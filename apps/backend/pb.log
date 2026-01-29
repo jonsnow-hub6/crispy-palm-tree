@@ -1,0 +1,12 @@
+nohup: ignoring input
+2026/01/25 11:29:12 presets.pb.js loaded
+2026/01/25 11:29:12 Project TCP listener and packet validation hooks initialized.
+2026/01/25 11:29:13 Server started at http://127.0.0.1:8090
+├─ REST API:  http://127.0.0.1:8090/api/
+└─ Dashboard: http://127.0.0.1:8090/_/
+File pb_hooks/projects.pb.js changed, restarting...
+2026/01/25 11:29:35 presets.pb.js loaded
+2026/01/25 11:29:35 Project TCP listener and packet validation hooks initialized.
+2026/01/25 11:29:35 Server started at http://127.0.0.1:8090
+├─ REST API:  http://127.0.0.1:8090/api/
+└─ Dashboard: http://127.0.0.1:8090/_/
