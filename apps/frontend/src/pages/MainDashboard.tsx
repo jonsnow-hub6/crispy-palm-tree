@@ -1,191 +1,173 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store';
 import { fetchPresets, setActivePreset } from '@/store/slices/presetsSlice';
-import { fetchStations } from '@/store/slices/stationsSlice';
-import { fetchProjects } from '@/store/slices/projectsSlice';
-import { updateHealthStatus } from '@/store/slices/systemSlice';
 import { Button } from '@/components/ui/button';
-import { pb } from '@/lib/pocketbase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useState } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { pb } from '@/lib/pocketbase';
 
 export function MainDashboard() {
   const dispatch = useDispatch<AppDispatch>();
   const { presets, activePresetId, loading: presetsLoading } = useSelector((state: RootState) => state.presets);
-  const { stations, activeStationId } = useSelector((state: RootState) => state.stations);
-  const { projects } = useSelector((state: RootState) => state.projects);
-  const { healthStatus } = useSelector((state: RootState) => state.system);
+
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [loadingApply, setLoadingApply] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     dispatch(fetchPresets());
-    dispatch(fetchStations());
-    dispatch(fetchProjects());
   }, [dispatch]);
 
-  const [distributingPresetId, setDistributingPresetId] = useState<string | null>(null);
-  const [distributionMessage, setDistributionMessage] = useState<string | null>(null);
+  const openConfirm = (presetId: string) => {
+    setSelectedPresetId(presetId);
+    setIsDialogOpen(true);
+    setMessage(null);
+  };
 
-  useEffect(() => {
-    // Poll for system health status
-        const fetchHealth = async () => {
-          try {
-            const data: any = await pb.send('/api/custom/system/health', { method: 'GET' });
-            if (data) {
-              dispatch(updateHealthStatus({ status: data.status, timestamp: Date.now() }));
-            }
-          } catch (error) {
-            console.error('Failed to fetch health status:', error);
-          }
-        };
-
-    fetchHealth();
-    const interval = setInterval(fetchHealth, 5000); // Poll every 5 seconds
-
-    return () => clearInterval(interval);
-  }, [dispatch]);
-
-  const handlePresetChange = async (presetId: string) => {
-    dispatch(setActivePreset(presetId));
-    // Trigger preset distribution with UX feedback
-    setDistributingPresetId(presetId);
-    setDistributionMessage('Starting distribution...');
+  const handleConfirmApply = async () => {
+    if (!selectedPresetId) return;
+    setLoadingApply(true);
+    setMessage(null);
     try {
-      await pb.send(`/api/custom/presets/${presetId}/distribute`, { method: 'POST' });
-      setDistributionMessage('Distribution started');
-    } catch (error) {
-      console.error('Failed to distribute preset:', error);
-      setDistributionMessage('Failed to contact server');
+      // Call backend preset set endpoint
+      await pb.send(`/api/presets/${selectedPresetId}/set`, { method: 'POST' });
+      dispatch(setActivePreset(selectedPresetId));
+      setMessage({ type: 'success', text: 'Preset applied to stations successfully' });
+    } catch (err: any) {
+      console.error('Failed to apply preset:', err);
+      const text = err?.message || 'Failed to apply preset to stations';
+      setMessage({ type: 'error', text });
     } finally {
-      // clear distributing state after short delay so user sees status
+      setLoadingApply(false);
+      // keep dialog open briefly to show result, then close
       setTimeout(() => {
-        setDistributingPresetId(null);
-        setTimeout(() => setDistributionMessage(null), 1500);
-      }, 1200);
+        setIsDialogOpen(false);
+      }, 800);
     }
   };
 
-  const activePreset = presets.find(p => p.id === activePresetId);
-  const activeStation = stations.find(s => s.id === activeStationId);
+  const selectedPreset = presets.find((p) => p.id === selectedPresetId) || null;
 
   return (
     <div className="min-h-screen bg-background p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-4xl font-bold">System Dashboard</h1>
+      <div className="max-w-3xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">Change Preset</h1>
         </div>
 
-        {/* System Health */}
-        <Card>
-          <CardHeader>
-            <CardTitle>System Health</CardTitle>
-            <CardDescription>Real-time packet validation status</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <div className={`h-4 w-4 rounded-full ${
-                healthStatus === 'healthy' ? 'bg-green-500' : 
-                healthStatus === 'unhealthy' ? 'bg-red-500' : 
-                'bg-gray-500'
-              }`} />
-              <span className="text-lg font-semibold">
-                {healthStatus === 'healthy' ? 'Healthy' : 
-                 healthStatus === 'unhealthy' ? 'Unhealthy' : 
-                 'Unknown'}
-              </span>
-              <Badge variant={healthStatus === 'healthy' ? 'default' : 'destructive'}>
-                {projects.filter(p => p.lastPacketValid && p.lastPacketTimestamp).length} / {projects.length} projects valid
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Active Station */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Active Station</CardTitle>
-            <CardDescription>Currently active station and links</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {activeStation ? (
-              <div className="space-y-2">
-                <p className="font-semibold">{activeStation.name}</p>
-                <div className="space-y-1">
-                  {activeStation.stationLinks.map((link, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-sm">
-                      <Badge variant={link.active ? 'default' : 'secondary'}>
-                        {link.active ? 'Active' : 'Inactive'}
-                      </Badge>
-                      <span>{link.host}:{link.port}</span>
-                      <span className="text-muted-foreground">Counter: {link.counter}</span>
+        {activePresetId && (
+          <div className="mb-4">
+            <Card>
+              <CardContent>
+                {(() => {
+                  const ap = presets.find(p => p.id === activePresetId);
+                  if (!ap) return null;
+                  return (
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-md shadow-md" style={{ backgroundColor: ap.color }} />
+                        <div>
+                          <div className="text-xl font-bold">{ap.name}</div>
+                          <div className="text-sm text-muted-foreground">Active preset • {ap.expand?.actions?.length || 0} action(s)</div>
+                        </div>
+                      </div>
+                      <div>
+                        <Button variant="ghost" onClick={() => openConfirm(ap.id)} style={{ borderColor: ap.color, color: ap.color }}>
+                          Re-apply
+                        </Button>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <p className="text-muted-foreground">No active station</p>
-            )}
-          </CardContent>
-        </Card>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-        {/* Preset Selection */}
         <Card>
           <CardHeader>
-            <CardTitle>Current Preset</CardTitle>
-            <CardDescription>Select preset to distribute to all stations</CardDescription>
+            <CardTitle>Presets</CardTitle>
+            <CardDescription>Choose a preset and confirm to apply it to all stations</CardDescription>
           </CardHeader>
           <CardContent>
-                {presetsLoading ? (
+            {presetsLoading ? (
               <p>Loading presets...</p>
             ) : presets.length === 0 ? (
               <p className="text-muted-foreground">No presets available</p>
             ) : (
-              <div className="space-y-4">
-                <div className="flex flex-wrap gap-2 items-center">
-                  {presets.map((preset) => (
-                    <Button
-                      key={preset.id}
-                      variant={activePresetId === preset.id ? 'default' : 'outline'}
-                      onClick={() => handlePresetChange(preset.id)}
-                      className="flex items-center gap-2"
-                      disabled={distributingPresetId === preset.id}
-                    >
-                      <div
-                        className="h-4 w-4 rounded-full"
-                        style={{ backgroundColor: preset.color }}
-                      />
-                      {preset.name}
-                      {distributingPresetId === preset.id && (
-                        <span className="ml-2 text-xs text-muted-foreground">Distributing...</span>
-                      )}
-                    </Button>
-                  ))}
-                </div>
-
-                {activePreset && (
-                  <div className="mt-2 p-4 rounded-md border-2 flex items-center justify-between" style={{ borderColor: activePreset.color }}>
-                    <div>
-                      <p className="font-bold text-lg">Active Preset: {activePreset.name}</p>
-                      {activePreset.expand?.actions && activePreset.expand.actions.length > 0 && (
-                        <div className="text-sm text-muted-foreground">
-                          {activePreset.expand.actions.length} action(s) configured
-                        </div>
-                      )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {presets.map((preset) => (
+                  <div key={preset.id} className="flex items-center justify-between p-3 border rounded-md" style={{ borderColor: preset.color }}>
+                    <div className="flex items-center gap-3">
+                      <div className="h-6 w-6 rounded-full shadow-sm" style={{ backgroundColor: preset.color }} />
+                      <div>
+                        <div className="font-semibold">{preset.name}</div>
+                        <div className="text-sm text-muted-foreground">{preset.expand?.actions?.length || 0} action(s)</div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-bold text-sm" style={{ color: activePreset.color }}>{activePreset.color}</div>
-                      {distributionMessage && (
-                        <div className="text-xs text-muted-foreground">{distributionMessage}</div>
-                      )}
+                    <div>
+                      <Button variant={activePresetId === preset.id ? 'default' : 'outline'} onClick={() => openConfirm(preset.id)}>
+                        Change
+                      </Button>
                     </div>
                   </div>
-                )}
+                ))}
               </div>
             )}
           </CardContent>
         </Card>
+
+        {message && (
+          <div className={`mt-4 p-3 rounded-md ${message.type === 'success' ? 'bg-green-50 text-green-800 border border-green-100' : 'bg-destructive/10 text-destructive border border-destructive/20'}`}>
+            {message.text}
+          </div>
+        )}
+
+        <Dialog open={isDialogOpen} onOpenChange={(v) => { setIsDialogOpen(v); if (!v) { setSelectedPresetId(null); setMessage(null); } }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                Confirm apply preset
+              </DialogTitle>
+              <DialogDescription>
+                This will send the preset to all configured station links. Stations may take a few seconds to apply the new preset.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="mt-4 space-y-4">
+              {selectedPreset ? (
+                <div className="flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-md shadow-sm" style={{ backgroundColor: selectedPreset.color }} />
+                  <div>
+                    <div className="font-semibold text-lg">{selectedPreset.name}</div>
+                    <div className="text-sm text-muted-foreground">{selectedPreset.expand?.actions?.length || 0} action(s)</div>
+                  </div>
+                </div>
+              ) : (
+                <div>Loading preset...</div>
+              )}
+
+              {message && (
+                <div className={`p-2 rounded-md ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-destructive/10 text-destructive'}`}>
+                  {message.text}
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setIsDialogOpen(false); setSelectedPresetId(null); setMessage(null); }} disabled={loadingApply}>Cancel</Button>
+              <Button onClick={handleConfirmApply} style={selectedPreset ? { backgroundColor: selectedPreset.color, borderColor: selectedPreset.color } : undefined} disabled={loadingApply || !selectedPreset}>
+                {loadingApply ? 'Applying...' : 'Apply preset'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
 }
+
+export default MainDashboard;
+

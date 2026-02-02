@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 // removed unused table import; using card layout instead
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Edit, Trash2, Power } from 'lucide-react';
+import { Plus, Edit, Trash2, Power, MoreVertical } from 'lucide-react';
 import StationGraph from '@/components/StationGraph';
 
 export function StationsPage() {
@@ -26,14 +26,31 @@ export function StationsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStation, setEditingStation] = useState<Station | null>(null);
   const [formData, setFormData] = useState({ name: '', stationLinks: [] as StationLink[] });
+  const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmStationId, setConfirmStationId] = useState<string | null>(null);
 
   useEffect(() => {
     dispatch(fetchStations());
   }, [dispatch]);
 
+  // close menu when clicking outside
+  useEffect(() => {
+    if (!menuOpenFor) return;
+    const handler = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      if (!target.closest(`[data-menu-id="${menuOpenFor}"]`)) {
+        setMenuOpenFor(null);
+      }
+    };
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
+  }, [menuOpenFor]);
+
   const handleCreate = () => {
     setEditingStation(null);
-    setFormData({ name: '', stationLinks: [{ host: '', port: 8080, active: false, counter: 0 }] });
+    setFormData({ name: '', stationLinks: [{ host: '', port: 8080, active: false, counter: 0, reachable: false }] });
     setIsDialogOpen(true);
   };
 
@@ -49,8 +66,19 @@ export function StationsPage() {
     }
   };
 
-  const handleActivate = async (stationId: string) => {
-    await dispatch(activateStation({ stationId }));
+  const handleActivate = (stationId: string) => {
+    setConfirmStationId(stationId);
+    setConfirmOpen(true);
+  };
+
+  const confirmActivate = async () => {
+    if (!confirmStationId) return;
+    setConfirmOpen(false);
+    try {
+      await dispatch(activateStation({ stationId: confirmStationId }));
+    } finally {
+      setConfirmStationId(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,7 +95,7 @@ export function StationsPage() {
   const addLink = () => {
     setFormData({
       ...formData,
-      stationLinks: [...formData.stationLinks, { host: '', port: 8080, active: false, counter: 0 }],
+      stationLinks: [...formData.stationLinks, { host: '', port: 8080, active: false, counter: 0, reachable: false }],
     });
   };
 
@@ -175,12 +203,55 @@ export function StationsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {stations.map((station) => {
               const isActive = station.stationLinks.some(l => l.active);
+              const anyReachable = station.stationLinks.some(l => l.reachable !== false);
               return (
                 <Card key={station.id}>
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
-                      <span className={isActive ? 'font-semibold text-primary' : 'font-normal text-muted-foreground'}>{station.name}</span>
-                      <span className="text-sm text-muted-foreground">{isActive ? 'Active' : 'Inactive'}</span>
+                      <div className="flex items-center gap-3">
+                        <span className={isActive ? 'font-semibold text-primary' : 'font-normal text-muted-foreground'}>{station.name}</span>
+                        {isActive ? (
+                          <Badge variant="default">Active</Badge>
+                        ) : (
+                          station.stationLinks.every(l => l.reachable === false) ? (
+                            <Badge variant="destructive">Unreachable</Badge>
+                          ) : (
+                            <Badge variant="outline">Inactive</Badge>
+                          )
+                        )}
+                      </div>
+                      <div className="relative" data-menu-id={station.id}>
+                        <div style={{ position: 'absolute', right: 8, top: 8 }}>
+                          <button
+                            aria-haspopup="menu"
+                            aria-expanded={menuOpenFor === station.id}
+                            onClick={() => setMenuOpenFor(menuOpenFor === station.id ? null : station.id)}
+                            className="p-1 rounded-md hover:bg-accent"
+                          >
+                            <MoreVertical className="h-5 w-5" />
+                          </button>
+                        </div>
+
+                        {menuOpenFor === station.id && (
+                          <div role="menu" aria-label="Station actions" className="absolute right-2 top-8 mt-2 w-44 bg-card border rounded-md shadow-md z-40">
+                            <div className="py-1">
+                              <button role="menuitem" className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60" onClick={() => { setMenuOpenFor(null); handleEdit(station); }}>
+                                <Edit className="h-4 w-4 text-muted-foreground" />
+                                <span>Edit</span>
+                              </button>
+                              <button role="menuitem" aria-disabled={isActive || !anyReachable} className={`flex items-center gap-2 w-full px-3 py-2 text-sm ${isActive || !anyReachable ? 'opacity-50 pointer-events-none' : 'hover:bg-accent/60'}`} onClick={() => { setMenuOpenFor(null); if (!isActive && anyReachable) handleActivate(station.id); }}>
+                                <Power className="h-4 w-4 text-green-500" />
+                                <span>Activate</span>
+                              </button>
+                              <div className="border-t my-1" />
+                              <button role="menuitem" className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-destructive" onClick={() => { setMenuOpenFor(null); handleDelete(station.id); }}>
+                                <Trash2 className="h-4 w-4" />
+                                <span>Delete</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </CardTitle>
                     <CardDescription className="text-sm">
                       {station.stationLinks.length} link(s)
@@ -189,17 +260,6 @@ export function StationsPage() {
                   <CardContent>
                     <div className="space-y-3">
                       <StationGraph station={station as any} onActivate={handleActivate} />
-                      <div className="flex gap-2 pt-2">
-                        <Button variant="outline" onClick={() => handleEdit(station)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" onClick={() => handleActivate(station.id)} disabled={isActive}>
-                          <Power className="h-4 w-4" />
-                        </Button>
-                        <Button variant="destructive" onClick={() => handleDelete(station.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -208,6 +268,18 @@ export function StationsPage() {
           </div>
         )}
       </div>
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Are you sure?</DialogTitle>
+            <DialogDescription>Activate this station? This will attempt to switch active links via the backend.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>Cancel</Button>
+            <Button onClick={confirmActivate} variant="default">Confirm</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

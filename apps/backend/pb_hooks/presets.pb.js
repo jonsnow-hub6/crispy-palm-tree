@@ -1,92 +1,101 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-console.log('presets.pb.js loaded');
-
-// Helper function to distribute preset to all station links
-async function distributePresetToStations(presetId) {
-  const preset = $app.findRecordById('presets', presetId);
-  if (!preset) {
-    return { success: false, error: 'Preset not found' };
-  }
-
-  // Get all actions for this preset
-  const actionIds = preset.get('actions') || [];
-  const actions = [];
-  for (const actionId of actionIds) {
-    const action = $app.findRecordById('actions', actionId);
-    if (action) {
-      const projectId = action.get('project');
-      const project = $app.findRecordById('projects', projectId);
-      if (project) {
-        actions.push({
-          project: project.get('name'),
-          payload: action.get('payload'),
-        });
-      }
-    }
-  }
-
-  const presetData = {
-    id: preset.id,
-    name: preset.get('name'),
-    color: preset.get('color'),
-    actions: actions,
-  };
-
-  // Get all stations and their links
-  const allStations = $app.findRecordsByFilter('stations', '');
-  const results = [];
-
-  for (const station of allStations) {
-    const stationLinks = JSON.parse(station.get('stationLinks') || '[]');
-    
-    for (const link of stationLinks) {
-      try {
-        const url = `http://${link.host}:${link.port}/api/setPreset`;
-        const response = $http.send({
-          url: url,
-          method: 'POST',
-          body: JSON.stringify(presetData),
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          timeout: 5000,
-        });
-
-        results.push({
-          station: station.get('name'),
-          link: `${link.host}:${link.port}`,
-          success: response.statusCode === 200,
-          error: response.statusCode !== 200 ? response.body : null,
-        });
-      } catch (error) {
-        results.push({
-          station: station.get('name'),
-          link: `${link.host}:${link.port}`,
-          success: false,
-          error: error.toString(),
-        });
-      }
-    }
-  }
-
-  return { success: true, results };
-}
-
-// Preset distribution endpoint is implemented in projects.pb.js to avoid duplicate registration
-
-// Hook: When preset is updated and it's the active one, distribute it
-onRecordAfterUpdateSuccess((e) => {
+routerAdd('POST', '/api/presets/{id}/set', async (c) => {
   try {
-    if (!e || !e.record) return;
-    const record = e.record;
-    const coll = record.collection || {};
-    if (!(coll.name === 'presets' || coll.id === 'presets')) return;
-    // Distribute preset to all stations
-    distributePresetToStations(record.id).then((result) => {
-      console.log('Preset auto-distributed:', record.get('name'), result);
+    const { httpPostSetPreset } = require(`${__hooks}/api.utils`);
+    const id = c.request.pathValue('id');
+
+    const preset = $app.findRecordById('presets', id);
+    if (!preset) {
+      return c.json(404, { error: 'Preset not found' });
+    }
+
+    // ---- deactivate previous active presets ----
+    const activePresets = $app.findRecordsByFilter('presets', 'active = true');
+    for (const p of activePresets) {
+      if (p.id !== preset.id) {
+        p.set('active', false);
+        $app.save(p);
+      }
+    }
+
+    // ---- activate current preset ----
+    preset.set('active', true);
+    $app.save(preset);
+
+    // ---- build preset payload ----
+    const actionIds = preset.get('actions') || [];
+    const commands = [];
+
+    for (const actionId of actionIds) {
+      const action = $app.findRecordById('actions', actionId);
+      if (!action) continue;
+
+      const projectId = action.get('project');
+      if (!projectId) continue;
+
+      commands.push({
+        id: projectId,               // project id
+        payload: action.get('payload'),
+      });
+    }
+
+    const presetPayload = {
+      presetName: preset.get('name'),
+      commands,
+    };
+
+    // ---- collect all station links ----
+    const stations = $app.findRecordsByFilter('stations', '');
+    const links = [];
+
+    for (const station of stations) {
+      const stationLinks = JSON.parse(station.get('stationLinks') || '[]');
+      for (const link of stationLinks) {
+        links.push({
+          stationId: station.id,
+          stationName: station.get('name'),
+          link,
+        });
+      }
+    }
+
+    // ---- apply preset to all links (no rollback) ----
+    const results = await Promise.all(
+      links.map(async ({ stationId, stationName, link }) => {
+        try {
+          const res = httpPostSetPreset(link, presetPayload);
+          return {
+            stationId,
+            stationName,
+            host: link.host,
+            port: link.port,
+            ok: res.ok,
+            error: res.ok ? null : res.error,
+          };
+        } catch (err) {
+          return {
+            stationId,
+            stationName,
+            host: link.host,
+            port: link.port,
+            ok: false,
+            error: String(err),
+          };
+        }
+      })
+    );
+
+    return c.json(200, {
+      success: true,
+      preset: presetPayload,
+      results,
     });
+
   } catch (err) {
-    console.error('onRecordAfterUpdateSuccess(presets) handler error:', err);
+    console.error('Preset distribution error:', err?.stack || err);
+    return c.json(500, { error: String(err) });
   }
 });
+
+console.log('presets.pb.js: /api/presets/{id}/set registered');

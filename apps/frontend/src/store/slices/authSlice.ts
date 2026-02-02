@@ -6,7 +6,7 @@ interface AuthState {
 }
 
 const initialState: AuthState = {
-  isAuthenticated: false,
+  isAuthenticated: typeof window !== 'undefined' && window.localStorage ? window.localStorage.getItem('app_isAuthenticated') === 'true' : false,
   password: import.meta.env.VITE_AUTH_PASSWORD || 'admin', // Default password
 };
 
@@ -17,10 +17,12 @@ const authSlice = createSlice({
     login: (state, action: PayloadAction<string>) => {
       if (action.payload === state.password) {
         state.isAuthenticated = true;
+        try { window.localStorage.setItem('app_isAuthenticated', 'true'); } catch (e) {}
       }
     },
     logout: (state) => {
       state.isAuthenticated = false;
+      try { window.localStorage.removeItem('app_isAuthenticated'); } catch (e) {}
     },
     setPassword: (state, action: PayloadAction<string>) => {
       state.password = action.payload;

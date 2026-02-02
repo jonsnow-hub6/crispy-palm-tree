@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 // removed unused table import; using card layout instead
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Edit, Trash2, Upload } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload, MoreVertical } from 'lucide-react';
 
 export function PresetsPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -27,12 +27,30 @@ export function PresetsPage() {
   const [formData, setFormData] = useState({ name: '', color: '#3b82f6' });
   const [importColor, setImportColor] = useState('#3b82f6');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const [importError, setImportError] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
+  const [showTopError, setShowTopError] = useState(true);
 
   useEffect(() => {
     dispatch(fetchPresets());
   }, [dispatch]);
+
+  // close menu when clicking outside
+  useEffect(() => {
+    if (!menuOpenFor) return;
+    const handler = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      if (!target.closest(`[data-menu-id="${menuOpenFor}"]`)) {
+        setMenuOpenFor(null);
+      }
+    };
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
+  }, [menuOpenFor]);
 
   const handleCreate = () => {
     setEditingPreset(null);
@@ -74,26 +92,32 @@ export function PresetsPage() {
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    // store selected file, do not auto-import
+    const file = e.target.files?.[0] ?? null;
+    setSelectedFile(file);
+    setSelectedFileName(file ? file.name : null);
+    setImportError('');
+  };
+
+  const handleImportConfirm = async () => {
+    if (!selectedFile) {
+      setImportError('Please choose a JSON file to import');
+      return;
+    }
 
     try {
-      const text = await file.text();
+      const text = await selectedFile.text();
       const jsonData = JSON.parse(text);
-      console.log(jsonData);
 
-      // Validate new format: { presetName: string, commands: [{ id: string, payload: string }] }
+      // Validate new format
       if (!jsonData.presetName || !jsonData.commands) {
-        setImportError('Invalid JSON format. Expected { presetName: string, commands: [{ id: string, payload: string }] }');
+        setImportError('Invalid JSON format. Expected { presetName: string, commands: [...] }');
         return;
       }
-
       if (!Array.isArray(jsonData.commands)) {
         setImportError('Commands must be an array of objects with id and payload');
         return;
       }
-
-      // Validate each command
       for (const cmd of jsonData.commands) {
         if (!cmd.id || !cmd.payload) {
           setImportError('Each command must have both id and payload fields');
@@ -107,18 +131,16 @@ export function PresetsPage() {
         color: importColor,
       })).unwrap();
 
-      // Refetch presets to ensure UI is updated
       await dispatch(fetchPresets());
       setIsImportDialogOpen(false);
       setImportError('');
       setImportColor('#3b82f6');
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    } catch (error: any) {
-      console.error('Import error:', error);
-      const errorMessage = error?.message || error || 'Failed to import preset';
-      setImportError(errorMessage);
+      setSelectedFile(null);
+      setSelectedFileName(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } catch (err: any) {
+      console.error('Import error:', err);
+      setImportError(err?.message || 'Failed to import preset');
     }
   };
 
@@ -128,7 +150,7 @@ export function PresetsPage() {
         <div className="flex justify-between items-center">
           <h1 className="text-4xl font-bold">Presets Management</h1>
           <div className="flex gap-2">
-            <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+            <Dialog open={isImportDialogOpen} onOpenChange={(v) => { setIsImportDialogOpen(v); if (!v) { setSelectedFile(null); setSelectedFileName(null); setImportError(''); setImportColor('#3b82f6'); if (fileInputRef.current) fileInputRef.current.value = ''; } }}>
               <DialogTrigger asChild>
                 <Button variant="outline">
                   <Upload className="h-4 w-4 mr-2" />
@@ -139,19 +161,23 @@ export function PresetsPage() {
                 <DialogHeader>
                   <DialogTitle>Import Preset from JSON</DialogTitle>
                   <DialogDescription>
-                    Upload a JSON file with preset configuration
+                    Choose a JSON file and adjust the color before importing
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="json-file">JSON File</Label>
-                    <Input
-                      id="json-file"
-                      type="file"
-                      accept=".json"
-                      ref={fileInputRef}
-                      onChange={handleFileUpload}
-                    />
+                    <Label>JSON File</Label>
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => fileInputRef.current?.click()}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
+                      className="border rounded-md p-4 cursor-pointer hover:bg-accent/40 flex items-center justify-between"
+                    >
+                      <div className="text-sm text-muted-foreground">{selectedFileName || 'Click to choose a .json file'}</div>
+                      <div className="text-xs text-muted-foreground">{selectedFileName ? `${(selectedFile?.size ?? 0) / 1024 | 0} KB` : 'No file'}</div>
+                      <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileUpload} className="hidden" />
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       Format: {"{ presetName: string, commands: [{ id: string, payload: string }] }"}
                     </p>
@@ -181,16 +207,10 @@ export function PresetsPage() {
                   )}
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => {
-                    setIsImportDialogOpen(false);
-                    setImportError('');
-                    setImportColor('#3b82f6');
-                    if (fileInputRef.current) {
-                      fileInputRef.current.value = '';
-                    }
-                  }}>
-                    Close
+                  <Button variant="outline" onClick={() => { setIsImportDialogOpen(false); }}>
+                    Cancel
                   </Button>
+                  <Button onClick={handleImportConfirm} disabled={!selectedFile}>Import</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -255,13 +275,7 @@ export function PresetsPage() {
           </div>
         </div>
 
-        {error && (
-          <Card className="border-destructive">
-            <CardContent className="py-4">
-              <p className="text-destructive">Error: {error}</p>
-            </CardContent>
-          </Card>
-        )}
+
         {loading ? (
           <p>Loading presets...</p>
         ) : presets.length === 0 ? (
@@ -301,14 +315,34 @@ export function PresetsPage() {
                         <span>No actions</span>
                       )}
                     </div>
-                    <div className="flex gap-2 items-start">
-                      <Button variant="outline" onClick={() => handleEdit(preset)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="destructive" onClick={() => handleDelete(preset.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                            <div className="relative" data-menu-id={preset.id}>
+                              <div style={{ position: 'absolute', right: 8, top: 8 }}>
+                                <button
+                                  aria-haspopup="menu"
+                                  aria-expanded={menuOpenFor === preset.id}
+                                  onClick={() => setMenuOpenFor(menuOpenFor === preset.id ? null : preset.id)}
+                                  className="p-1 rounded-md hover:bg-accent"
+                                >
+                                  <MoreVertical className="h-5 w-5" />
+                                </button>
+                              </div>
+
+                              {menuOpenFor === preset.id && (
+                                <div role="menu" aria-label="Preset actions" className="absolute right-2 top-8 mt-2 w-40 bg-card border rounded-md shadow-md z-40">
+                                  <div className="py-1">
+                                    <button role="menuitem" className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60" onClick={() => { setMenuOpenFor(null); handleEdit(preset); }}>
+                                      <Edit className="h-4 w-4 text-muted-foreground" />
+                                      <span>Edit</span>
+                                    </button>
+                                    <div className="border-t my-1" />
+                                    <button role="menuitem" className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-destructive" onClick={() => { setMenuOpenFor(null); handleDelete(preset.id); }}>
+                                      <Trash2 className="h-4 w-4" />
+                                      <span>Delete</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                   </div>
                 </CardContent>
               </Card>

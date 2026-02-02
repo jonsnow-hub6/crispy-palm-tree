@@ -1,11 +1,9 @@
-/* Counter Monitor Worker
-   - Runs every 5s
-   - Fetches all stations, probes each link /api/getCounter
-   - Updates link.counter, link.reachable, station.counterMismatch, station.unreachable
-   - Ensures counters never decrease; sets flags when they do
-*/
+const {
+  getAllStations,
+  updateStation,
+  createNotification,
+} = require('./pbClient');
 
-const { ensureAdmin, getAllStations, updateStation } = require('./pbClient');
 const fetch = global.fetch || require('node-fetch');
 
 const INTERVAL_MS = 5000;
@@ -22,13 +20,16 @@ async function probeCounter(link) {
   try {
     const res = await timeoutFetch(url, { method: 'GET' }, 3000);
     if (!res.ok) return { ok: false };
+
     let text = await res.text();
-    try { text = JSON.parse(text); } catch (e) {}
+    try { text = JSON.parse(text); } catch {}
+
     const num = Number(text);
     if (!Number.isFinite(num)) return { ok: false };
+
     return { ok: true, counter: num };
-  } catch (err) {
-    return { ok: false, error: String(err) };
+  } catch {
+    return { ok: false };
   }
 }
 
@@ -41,73 +42,98 @@ function mergeLinkFields(existing, probe) {
 }
 
 async function runOnce() {
-  try {
-    await ensureAdmin();
-    const stations = await getAllStations();
-    for (const st of stations) {
-      const linksRaw = st.stationLinks || st.get?.('stationLinks') || '[]';
-      let links = [];
-      try { links = JSON.parse(linksRaw); } catch (e) { links = []; }
+  const stations = await getAllStations();
 
-      const probes = await Promise.all(links.map((l) => probeCounter(l)));
-      let anyReachable = false;
-      let counters = [];
-      const updatedLinks = links.map((link, i) => {
-        const probe = probes[i];
-        const merged = mergeLinkFields(link, probe);
-        if (merged.reachable) {
-          anyReachable = true;
-          if (typeof merged.counter === 'number') counters.push(merged.counter);
-        }
-        return merged;
-      });
+  let allCounters = [];
+  let counterDecreased = false;
 
-      // Check counter monotonicity per-link using stored value
-      let counterDecrease = false;
-      for (let i = 0; i < links.length; i++) {
-        const old = links[i];
-        const updated = updatedLinks[i];
-        if (updated.counter != null && old && typeof old.counter === 'number') {
-          if (updated.counter < old.counter) counterDecrease = true;
-        }
-      }
+  // identify active station
+  const activeStation = stations.find(st =>
+    (Array.isArray(st.stationLinks)
+      ? st.stationLinks
+      : JSON.parse(st.stationLinks || '[]')
+    ).some(l => l.active === true)
+  );
 
-      // consistency across reachable links
-      const uniqueCounters = Array.from(new Set(counters));
-      const countersConsistent = uniqueCounters.length <= 1;
+  for (const st of stations) {
+    let links = [];
 
-      const toSave = {
-        stationLinks: JSON.stringify(updatedLinks),
-        counterMismatch: !countersConsistent,
-        unreachable: !anyReachable,
-        counterDecrease: counterDecrease,
-        updatedAt: new Date().toISOString(),
-      };
-
+    if (Array.isArray(st.stationLinks)) {
+      links = st.stationLinks;
+    } else {
       try {
-        await updateStation(st.id, toSave);
-      } catch (err) {
-        console.error('Failed to update station', st.id, err && err.message ? err.message : err);
-      }
-
-      // If inconsistent or decrease, also log for visibility
-      if (!countersConsistent) {
-        console.warn(`Station ${st.id} counter mismatch:`, uniqueCounters);
-      }
-      if (counterDecrease) {
-        console.error(`Station ${st.id} counter decreased on one or more links`);
+        links = JSON.parse(st.stationLinks || '[]');
+      } catch {
+        links = [];
       }
     }
-  } catch (err) {
-    console.error('Counter monitor run error:', err && err.message ? err.message : err);
+
+    const probes = await Promise.all(links.map(probeCounter));
+
+    const updatedLinks = links.map((link, i) =>
+      mergeLinkFields(link, probes[i])
+    );
+
+    // ---- counter decrease (global) ----
+    for (let i = 0; i < links.length; i++) {
+      const old = links[i];
+      const updated = updatedLinks[i];
+
+      if (
+        typeof old?.counter === 'number' &&
+        typeof updated?.counter === 'number'
+      ) {
+        if (updated.counter < old.counter) {
+          counterDecreased = true;
+        }
+        allCounters.push(updated.counter);
+      }
+    }
+
+    // ---- active station unreachable → ERROR ----
+    if (activeStation && st.id === activeStation.id) {
+      const anyReachable = updatedLinks.some(l => l.reachable);
+      if (!anyReachable) {
+        await createNotification({
+          level: 'critical',
+          type: 'connection',
+          content: `Active station ${activeStation.name} is unreachable`,
+        });
+      }
+    }
+
+    // ---- persist links (always) ----
+    await updateStation(st.id, {
+      stationLinks: JSON.stringify(updatedLinks),
+    });
+  }
+
+  // ---- global counter decrease ----
+  if (counterDecreased) {
+    await createNotification({
+      level: 'error',
+      type: 'counter',
+      content: 'Counter decreased on at least one link',
+    });
+  }
+
+  // ---- global counter consistency ----
+  const uniqueCounters = Array.from(new Set(allCounters));
+  if (uniqueCounters.length > 1) {
+    await createNotification({
+      level: 'warning',
+      type: 'counter',
+      content: `Global counter mismatch detected: ${uniqueCounters.join(', ')}`,
+    });
   }
 }
 
 async function start() {
-  console.log('Counter monitor starting, interval', INTERVAL_MS);
-  // Run immediately then schedule
+  console.log('Counter monitor starting');
   await runOnce();
   setInterval(runOnce, INTERVAL_MS);
 }
 
-start().catch((e) => console.error('Monitor crash:', e));
+start().catch(err => {
+  console.error('Monitor crash:', err);
+});

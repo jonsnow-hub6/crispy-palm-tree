@@ -7,13 +7,18 @@ import { LoginPage } from '@/pages/LoginPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { NavBar } from '@/components/NavBar';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import useRealtime from '@/hooks/useRealtime';
+import { Notifications } from '@/components/Notifications';
 
 export function App() {
+  const { toasts, removeToast } = useRealtime();
+
   return (
     <ThemeProvider>
       <BrowserRouter>
         <div className="min-h-screen bg-background">
           <NavBar />
+          <Notifications toasts={toasts} onClose={removeToast} />
           <Routes>
           <Route path="/" element={<MainDashboard />} />
           <Route path="/login" element={<LoginPage />} />

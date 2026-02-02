@@ -50,6 +50,37 @@ function httpGetCounter(link) {
   }
 }
 
+function httpPostSetPreset(link, preset) {
+  const url = `http://${link.host}:${link.port}/api/setPreset`;
+  try {
+    const res = $http.send({
+      url: url,
+      method: 'POST',
+      body: JSON.stringify(preset),
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 5000,
+    });
+    return { ok: res.statusCode >= 200 && res.statusCode < 300, res };
+  } catch (err) {
+    return { ok: false, error: `error in http request to api: ${String(err)}` };
+  }
+}
+
+function httpGetPreset(link) {
+  const url = `http://${link.host}:${link.port}/api/getPreset`;
+  try {
+    const res = $http.send({ url: url, method: 'GET', timeout: 3000 });
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      let body = res.body;
+      try { body = JSON.parse(res.body); } catch (e) {}
+      return { ok: true, value: body };
+    }
+    return { ok: false, error: `status ${res.statusCode}` };
+  } catch (err) {
+    return { ok: false, error: `error in http request to api: ${String(err)}` };
+  }
+}
+
 function activateLink(link) {
   return new Promise((resolve) => {
     const res = httpPostSetActive(link, true);
@@ -89,4 +120,6 @@ module.exports = {
   activateLink,
   deactivateLink,
   probeLink,
+  httpPostSetPreset,
+  httpGetPreset,
 };

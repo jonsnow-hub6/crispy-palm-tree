@@ -7,6 +7,7 @@ type StationLink = {
   port: number;
   active: boolean;
   counter: number;
+  reachable?: boolean;
 };
 
 type Station = {
@@ -37,7 +38,9 @@ export function StationGraph({ station, onActivate }: { station: Station; onActi
   const n = station.stationLinks.length;
   const linkXs = station.stationLinks.map((_, i) => ((i + 1) * dims.w) / (n + 1));
 
-  const hasAnyActive = station.stationLinks.some(l => l.active);
+  const hasAnyActive = station.stationLinks.some(l => l.active && l.reachable !== false);
+  const anyReachable = station.stationLinks.some(l => l.reachable !== false);
+  const stationIsActivatable = anyReachable && !station.stationLinks.some(l => l.active === true);
 
   return (
     <div ref={containerRef} className="relative w-full" style={{ minWidth: 280, height: dims.h }}>
@@ -83,8 +86,10 @@ export function StationGraph({ station, onActivate }: { station: Station; onActi
       {/* station node */}
       <div style={{ left: stationX, top: `${stationY - 12}px` }} className="absolute flex items-center justify-center pointer-events-auto transform -translate-x-1/2">
         <button
-          onClick={() => onActivate(station.id)}
-          className={`flex items-center justify-center h-12 w-12 rounded-full transition-transform focus:outline-none ${hasAnyActive ? 'bg-cyan-500 text-white scale-105' : 'bg-slate-100 text-slate-700'}`}
+          onClick={() => stationIsActivatable && onActivate(station.id)}
+          disabled={!stationIsActivatable}
+          aria-disabled={!stationIsActivatable}
+          className={`flex items-center justify-center h-12 w-12 rounded-full transition-transform focus:outline-none ${hasAnyActive ? 'bg-cyan-500 text-white scale-105' : stationIsActivatable ? 'bg-slate-100 text-slate-700 hover:scale-105' : 'bg-slate-700/10 text-muted-foreground cursor-not-allowed'}`}
           aria-label={`Station ${station.name}`}
         >
           <Radio className="h-6 w-6" />
@@ -99,8 +104,10 @@ export function StationGraph({ station, onActivate }: { station: Station; onActi
           <div key={i} style={{ left: x, top: `${linksY - 12}px` }} className="absolute flex items-center justify-center pointer-events-none transform -translate-x-1/2">
             <div className="relative">
               <button
-                onClick={() => onActivate(station.id)}
-                className={`peer pointer-events-auto flex items-center justify-center h-9 w-9 rounded-full transition-transform focus:outline-none ${active ? 'bg-cyan-500 text-white scale-110' : 'bg-white border border-slate-200 text-slate-600'}`}
+                onClick={() => (link.reachable !== false && !link.active) && onActivate(station.id)}
+                disabled={link.reachable === false || link.active}
+                aria-disabled={link.reachable === false || link.active}
+                className={`peer pointer-events-auto flex items-center justify-center h-9 w-9 rounded-full transition-transform focus:outline-none ${active ? 'bg-cyan-500 text-white scale-110' : link.reachable === false ? 'bg-red-50 text-red-600 border border-red-100 cursor-not-allowed' : 'bg-white border border-slate-200 text-slate-600'}`}
                 aria-pressed={active}
               >
                 <Radio className={`h-4 w-4 ${active ? 'text-white' : 'text-slate-400'}`} />
@@ -112,7 +119,7 @@ export function StationGraph({ station, onActivate }: { station: Station; onActi
                   <div className="mb-1 text-card-foreground">
                     <div className="text-[12px]"><span className="font-medium">Host:</span> <span className="text-muted-foreground ml-1">{String(link.host)}</span></div>
                     <div className="text-[12px]"><span className="font-medium">Port:</span> <span className="text-muted-foreground ml-1">{String(link.port)}</span></div>
-                    <div className="text-[12px]"><span className="font-medium">Status:</span> <span className="text-muted-foreground ml-1">{link.active ? 'Active' : 'Inactive'}</span></div>
+                        <div className="text-[12px]"><span className="font-medium">Status:</span> <span className="text-muted-foreground ml-1">{link.reachable === false ? 'Unreachable' : link.active ? 'Active' : 'Inactive'}</span></div>
                     <div className="text-[12px]"><span className="font-medium">Counter:</span> <span className="text-muted-foreground ml-1">{link.counter}</span></div>
                   </div>
                 </div>

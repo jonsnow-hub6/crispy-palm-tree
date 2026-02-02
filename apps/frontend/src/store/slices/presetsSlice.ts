@@ -165,6 +165,10 @@ const presetsSlice = createSlice({
       .addCase(fetchPresets.fulfilled, (state, action) => {
         state.loading = false;
         state.presets = action.payload;
+        // Determine active preset: prefer existing active if still present, otherwise use most recently updated/created
+        if (!state.activePresetId || !state.presets.find(p => p.id === state.activePresetId)) {
+          state.activePresetId = action.payload.length > 0 ? action.payload[0].id : null;
+        }
       })
       .addCase(fetchPresets.rejected, (state, action) => {
         state.loading = false;

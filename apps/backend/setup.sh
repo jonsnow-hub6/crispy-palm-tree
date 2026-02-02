@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # PocketBase version
-VERSION="0.36.1"
+VERSION="0.36.2"
 ZIP_FILE="pocketbase_${VERSION}_linux_amd64.zip"
 URL="https://github.com/pocketbase/pocketbase/releases/download/v${VERSION}/${ZIP_FILE}"
 

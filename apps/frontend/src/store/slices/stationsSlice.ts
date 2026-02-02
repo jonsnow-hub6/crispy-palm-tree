@@ -7,6 +7,7 @@ export interface StationLink {
   port: number;
   active: boolean;
   counter: number;
+  reachable: boolean;
 }
 
 export interface Station extends RecordModel {
@@ -68,7 +69,6 @@ export const activateStation = createAsyncThunk(
   async ({ stationId }: { stationId: string; }, thunkAPI) => {
     // Call backend activation endpoint which is the source-of-truth
     try {
-      console.log('11111111111111111111111111');
       await pb.send(`/api/stations/${stationId}/activate`, {
         method: 'POST'
       });
@@ -92,6 +92,18 @@ const stationsSlice = createSlice({
   reducers: {
     setActiveStation: (state, action: PayloadAction<string | null>) => {
       state.activeStationId = action.payload;
+    },
+    upsertStation: (state, action: PayloadAction<Station>) => {
+      const idx = state.stations.findIndex(s => s.id === action.payload.id);
+      if (idx !== -1) state.stations[idx] = action.payload;
+      else state.stations.push(action.payload);
+      // recompute active station
+      const active = state.stations.find(s => s.stationLinks.some(l => l.active));
+      state.activeStationId = active?.id || null;
+    },
+    removeStation: (state, action: PayloadAction<string>) => {
+      state.stations = state.stations.filter(s => s.id !== action.payload);
+      if (state.activeStationId === action.payload) state.activeStationId = null;
     },
     updateStationLinkCounter: (state, action: PayloadAction<{ stationId: string; linkIndex: number; counter: number }>) => {
       const station = state.stations.find(s => s.id === action.payload.stationId);
@@ -120,7 +132,12 @@ const stationsSlice = createSlice({
         state.error = action.error.message || 'Failed to fetch stations';
       })
       .addCase(createStation.fulfilled, (state, action) => {
-        state.stations.push(action.payload);
+        const idx = state.stations.findIndex(s => s.id === action.payload.id);
+        if (idx !== -1) {
+          state.stations[idx] = action.payload;
+        } else {
+          state.stations.push(action.payload);
+        }
       })
       .addCase(updateStation.fulfilled, (state, action) => {
         const index = state.stations.findIndex(s => s.id === action.payload.id);
@@ -161,6 +178,6 @@ const stationsSlice = createSlice({
   },
 });
 
-export const { setActiveStation, updateStationLinkCounter } = stationsSlice.actions;
+export const { setActiveStation, updateStationLinkCounter, upsertStation, removeStation } = stationsSlice.actions;
 export default stationsSlice.reducer;
 
