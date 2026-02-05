@@ -296,7 +296,6 @@ export function PresetsPage() {
                     </div>
                   </CardTitle>
                   <CardDescription className="text-sm text-muted-foreground">
-                    {preset.expand?.actions?.length || 0} action(s)
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

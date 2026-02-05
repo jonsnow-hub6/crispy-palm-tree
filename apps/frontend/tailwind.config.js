@@ -69,10 +69,15 @@ module.exports = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: 0 },
         },
+        blinkCyan: {
+          '0%, 100%': { borderColor: '#06b6d4', boxShadow: '0 0 0px #06b6d4' },
+          '50%': { borderColor: 'transparent', boxShadow: '0 0 12px #06b6d4' },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "blinkCyan": 'blinkCyan 1.2s infinite ease-in-out',
       },
     },
   },

@@ -117,7 +117,7 @@ export function StationGraph({ station, onActivate }: { station: Station; onActi
               <div className="pointer-events-none absolute -bottom-24 left-1/2 transform -translate-x-1/2 opacity-0 peer-hover:opacity-100 transition-opacity z-50">
                 <div className="bg-card border rounded-md p-2 text-xs shadow-md w-56">
                   <div className="mb-1 text-card-foreground">
-                    <div className="text-[12px]"><span className="font-medium">Host:</span> <span className="text-muted-foreground ml-1">{String(link.host)}</span></div>
+                    <div className="text-[12px]"><span className="font-medium">IP:</span> <span className="text-muted-foreground ml-1">{String(link.host)}</span></div>
                     <div className="text-[12px]"><span className="font-medium">Port:</span> <span className="text-muted-foreground ml-1">{String(link.port)}</span></div>
                         <div className="text-[12px]"><span className="font-medium">Status:</span> <span className="text-muted-foreground ml-1">{link.reachable === false ? 'Unreachable' : link.active ? 'Active' : 'Inactive'}</span></div>
                     <div className="text-[12px]"><span className="font-medium">Counter:</span> <span className="text-muted-foreground ml-1">{link.counter}</span></div>
