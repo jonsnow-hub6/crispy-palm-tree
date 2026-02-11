@@ -13,6 +13,7 @@ export interface Preset extends RecordModel {
   expand?: {
     actions?: Action[];
   };
+  active: boolean;
 }
 
 interface PresetsState {
@@ -163,13 +164,26 @@ const presetsSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchPresets.fulfilled, (state, action) => {
-        state.loading = false;
-        state.presets = action.payload;
-        // Determine active preset: prefer existing active if still present, otherwise use most recently updated/created
-        if (!state.activePresetId || !state.presets.find(p => p.id === state.activePresetId)) {
-          state.activePresetId = action.payload.length > 0 ? action.payload[0].id : null;
-        }
-      })
+  state.loading = false;
+  state.presets = action.payload;
+
+  // ✅ Get active preset from PB
+  const actives = action.payload.filter(p => p.active === true);
+
+  if (actives.length > 0) {
+    // Prefer DB state
+    state.activePresetId = actives[0].id;
+  } else {
+    // Fallback: none active in DB
+    state.activePresetId = null;
+  }
+
+  // Optional safety warning
+  if (actives.length > 1) {
+    console.warn('Multiple active presets in DB:', actives);
+  }
+})
+
       .addCase(fetchPresets.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch presets';

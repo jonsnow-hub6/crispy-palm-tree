@@ -9,9 +9,20 @@ import { NavBar } from '@/components/NavBar';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import useRealtime from '@/hooks/useRealtime';
 import { Notifications } from '@/components/Notifications';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { fetchPresets } from '@/store/slices/presetsSlice';
+import type { AppDispatch } from '@/store';
+import { fetchStations } from '@/store/slices/stationsSlice';
 
 export function App() {
   const { toasts, removeToast } = useRealtime();
+  const dispatch = useDispatch<AppDispatch>();
+
+  useEffect(() => {
+    dispatch(fetchPresets()); // ✅ load on startup
+    dispatch(fetchStations()); // ✅ load on startup
+  }, [dispatch]);
 
   return (
     <ThemeProvider>
@@ -20,33 +31,33 @@ export function App() {
           <NavBar />
           <Notifications toasts={toasts} onClose={removeToast} />
           <Routes>
-          <Route path="/" element={<MainDashboard />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route
-            path="/stations"
-            element={
-              <ProtectedRoute>
-                <StationsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/projects"
-            element={
-              <ProtectedRoute>
-                <ProjectsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/presets"
-            element={
-              <ProtectedRoute>
-                <PresetsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="/" element={<MainDashboard />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route
+              path="/stations"
+              element={
+                <ProtectedRoute>
+                  <StationsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/projects"
+              element={
+                <ProtectedRoute>
+                  <ProjectsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/presets"
+              element={
+                <ProtectedRoute>
+                  <PresetsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </BrowserRouter>
