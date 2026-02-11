@@ -7,6 +7,7 @@ import {
   updateStation,
   deleteStation,
   activateStation,
+  deactivateStation,
   Station,
   StationLink,
 } from '@/store/slices/stationsSlice';
@@ -95,6 +96,10 @@ export function StationsPage() {
     setConfirmOpen(true);
   };
 
+  const handleDeactivate = async (stationId: string) => {
+  await dispatch(deactivateStation({ stationId }));
+};
+
   const confirmActivate = async () => {
     if (!confirmStationId) return;
     setConfirmOpen(false);
@@ -144,8 +149,7 @@ export function StationsPage() {
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-4xl font-bold">Stations Management</h1>
+        <div className="flex items-center justify-end">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={handleCreate}>
@@ -259,6 +263,9 @@ export function StationsPage() {
               const anyReachable = station.stationLinks.some(
                 (l) => l.reachable !== false,
               );
+
+              const activeLink = station.stationLinks.find((l) => l.active);
+              const activeCounter = activeLink?.counter;
               return (
                 <Card
                   key={station.id}
@@ -289,6 +296,12 @@ export function StationsPage() {
                         ) : (
                           <Badge variant="outline">Inactive</Badge>
                         )}
+
+                        {activeCounter !== undefined && (
+                          <Badge variant="secondary" className="ml-1">
+                            Counter: {activeCounter}
+                          </Badge>
+                        )}
                       </div>
                       <div className="relative" data-menu-id={station.id}>
                         <div style={{ position: 'absolute', right: 8, top: 8 }}>
@@ -313,43 +326,68 @@ export function StationsPage() {
                             className="absolute right-2 top-8 mt-2 w-44 bg-card border rounded-md shadow-md z-40"
                           >
                             <div className="py-1">
-                              <button
-                                role="menuitem"
-                                className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60"
-                                onClick={() => {
-                                  setMenuOpenFor(null);
-                                  handleEdit(station);
-                                }}
-                              >
-                                <Edit className="h-4 w-4 text-muted-foreground" />
-                                <span>Edit</span>
-                              </button>
-                              <button
-                                role="menuitem"
-                                aria-disabled={isActive || !anyReachable}
-                                className={`flex items-center gap-2 w-full px-3 py-2 text-sm ${isActive || !anyReachable ? 'opacity-50 pointer-events-none' : 'hover:bg-accent/60'}`}
-                                onClick={() => {
-                                  setMenuOpenFor(null);
-                                  if (!isActive && anyReachable)
-                                    handleActivate(station.id);
-                                }}
-                              >
-                                <Power className="h-4 w-4 text-green-500" />
-                                <span>Activate</span>
-                              </button>
-                              <div className="border-t my-1" />
-                              <button
-                                role="menuitem"
-                                className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-destructive"
-                                onClick={() => {
-                                  setMenuOpenFor(null);
-                                  handleDelete(station.id);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                <span>Delete</span>
-                              </button>
-                            </div>
+  {/* Edit */}
+  <button
+    role="menuitem"
+    className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60"
+    onClick={() => {
+      setMenuOpenFor(null);
+      handleEdit(station);
+    }}
+  >
+    <Edit className="h-4 w-4 text-muted-foreground" />
+    <span>Edit</span>
+  </button>
+
+  {/* Activate */}
+  <button
+    role="menuitem"
+    aria-disabled={isActive || !anyReachable}
+    className={`flex items-center gap-2 w-full px-3 py-2 text-sm ${
+      isActive || !anyReachable
+        ? 'opacity-50 pointer-events-none'
+        : 'hover:bg-accent/60'
+    }`}
+    onClick={() => {
+      setMenuOpenFor(null);
+      if (!isActive && anyReachable)
+        handleActivate(station.id);
+    }}
+  >
+    <Power className="h-4 w-4 text-green-500" />
+    <span>Activate</span>
+  </button>
+
+  {/* Deactivate (only if active) */}
+  {isActive && (
+    <button
+      role="menuitem"
+      className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-yellow-600"
+      onClick={() => {
+        setMenuOpenFor(null);
+        handleDeactivate(station.id);
+      }}
+    >
+      <Power className="h-4 w-4 rotate-180" />
+      <span>Deactivate</span>
+    </button>
+  )}
+
+  <div className="border-t my-1" />
+
+  {/* Delete */}
+  <button
+    role="menuitem"
+    className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-destructive"
+    onClick={() => {
+      setMenuOpenFor(null);
+      handleDelete(station.id);
+    }}
+  >
+    <Trash2 className="h-4 w-4" />
+    <span>Delete</span>
+  </button>
+</div>
                           </div>
                         )}
                       </div>
@@ -376,7 +414,6 @@ export function StationsPage() {
             <DialogTitle>Are you sure?</DialogTitle>
             <DialogDescription>
               Activate this station? This will attempt to switch active links
-              via the backend.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

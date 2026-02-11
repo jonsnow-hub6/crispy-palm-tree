@@ -1,6 +1,5 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-
 // Helper HTTP wrappers (synchronous $http.send)
 function httpPostSetActive(link, active) {
   const url = `http://${link.host}:${link.port}/api/setActive`;
@@ -25,7 +24,9 @@ function httpGetActive(link) {
     if (res.statusCode >= 200 && res.statusCode < 300) {
       // Expect boolean in body (raw)
       let body = res.body;
-      try { body = JSON.parse(res.body); } catch (e) {}
+      try {
+        body = JSON.parse(res.body);
+      } catch (e) {}
       return { ok: true, value: Boolean(body) };
     }
     return { ok: false, error: `status ${res.statusCode}` };
@@ -40,7 +41,9 @@ function httpGetCounter(link) {
     const res = $http.send({ url: url, method: 'GET', timeout: 3000 });
     if (res.statusCode >= 200 && res.statusCode < 300) {
       let body = res.body;
-      try { body = JSON.parse(res.body); } catch (e) {}
+      try {
+        body = JSON.parse(res.body);
+      } catch (e) {}
       const num = Number(body);
       return { ok: true, value: Number.isFinite(num) ? num : null };
     }
@@ -66,18 +69,40 @@ function httpPostSetPreset(link, preset) {
   }
 }
 
-function httpGetPreset(link) {
+async function httpGetPreset(link) {
   const url = `http://${link.host}:${link.port}/api/getPreset`;
   try {
-    const res = $http.send({ url: url, method: 'GET', timeout: 3000 });
+    const res = $http.send({
+      url,
+      method: 'GET',
+      timeout: 3000,
+    });
     if (res.statusCode >= 200 && res.statusCode < 300) {
-      let body = res.body;
-      try { body = JSON.parse(res.body); } catch (e) {}
-      return { ok: true, value: body };
+      let body = res.json;
+      if (typeof body === 'string') {
+        try {
+          body = JSON.parse(body);
+        } catch (e) {
+          return {
+            ok: false,
+            error: 'Invalid JSON response',
+          };
+        }
+      }
+      return {
+        ok: true,
+        value: body,
+      };
     }
-    return { ok: false, error: `status ${res.statusCode}` };
+    return {
+      ok: false,
+      error: `status ${res.statusCode}`,
+    };
   } catch (err) {
-    return { ok: false, error: `error in http request to api: ${String(err)}` };
+    return {
+      ok: false,
+      error: `error in http request to api: ${String(err)}`,
+    };
   }
 }
 

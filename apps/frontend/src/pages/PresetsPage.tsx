@@ -1,26 +1,42 @@
 import { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store';
-import { 
-  fetchPresets, 
-  createPreset, 
-  updatePreset, 
+import {
+  fetchPresets,
+  createPreset,
+  updatePreset,
   deletePreset,
   importPresetFromJson,
-  Preset 
+  Preset,
 } from '@/store/slices/presetsSlice';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 // removed unused table import; using card layout instead
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Plus, Edit, Trash2, Upload, MoreVertical } from 'lucide-react';
 
 export function PresetsPage() {
   const dispatch = useDispatch<AppDispatch>();
-  const { presets, loading, error } = useSelector((state: RootState) => state.presets);
+  const { presets, loading, error } = useSelector(
+    (state: RootState) => state.presets,
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [editingPreset, setEditingPreset] = useState<Preset | null>(null);
@@ -75,7 +91,9 @@ export function PresetsPage() {
     setSubmitError(null);
     try {
       if (editingPreset) {
-        await dispatch(updatePreset({ id: editingPreset.id, data: formData })).unwrap();
+        await dispatch(
+          updatePreset({ id: editingPreset.id, data: formData }),
+        ).unwrap();
       } else {
         await dispatch(createPreset(formData)).unwrap();
       }
@@ -111,11 +129,15 @@ export function PresetsPage() {
 
       // Validate new format
       if (!jsonData.presetName || !jsonData.commands) {
-        setImportError('Invalid JSON format. Expected { presetName: string, commands: [...] }');
+        setImportError(
+          'Invalid JSON format. Expected { presetName: string, commands: [...] }',
+        );
         return;
       }
       if (!Array.isArray(jsonData.commands)) {
-        setImportError('Commands must be an array of objects with id and payload');
+        setImportError(
+          'Commands must be an array of objects with id and payload',
+        );
         return;
       }
       for (const cmd of jsonData.commands) {
@@ -125,11 +147,13 @@ export function PresetsPage() {
         }
       }
 
-      await dispatch(importPresetFromJson({
-        presetName: jsonData.presetName,
-        commands: jsonData.commands,
-        color: importColor,
-      })).unwrap();
+      await dispatch(
+        importPresetFromJson({
+          presetName: jsonData.presetName,
+          commands: jsonData.commands,
+          color: importColor,
+        }),
+      ).unwrap();
 
       await dispatch(fetchPresets());
       setIsImportDialogOpen(false);
@@ -147,12 +171,23 @@ export function PresetsPage() {
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-4xl font-bold">Presets Management</h1>
+        <div className="flex items-center justify-end">
           <div className="flex gap-2">
-            <Dialog open={isImportDialogOpen} onOpenChange={(v) => { setIsImportDialogOpen(v); if (!v) { setSelectedFile(null); setSelectedFileName(null); setImportError(''); setImportColor('#3b82f6'); if (fileInputRef.current) fileInputRef.current.value = ''; } }}>
+            <Dialog
+              open={isImportDialogOpen}
+              onOpenChange={(v) => {
+                setIsImportDialogOpen(v);
+                if (!v) {
+                  setSelectedFile(null);
+                  setSelectedFileName(null);
+                  setImportError('');
+                  setImportColor('#3b82f6');
+                  if (fileInputRef.current) fileInputRef.current.value = '';
+                }
+              }}
+            >
               <DialogTrigger asChild>
-                <Button variant="outline">
+                <Button>
                   <Upload className="h-4 w-4 mr-2" />
                   Import JSON
                 </Button>
@@ -171,15 +206,33 @@ export function PresetsPage() {
                       role="button"
                       tabIndex={0}
                       onClick={() => fileInputRef.current?.click()}
-                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ')
+                          fileInputRef.current?.click();
+                      }}
                       className="border rounded-md p-4 cursor-pointer hover:bg-accent/40 flex items-center justify-between"
                     >
-                      <div className="text-sm text-muted-foreground">{selectedFileName || 'Click to choose a .json file'}</div>
-                      <div className="text-xs text-muted-foreground">{selectedFileName ? `${(selectedFile?.size ?? 0) / 1024 | 0} KB` : 'No file'}</div>
-                      <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileUpload} className="hidden" />
+                      <div className="text-sm text-muted-foreground">
+                        {selectedFileName || 'Click to choose a .json file'}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {selectedFileName
+                          ? `${((selectedFile?.size ?? 0) / 1024) | 0} KB`
+                          : 'No file'}
+                      </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".json"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Format: {"{ presetName: string, commands: [{ id: string, payload: string }] }"}
+                      Format:{' '}
+                      {
+                        '{ presetName: string, commands: [{ id: string, payload: string }] }'
+                      }
                     </p>
                   </div>
                   <div className="space-y-2">
@@ -207,10 +260,20 @@ export function PresetsPage() {
                   )}
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => { setIsImportDialogOpen(false); }}>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsImportDialogOpen(false);
+                    }}
+                  >
                     Cancel
                   </Button>
-                  <Button onClick={handleImportConfirm} disabled={!selectedFile}>Import</Button>
+                  <Button
+                    onClick={handleImportConfirm}
+                    disabled={!selectedFile}
+                  >
+                    Import
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -219,9 +282,13 @@ export function PresetsPage() {
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>{editingPreset ? 'Edit Preset' : 'Preset'}</DialogTitle>
+                  <DialogTitle>
+                    {editingPreset ? 'Edit Preset' : 'Preset'}
+                  </DialogTitle>
                   <DialogDescription>
-                    {editingPreset ? 'Update preset details' : 'No creation via UI. Use Import JSON.'}
+                    {editingPreset
+                      ? 'Update preset details'
+                      : 'No creation via UI. Use Import JSON.'}
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -235,7 +302,9 @@ export function PresetsPage() {
                     <Input
                       id="name"
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
                       required
                     />
                   </div>
@@ -246,23 +315,31 @@ export function PresetsPage() {
                         id="color"
                         type="color"
                         value={formData.color}
-                        onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, color: e.target.value })
+                        }
                         className="w-20 h-10"
                       />
                       <Input
                         value={formData.color}
-                        onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, color: e.target.value })
+                        }
                         placeholder="#3b82f6"
                         pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
                       />
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => {
-                      setIsDialogOpen(false);
-                      setSubmitError(null);
-                      setFormData({ name: '', color: '#3b82f6' });
-                    }}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setIsDialogOpen(false);
+                        setSubmitError(null);
+                        setFormData({ name: '', color: '#3b82f6' });
+                      }}
+                    >
                       Cancel
                     </Button>
                     <Button type="submit" disabled={loading || !editingPreset}>
@@ -275,7 +352,6 @@ export function PresetsPage() {
           </div>
         </div>
 
-
         {loading ? (
           <p>Loading presets...</p>
         ) : presets.length === 0 ? (
@@ -287,26 +363,97 @@ export function PresetsPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {presets.map((preset) => (
-              <Card key={preset.id} style={{ borderLeft: `4px solid ${preset.color}` }}>
+              <Card
+                key={preset.id}
+                style={{ borderLeft: `4px solid ${preset.color}` }}
+              >
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span className="font-semibold text-lg">{preset.name}</span>
-                    <div className="flex items-center gap-2">
-                      <div className="h-6 w-6 rounded-full shadow-md" style={{ backgroundColor: preset.color }} />
-                    </div>
-                  </CardTitle>
-                  <CardDescription className="text-sm text-muted-foreground">
-                  </CardDescription>
-                </CardHeader>
+  <div className="flex items-center justify-between">
+    {/* Left: Name */}
+    <h3 className="font-semibold text-lg truncate">
+      {preset.name}
+    </h3>
+
+    {/* Right: Color + Menu */}
+    <div className="flex items-center gap-2">
+      {/* Color */}
+      <div
+        className="h-5 w-5 rounded-full shadow-md"
+        style={{ backgroundColor: preset.color }}
+      />
+
+      {/* Menu */}
+      <div className="relative" data-menu-id={preset.id}>
+        <button
+          aria-haspopup="menu"
+          aria-expanded={menuOpenFor === preset.id}
+          onClick={() =>
+            setMenuOpenFor(menuOpenFor === preset.id ? null : preset.id)
+          }
+          className="p-1 rounded-md hover:bg-accent"
+        >
+          <MoreVertical className="h-5 w-5" />
+        </button>
+
+        {menuOpenFor === preset.id && (
+          <div
+            role="menu"
+            className="absolute right-0 top-7 w-40 bg-card border rounded-md shadow-md z-40"
+          >
+            <div className="py-1">
+              <button
+                role="menuitem"
+                className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60"
+                onClick={() => {
+                  setMenuOpenFor(null);
+                  handleEdit(preset);
+                }}
+              >
+                <Edit className="h-4 w-4" />
+                Edit
+              </button>
+
+              <div className="border-t my-1" />
+
+              <button
+                role="menuitem"
+                className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-destructive"
+                onClick={() => {
+                  setMenuOpenFor(null);
+                  handleDelete(preset.id);
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</CardHeader>
+
                 <CardContent>
                   <div className="flex justify-between items-start gap-4">
                     <div className="text-sm text-muted-foreground w-full">
-                      {preset.expand?.actions && preset.expand.actions.length > 0 ? (
+                      {preset.expand?.actions &&
+                      preset.expand.actions.length > 0 ? (
                         <ul className="space-y-2">
                           {preset.expand.actions.slice(0, 4).map((a) => (
-                            <li key={a.id} className="flex items-start gap-3 text-sm">
-                              <Badge variant="secondary" className="font-mono text-[11px] px-2 py-0.5">{a.project}</Badge>
-                              <span className="text-sm text-foreground truncate">{a.payload}</span>
+                            <li
+                              key={a.id}
+                              className="flex items-start gap-3 text-sm"
+                            >
+                              <Badge
+                                variant="secondary"
+                                className="font-mono text-[11px] px-2 py-0.5"
+                              >
+                                {a.project}
+                              </Badge>
+                              <span className="text-sm text-foreground truncate">
+                                {a.payload}
+                              </span>
                             </li>
                           ))}
                         </ul>
@@ -314,34 +461,6 @@ export function PresetsPage() {
                         <span>No actions</span>
                       )}
                     </div>
-                            <div className="relative" data-menu-id={preset.id}>
-                              <div style={{ position: 'absolute', right: 8, top: 8 }}>
-                                <button
-                                  aria-haspopup="menu"
-                                  aria-expanded={menuOpenFor === preset.id}
-                                  onClick={() => setMenuOpenFor(menuOpenFor === preset.id ? null : preset.id)}
-                                  className="p-1 rounded-md hover:bg-accent"
-                                >
-                                  <MoreVertical className="h-5 w-5" />
-                                </button>
-                              </div>
-
-                              {menuOpenFor === preset.id && (
-                                <div role="menu" aria-label="Preset actions" className="absolute right-2 top-8 mt-2 w-40 bg-card border rounded-md shadow-md z-40">
-                                  <div className="py-1">
-                                    <button role="menuitem" className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60" onClick={() => { setMenuOpenFor(null); handleEdit(preset); }}>
-                                      <Edit className="h-4 w-4 text-muted-foreground" />
-                                      <span>Edit</span>
-                                    </button>
-                                    <div className="border-t my-1" />
-                                    <button role="menuitem" className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-destructive" onClick={() => { setMenuOpenFor(null); handleDelete(preset.id); }}>
-                                      <Trash2 className="h-4 w-4" />
-                                      <span>Delete</span>
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
                   </div>
                 </CardContent>
               </Card>

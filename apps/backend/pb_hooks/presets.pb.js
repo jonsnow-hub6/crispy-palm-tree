@@ -1,6 +1,9 @@
 /// <reference path="../pb_data/types.d.ts" />
 
 routerAdd('POST', '/api/presets/{id}/set', async (c) => {
+  let notifications = $app.findCollectionByNameOrId('notifications');
+  let notification = new Record(notifications);
+
   try {
     const { httpPostSetPreset } = require(`${__hooks}/api.utils`);
     const id = c.request.pathValue('id');
@@ -63,8 +66,14 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
     // ---- apply preset to all links (no rollback) ----
     const results = await Promise.all(
       links.map(async ({ stationId, stationName, link }) => {
+        let errorNotification = new Record(notifications);
         try {
           const res = httpPostSetPreset(link, presetPayload);
+          if (!res.ok) {
+            errorNotification.set("level", "error");
+            errorNotification.set("content", `Failed to send preset to station "${stationName}" at ${link.host}:${link.port} - ${res.error}`);
+            $app.save(errorNotification);
+          }
           return {
             stationId,
             stationName,
@@ -74,6 +83,10 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
             error: res.ok ? null : res.error,
           };
         } catch (err) {
+          errorNotification.set("level", "error");
+          errorNotification.set("content", `Failed to send preset to station "${stationName}" at ${link.host}:${link.port} - ${String(err)}`);
+          $app.save(errorNotification);
+
           return {
             stationId,
             stationName,
@@ -86,6 +99,11 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
       })
     );
 
+    notification.set("level", "info");
+    notification.set("type", "preset");
+    notification.set("content", `Preset "${preset.get('name')}" activated and sent to ${results.length} station links`);
+    $app.save(notification);
+
     return c.json(200, {
       success: true,
       preset: presetPayload,
@@ -93,9 +111,238 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
     });
 
   } catch (err) {
-    console.error('Preset distribution error:', err?.stack || err);
+    notification.set("level", "error");
+    notification.set("content", `Error during preset activation - ${String(err)}`);
+    $app.save(notification);
+    
     return c.json(500, { error: String(err) });
   }
 });
+
+
+routerAdd('POST', '/api/presets/{id}/set-link', async (c) => {
+
+  const notifications = $app.findCollectionByNameOrId('notifications');
+  let notification = new Record(notifications);
+
+  console.error('Received request to set preset for single link');
+
+  try {
+    const { httpPostSetPreset } = require(`${__hooks}/api.utils`);
+
+    const id = c.request.pathValue('id');
+    const body = c.requestInfo().body;
+
+    const { host, port } = body || {};
+
+    if (!host || !port) {
+      return c.json(400, { error: 'Missing host or port' });
+    }
+
+    // Find preset
+    const preset = $app.findRecordById('presets', id);
+
+    if (!preset) {
+      return c.json(404, { error: 'Preset not found' });
+    }
+
+    // Build payload
+    const actionIds = preset.get('actions') || [];
+    const commands = [];
+
+    for (const actionId of actionIds) {
+
+      const action = $app.findRecordById('actions', actionId);
+      if (!action) continue;
+
+      const projectId = action.get('project');
+      if (!projectId) continue;
+
+      commands.push({
+        id: projectId,
+        payload: action.get('payload'),
+      });
+    }
+
+    const presetPayload = {
+      presetName: preset.get('name'),
+      commands,
+    };
+
+    // Send to device
+    const res = httpPostSetPreset({ host, port }, presetPayload);
+
+    // =============================
+    // Update stationLinks in DB
+    // =============================
+    const stations = $app.findRecordsByFilter('stations', '');
+
+    for (const station of stations) {
+
+      let links = JSON.parse(station.get('stationLinks') || '[]');
+
+      let changed = false;
+
+      links = links.map(l => {
+
+        if (l.host === host && l.port === port) {
+
+          changed = true;
+
+          return {
+            ...l,
+            currentPreset: res.ok
+              ? preset.get('name')
+              : 'unknown',
+            reachable: res.ok
+          };
+        }
+
+        return l;
+      });
+
+      if (changed) {
+        station.set('stationLinks', JSON.stringify(links));
+        $app.save(station);
+      }
+    }
+
+    // =============================
+    // Notifications
+    // =============================
+    if (!res.ok) {
+
+      notification.set("level", "error");
+      notification.set("type", "preset");
+      notification.set(
+        "content",
+        `Failed to send preset "${preset.get('name')}" to ${host}:${port} - ${res.error}`
+      );
+
+    } else {
+
+      notification.set("level", "info");
+      notification.set("type", "preset");
+      notification.set(
+        "content",
+        `Preset "${preset.get('name')}" sent to ${host}:${port}`
+      );
+    }
+
+    $app.save(notification);
+
+    return c.json(200, {
+      success: res.ok,
+      target: { host, port },
+      preset: presetPayload,
+      error: res.ok ? null : res.error,
+    });
+
+  } catch (err) {
+
+    notification.set("level", "error");
+    notification.set("type", "preset");
+    notification.set(
+      "content",
+      `Error sending preset to single link - ${String(err)}`
+    );
+
+    $app.save(notification);
+
+    console.error(err?.stack || err);
+
+    return c.json(500, { error: String(err) });
+  }
+});
+
+cronAdd('checkPresets', '*/1 * * * *', async () => {
+
+  const { httpGetPreset } = require(`${__hooks}/api.utils`);
+
+  const activePreset = $app.findRecordsByFilter('presets', 'active = true')[0];
+  if (!activePreset) return;
+
+  const stations = $app.findRecordsByFilter('stations', '');
+
+  for (const station of stations) {
+
+    const stationLinks = JSON.parse(station.get('stationLinks') || '[]');
+
+    // Deep copy (safer than [...])
+    const updatedLinks = JSON.parse(JSON.stringify(stationLinks));
+
+    for (const link of stationLinks) {
+
+      const res = await httpGetPreset(link);
+
+      // ============================
+      // ✅ SUCCESS
+      // ============================
+      if (res.ok && res.value) {
+
+        // Always update link status
+        updatedLinks.forEach(l => {
+          if (l.host === link.host && l.port === link.port) {
+            l.currentPreset = res.value.presetName || 'unknown';
+            l.reachable = true;
+          }
+        });
+
+        // Check mismatch
+        if (res.value.presetName !== activePreset.get('name')) {
+
+          let notification = new Record(
+            $app.findCollectionByNameOrId('notifications')
+          );
+
+          notification.set("level", "warning");
+          notification.set("type", "preset");
+          notification.set(
+            "content",
+            `Preset mismatch detected at station "${station.get('name')}" (${link.host}:${link.port}) - expected "${activePreset.get('name')}", got "${res.value.presetName || 'unknown'}"`
+          );
+
+          $app.save(notification);
+        }
+
+      }
+
+      // ============================
+      // ❌ ERROR
+      // ============================
+      else {
+
+        let notification = new Record(
+          $app.findCollectionByNameOrId('notifications')
+        );
+
+        notification.set("level", "error");
+        notification.set("type", "connection");
+        notification.set(
+          "content",
+          `Failed to get preset from station "${station.get('name')}" (${link.host}:${link.port}) - ${res.error}`
+        );
+
+        $app.save(notification);
+
+        // Mark link unreachable
+        updatedLinks.forEach(l => {
+          if (l.host === link.host && l.port === link.port) {
+            l.currentPreset = 'unknown';
+            l.reachable = false;
+          }
+        });
+      }
+    }
+
+    // ============================
+    // 💾 SAVE UPDATED LINKS
+    // ============================
+    station.set('stationLinks', JSON.stringify(updatedLinks));
+    $app.save(station);
+  }
+
+});
+
 
 console.log('presets.pb.js: /api/presets/{id}/set registered');

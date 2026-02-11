@@ -30,22 +30,19 @@ const initialState: StationsState = {
 };
 
 // Async thunks
-export const fetchStations = createAsyncThunk(
-  'stations/fetchAll',
-  async () => {
-    const records = await pb.collection('stations').getFullList<Station>({
-      sort: '-created',
-    });
-    return records;
-  }
-);
+export const fetchStations = createAsyncThunk('stations/fetchAll', async () => {
+  const records = await pb.collection('stations').getFullList<Station>({
+    sort: '-created',
+  });
+  return records;
+});
 
 export const createStation = createAsyncThunk(
   'stations/create',
   async (data: { name: string; stationLinks: StationLink[] }) => {
     const record = await pb.collection('stations').create<Station>(data);
     return record;
-  }
+  },
 );
 
 export const updateStation = createAsyncThunk(
@@ -53,7 +50,7 @@ export const updateStation = createAsyncThunk(
   async ({ id, data }: { id: string; data: Partial<Station> }) => {
     const record = await pb.collection('stations').update<Station>(id, data);
     return record;
-  }
+  },
 );
 
 export const deleteStation = createAsyncThunk(
@@ -61,16 +58,16 @@ export const deleteStation = createAsyncThunk(
   async (id: string) => {
     await pb.collection('stations').delete(id);
     return id;
-  }
+  },
 );
 
 export const activateStation = createAsyncThunk(
   'stations/activate',
-  async ({ stationId }: { stationId: string; }, thunkAPI) => {
+  async ({ stationId }: { stationId: string }, thunkAPI) => {
     // Call backend activation endpoint which is the source-of-truth
     try {
       await pb.send(`/api/stations/${stationId}/activate`, {
-        method: 'POST'
+        method: 'POST',
       });
     } catch (err: any) {
       console.error('Failed to activate station:', err);
@@ -83,7 +80,29 @@ export const activateStation = createAsyncThunk(
     // Return updated station record to satisfy reducers (fetchStations will update full list)
     const updated = await pb.collection('stations').getOne<Station>(stationId);
     return updated;
-  }
+  },
+);
+
+export const deactivateStation = createAsyncThunk(
+  'stations/deactivate',
+  async ({ stationId }: { stationId: string }, thunkAPI) => {
+    // Call backend activation endpoint which is the source-of-truth
+    try {
+      await pb.send(`/api/stations/${stationId}/deactivate`, {
+        method: 'POST',
+      });
+    } catch (err: any) {
+      console.error('Failed to deactivate station:', err);
+      return thunkAPI.rejectWithValue({ error: err?.message || String(err) });
+    }
+
+    // Refresh stations from the server to reflect backend-driven state
+    await thunkAPI.dispatch(fetchStations());
+
+    // Return updated station record to satisfy reducers (fetchStations will update full list)
+    const updated = await pb.collection('stations').getOne<Station>(stationId);
+    return updated;
+  },
 );
 
 const stationsSlice = createSlice({
@@ -94,21 +113,34 @@ const stationsSlice = createSlice({
       state.activeStationId = action.payload;
     },
     upsertStation: (state, action: PayloadAction<Station>) => {
-      const idx = state.stations.findIndex(s => s.id === action.payload.id);
+      const idx = state.stations.findIndex((s) => s.id === action.payload.id);
       if (idx !== -1) state.stations[idx] = action.payload;
       else state.stations.push(action.payload);
       // recompute active station
-      const active = state.stations.find(s => s.stationLinks.some(l => l.active));
+      const active = state.stations.find((s) =>
+        s.stationLinks.some((l) => l.active),
+      );
       state.activeStationId = active?.id || null;
     },
     removeStation: (state, action: PayloadAction<string>) => {
-      state.stations = state.stations.filter(s => s.id !== action.payload);
-      if (state.activeStationId === action.payload) state.activeStationId = null;
+      state.stations = state.stations.filter((s) => s.id !== action.payload);
+      if (state.activeStationId === action.payload)
+        state.activeStationId = null;
     },
-    updateStationLinkCounter: (state, action: PayloadAction<{ stationId: string; linkIndex: number; counter: number }>) => {
-      const station = state.stations.find(s => s.id === action.payload.stationId);
+    updateStationLinkCounter: (
+      state,
+      action: PayloadAction<{
+        stationId: string;
+        linkIndex: number;
+        counter: number;
+      }>,
+    ) => {
+      const station = state.stations.find(
+        (s) => s.id === action.payload.stationId,
+      );
       if (station) {
-        station.stationLinks[action.payload.linkIndex].counter = action.payload.counter;
+        station.stationLinks[action.payload.linkIndex].counter =
+          action.payload.counter;
       }
     },
   },
@@ -122,8 +154,8 @@ const stationsSlice = createSlice({
         state.loading = false;
         state.stations = action.payload;
         // Find active station
-        const activeStation = action.payload.find(s => 
-          s.stationLinks.some(link => link.active)
+        const activeStation = action.payload.find((s) =>
+          s.stationLinks.some((link) => link.active),
         );
         state.activeStationId = activeStation?.id || null;
       })
@@ -132,7 +164,7 @@ const stationsSlice = createSlice({
         state.error = action.error.message || 'Failed to fetch stations';
       })
       .addCase(createStation.fulfilled, (state, action) => {
-        const idx = state.stations.findIndex(s => s.id === action.payload.id);
+        const idx = state.stations.findIndex((s) => s.id === action.payload.id);
         if (idx !== -1) {
           state.stations[idx] = action.payload;
         } else {
@@ -140,12 +172,16 @@ const stationsSlice = createSlice({
         }
       })
       .addCase(updateStation.fulfilled, (state, action) => {
-        const index = state.stations.findIndex(s => s.id === action.payload.id);
+        const index = state.stations.findIndex(
+          (s) => s.id === action.payload.id,
+        );
         if (index !== -1) {
           state.stations[index] = action.payload;
         }
         // Update active station if needed
-        const hasActiveLink = action.payload.stationLinks.some(link => link.active);
+        const hasActiveLink = action.payload.stationLinks.some(
+          (link) => link.active,
+        );
         if (hasActiveLink) {
           state.activeStationId = action.payload.id;
         } else if (state.activeStationId === action.payload.id) {
@@ -153,31 +189,51 @@ const stationsSlice = createSlice({
         }
       })
       .addCase(deleteStation.fulfilled, (state, action) => {
-        state.stations = state.stations.filter(s => s.id !== action.payload);
+        state.stations = state.stations.filter((s) => s.id !== action.payload);
         if (state.activeStationId === action.payload) {
           state.activeStationId = null;
         }
       })
       .addCase(activateStation.fulfilled, (state, action) => {
-        const index = state.stations.findIndex(s => s.id === action.payload.id);
+        const index = state.stations.findIndex(
+          (s) => s.id === action.payload.id,
+        );
         if (index !== -1) {
           state.stations[index] = action.payload;
         }
         // Update all stations to reflect deactivation for others
-        state.stations = state.stations.map(s => {
+        state.stations = state.stations.map((s) => {
           if (s.id === action.payload.id) {
             return action.payload;
           }
           return {
             ...s,
-            stationLinks: s.stationLinks.map(link => ({ ...link, active: false })),
+            stationLinks: s.stationLinks.map((link) => ({
+              ...link,
+              active: false,
+            })),
           } as Station;
         });
         state.activeStationId = action.payload.id;
+      })
+      .addCase(deactivateStation.fulfilled, (state, action) => {
+        const station = state.stations.find(
+          (s) => s.id === action.payload.stationId,
+        );
+
+        if (station) {
+          station.stationLinks.forEach((l) => {
+            l.active = false;
+          });
+        }
       });
   },
 });
 
-export const { setActiveStation, updateStationLinkCounter, upsertStation, removeStation } = stationsSlice.actions;
+export const {
+  setActiveStation,
+  updateStationLinkCounter,
+  upsertStation,
+  removeStation,
+} = stationsSlice.actions;
 export default stationsSlice.reducer;
-

@@ -3,7 +3,16 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '@/store/slices/authSlice';
 import { RootState } from '@/store';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, Radio, FolderOpen, Palette, LogOut, Home, Moon, Sun } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Radio,
+  FolderOpen,
+  Palette,
+  LogOut,
+  Home,
+  Moon,
+  Sun,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -11,7 +20,13 @@ export function NavBar() {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const isAuthenticated = useSelector(
+    (state: RootState) => state.auth.isAuthenticated,
+  );
+
+  const { presets, activePresetId } = useSelector(
+    (state: RootState) => state.presets,
+  );
   const { theme, toggleTheme } = useTheme();
 
   const handleLogout = () => {
@@ -26,7 +41,10 @@ export function NavBar() {
     { path: '/presets', label: 'Presets', icon: Palette, public: false },
   ];
 
-  const visibleItems = navItems.filter(item => item.public || isAuthenticated);
+  const visibleItems = navItems.filter(
+    (item) => item.public || isAuthenticated,
+  );
+  const activePreset = presets.find((p) => p.id === activePresetId);
 
   return (
     <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -47,7 +65,7 @@ export function NavBar() {
                       variant={isActive ? 'default' : 'ghost'}
                       className={cn(
                         'flex items-center gap-2',
-                        isActive && 'bg-primary text-primary-foreground'
+                        isActive && 'bg-primary text-primary-foreground',
                       )}
                     >
                       <Icon className="h-4 w-4" />
@@ -58,6 +76,19 @@ export function NavBar() {
               })}
             </div>
           </div>
+
+          {activePreset && (
+            <div className="flex items-center gap-2 px-3 py-1 rounded-md border bg-muted/40">
+              <div
+                className="h-3 w-3 rounded-full"
+                style={{ backgroundColor: activePreset.color }}
+              />
+              <span className="text-sm font-medium text-muted-foreground">
+                Preset:
+              </span>
+              <span className="text-sm font-semibold">{activePreset.name}</span>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"

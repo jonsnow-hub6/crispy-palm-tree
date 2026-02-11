@@ -22,7 +22,9 @@ async function probeCounter(link) {
     if (!res.ok) return { ok: false };
 
     let text = await res.text();
-    try { text = JSON.parse(text); } catch {}
+    try {
+      text = JSON.parse(text);
+    } catch {}
 
     const num = Number(text);
     if (!Number.isFinite(num)) return { ok: false };
@@ -33,11 +35,40 @@ async function probeCounter(link) {
   }
 }
 
-function mergeLinkFields(existing, probe) {
+async function probeActive(link) {
+  const url = `http://${link.host}:${link.port}/api/getActive`;
+
+  try {
+    const res = await timeoutFetch(url, { method: 'GET' }, 3000);
+    if (!res.ok) return { ok: false };
+
+    let text = await res.text();
+    try {
+      text = JSON.parse(text);
+    } catch {}
+
+    // Accept: true/false, "true"/"false", 1/0
+    const active =
+      text === true || text === 'true' || text === 1 || text === '1';
+
+    return { ok: true, active };
+  } catch {
+    return { ok: false };
+  }
+}
+
+function mergeLinkFields(existing, counterProbe, activeProbe) {
   return {
     ...existing,
-    reachable: !!probe.ok,
-    counter: probe.ok ? probe.counter : existing.counter ?? null,
+
+    // Reachable if any probe succeeded
+    reachable: !!(counterProbe.ok || activeProbe.ok),
+
+    counter: counterProbe.ok
+      ? counterProbe.counter
+      : (existing.counter ?? null),
+
+    active: activeProbe.ok ? activeProbe.active : (existing.active ?? false),
   };
 }
 
@@ -48,12 +79,14 @@ async function runOnce() {
   let counterDecreased = false;
 
   // identify active station
-  const activeStation = stations.find(st =>
+  const activeStation = stations.find((st) =>
     (Array.isArray(st.stationLinks)
       ? st.stationLinks
       : JSON.parse(st.stationLinks || '[]')
-    ).some(l => l.active === true)
+    ).some((l) => l.active === true),
   );
+
+  let isActive = false;
 
   for (const st of stations) {
     let links = [];
@@ -68,16 +101,59 @@ async function runOnce() {
       }
     }
 
-    const probes = await Promise.all(links.map(probeCounter));
+    const counterProbes = await Promise.all(links.map(probeCounter));
+
+    const activeProbes = await Promise.all(links.map(probeActive));
 
     const updatedLinks = links.map((link, i) =>
-      mergeLinkFields(link, probes[i])
+      mergeLinkFields(link, counterProbes[i], activeProbes[i]),
     );
+
+    // ---- multiple active links → CRITICAL ----
+    const activeLinks = updatedLinks.filter((l) => l.active === true);
+
+    if (activeLinks.length > 1) {
+      await createNotification({
+        level: 'critical',
+        type: 'connection',
+        content: `Station ${st.name} has multiple active links (${activeLinks.length})`,
+      });
+    }
+
+    if (activeLinks.length > 0 && isActive) {
+      await createNotification({
+        level: 'critical',
+        type: 'connection',
+        content: `Station ${st.name} has active link while another station is active`,
+      });
+    }
+
+    isActive = activeLinks.length > 0 || isActive;
 
     // ---- counter decrease (global) ----
     for (let i = 0; i < links.length; i++) {
       const old = links[i];
       const updated = updatedLinks[i];
+
+      if (old?.active === true && updated?.active === false) {
+        await createNotification({
+          level: 'error',
+          type: 'connection',
+          content: `Link ${old.host}:${old.port} became inactive`,
+        });
+      }
+
+      if (activeStation && st.id === activeStation.id) {
+        const anyActive = updatedLinks.some((l) => l.active === true);
+
+        if (!anyActive) {
+          await createNotification({
+            level: 'critical',
+            type: 'connection',
+            content: `Active station ${st.name} has no active links`,
+          });
+        }
+      }
 
       if (
         typeof old?.counter === 'number' &&
@@ -92,7 +168,7 @@ async function runOnce() {
 
     // ---- active station unreachable → ERROR ----
     if (activeStation && st.id === activeStation.id) {
-      const anyReachable = updatedLinks.some(l => l.reachable);
+      const anyReachable = updatedLinks.some((l) => l.reachable);
       if (!anyReachable) {
         await createNotification({
           level: 'critical',
@@ -126,6 +202,14 @@ async function runOnce() {
       content: `Global counter mismatch detected: ${uniqueCounters.join(', ')}`,
     });
   }
+
+  if (!isActive) {
+    await createNotification({
+      level: 'critical',
+      type: 'connection',
+      content: `No active stations detected`,
+    });
+  }
 }
 
 async function start() {
@@ -134,6 +218,6 @@ async function start() {
   setInterval(runOnce, INTERVAL_MS);
 }
 
-start().catch(err => {
+start().catch((err) => {
   console.error('Monitor crash:', err);
 });

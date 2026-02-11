@@ -1,50 +1,180 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import {
+  X,
+  Info,
+  AlertTriangle,
+  XCircle,
+  AlertOctagon,
+} from 'lucide-react';
 
-export function Notifications({ toasts, onClose }: { toasts: any[]; onClose: (id: string) => void }) {
-  const fatal = toasts.find(t => t.level === 'fatal');
+const AUTO_CLOSE = 6000;
+
+const levelStyles: Record<
+  string,
+  {
+    border: string;
+    bg: string;
+    text: string;
+    badge: 'default' | 'secondary' | 'destructive';
+    icon: React.ElementType;
+    banner?: string;
+    glow?: string;
+  }
+> = {
+  info: {
+    border: 'border-primary/20',
+    bg: 'bg-primary/5',
+    text: 'text-primary',
+    badge: 'default',
+    icon: Info,
+  },
+
+  warning: {
+    border: 'border-yellow-400/20',
+    bg: 'bg-yellow-400/5',
+    text: 'text-yellow-600 dark:text-yellow-400',
+    badge: 'secondary',
+    icon: AlertTriangle,
+  },
+
+  error: {
+    border: 'border-destructive/40',
+    bg: 'bg-destructive/15',
+    text: 'text-destructive',
+    badge: 'destructive',
+    icon: XCircle,
+  },
+
+  critical: {
+    border: 'border-red-900/60',
+    bg: 'bg-destructive',
+    text: 'text-destructive-foreground',
+    badge: 'default',
+    icon: AlertOctagon,
+    banner: 'shadow-xl border-b-4 border-red-900 animate-softPulse',
+    glow: 'shadow-[0_0_20px_rgba(220,38,38,0.35)]',
+  },
+};
+
+function ToastItem({
+  toast,
+  onClose,
+}: {
+  toast: any;
+  onClose: (id: string) => void;
+}) {
+  const [leaving, setLeaving] = useState(false);
+  const [paused, setPaused] = useState(false);
+
+  const style = levelStyles[toast.level] || levelStyles.info;
+  const Icon = style.icon;
+
+  /* Auto close */
+  useEffect(() => {
+    if (paused) return;
+
+    const timer = setTimeout(() => {
+      handleClose();
+    }, AUTO_CLOSE);
+
+    return () => clearTimeout(timer);
+  }, [paused]);
+
+  const handleClose = () => {
+    setLeaving(true);
+
+    setTimeout(() => {
+      onClose(toast.id);
+    }, 300);
+  };
+
   return (
-    <>
-      {fatal && (
-        <div className="fixed left-0 right-0 top-0 z-60">
-          <div className="mx-auto max-w-7xl px-4 py-3 bg-destructive text-destructive-foreground flex items-center justify-between shadow-md">
-            <div className="flex items-center gap-3">
-              <Badge variant="destructive">CRITICAL</Badge>
-              <div className="font-medium">{fatal.type} — {fatal.content}</div>
-            </div>
-            <div>
-              <Button variant="ghost" size="icon" onClick={() => onClose(fatal.id)} aria-label="Dismiss critical">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
+    <div
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      className={`
+        relative overflow-hidden
+        w-full p-4 rounded-lg border shadow-md bg-card
+        ${style.border} ${style.bg}
+        transition-all
+        ${leaving ? 'animate-toastOut' : 'animate-toastIn'}
+        hover:shadow-lg
+        ${style.banner || ''}
+        ${style.glow || ''}
+      `}
+    >
+      {/* Progress Bar */}
+      {!paused && !leaving && (
+        <div
+          className="absolute bottom-0 left-0 h-[3px] bg-primary/60 animate-toastProgress"
+          style={{ animationDuration: `${AUTO_CLOSE}ms` }}
+        />
       )}
 
-      <div className="fixed right-4 top-4 z-50 space-y-3">
-        {toasts.filter(t => t.level !== 'fatal').map((t) => (
-          <div key={t.id} className="max-w-sm w-full p-3 rounded-md shadow-md border bg-card">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <Badge variant={t.level === 'error' ? 'destructive' : t.level === 'warning' ? 'secondary' : 'default'}>{t.level}</Badge>
-                  <div className="text-sm font-medium">{t.type}</div>
-                </div>
-                <div className="text-sm text-muted-foreground">{t.content}</div>
-                {t.stationName && <div className="text-xs text-muted-foreground mt-2">Station: <span className="font-medium">{t.stationName}</span></div>}
-              </div>
-              <div>
-                <Button variant="ghost" size="icon" onClick={() => onClose(t.id)} aria-label="Close notification">
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+      <div className="flex items-start gap-3">
+        {/* Icon */}
+        <div className={`mt-0.5 ${style.text}`}>
+          <Icon className="h-5 w-5" />
+        </div>
+
+        {/* Content */}
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <Badge variant={style.badge}>
+              {toast.level}
+            </Badge>
+
+            <div className="text-sm font-semibold">
+              {toast.type}
             </div>
           </div>
-        ))}
+
+          <div className="text-sm text-muted-foreground">
+            {toast.content}
+          </div>
+
+          {toast.stationName && (
+            <div className="text-xs text-muted-foreground mt-2">
+              Station:{' '}
+              <span className="font-medium">
+                {toast.stationName}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Close */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleClose}
+        >
+          <X className="h-4 w-4" />
+        </Button>
       </div>
-    </>
+    </div>
+  );
+}
+
+export function Notifications({
+  toasts,
+  onClose,
+}: {
+  toasts: any[];
+  onClose: (id: string) => void;
+}) {
+  return (
+    <div className="fixed left-4 bottom-4 z-50 flex flex-col-reverse gap-3 max-w-sm w-full">
+      {toasts.map((t) => (
+        <ToastItem
+          key={t.id}
+          toast={t}
+          onClose={onClose}
+        />
+      ))}
+    </div>
   );
 }
 
