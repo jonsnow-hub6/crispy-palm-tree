@@ -364,9 +364,11 @@ export function PresetsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {presets.map((preset) => (
               <Card
-                key={preset.id}
-                style={{ borderLeft: `4px solid ${preset.color}` }}
-              >
+  key={preset.id}
+  className="group flex flex-col h-full transition-all duration-300 hover:shadow-lg"
+  style={{ borderLeft: `4px solid ${preset.color}` }}
+>
+
                 <CardHeader>
   <div className="flex items-center justify-between">
     {/* Left: Name */}
@@ -434,35 +436,75 @@ export function PresetsPage() {
   </div>
 </CardHeader>
 
-                <CardContent>
-                  <div className="flex justify-between items-start gap-4">
-                    <div className="text-sm text-muted-foreground w-full">
-                      {preset.expand?.actions &&
-                      preset.expand.actions.length > 0 ? (
-                        <ul className="space-y-2">
-                          {preset.expand.actions.slice(0, 4).map((a) => (
-                            <li
-                              key={a.id}
-                              className="flex items-start gap-3 text-sm"
-                            >
-                              <Badge
-                                variant="secondary"
-                                className="font-mono text-[11px] px-2 py-0.5"
-                              >
-                                {a.project}
-                              </Badge>
-                              <span className="text-sm text-foreground truncate">
-                                {a.payload}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <span>No actions</span>
-                      )}
-                    </div>
+                <CardContent className="flex flex-col h-full">
+  {(() => {
+    const actions = preset.expand?.actions || [];
+    const visible = actions.slice(0, 3);
+    const remaining = actions.slice(3);
+
+    return actions.length > 0 ? (
+      <div className="space-y-2">
+        {/* VISIBLE ACTIONS */}
+        {visible.map((a) => (
+          <div key={a.id} className="flex items-start gap-3 text-sm">
+            <Badge
+              variant="secondary"
+              className="font-mono text-[11px] px-2 py-0.5 shrink-0"
+            >
+              {a.project}
+            </Badge>
+
+            <span title={a.payload} className="truncate">
+              {a.payload}
+            </span>
+          </div>
+        ))}
+
+        {/* +X MORE */}
+        {remaining.length > 0 && (
+          <div className="relative w-fit group/more">
+            <div className="text-xs text-primary cursor-default">
+              +{remaining.length} more action
+              {remaining.length > 1 ? 's' : ''}
+            </div>
+
+            {/* HOVER POPOVER */}
+            <div
+              className="
+                pointer-events-none
+                absolute left-0 bottom-full mb-2
+                w-72 rounded-md border bg-card shadow-lg p-3
+                opacity-0 translate-y-1
+                transition-all duration-200
+                group-hover/more:opacity-100
+                group-hover/more:translate-y-0
+              "
+            >
+              <div className="space-y-2 max-h-60 overflow-auto">
+                {actions.map((a) => (
+                  <div key={a.id} className="flex gap-2 text-xs">
+                    <Badge
+                      variant="secondary"
+                      className="font-mono text-[10px]"
+                    >
+                      {a.project}
+                    </Badge>
+                    <span className="break-words">{a.payload}</span>
                   </div>
-                </CardContent>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    ) : (
+      <span className="text-sm text-muted-foreground">No actions</span>
+    );
+  })()}
+</CardContent>
+
+
+
               </Card>
             ))}
           </div>

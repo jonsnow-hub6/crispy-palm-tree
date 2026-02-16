@@ -54,7 +54,7 @@ const levelStyles: Record<
     badge: 'default',
     icon: AlertOctagon,
     banner: 'shadow-xl border-b-4 border-red-900 animate-softPulse',
-    glow: 'shadow-[0_0_20px_rgba(220,38,38,0.35)]',
+    glow: 'shadow-[0_0_25px_5px_rgba(220,38,38,0.45)]'
   },
 };
 

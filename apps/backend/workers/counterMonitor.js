@@ -112,6 +112,14 @@ async function runOnce() {
     // ---- multiple active links → CRITICAL ----
     const activeLinks = updatedLinks.filter((l) => l.active === true);
 
+    if (activeLinks.length === 1 && !activeLinks[0].reachable) {
+      await createNotification({
+        level: 'critical',
+        type: 'connection',
+        content: `Station ${st.name} has one active link but it's unreachable`,
+      });
+    }
+
     if (activeLinks.length > 1) {
       await createNotification({
         level: 'critical',

@@ -271,7 +271,7 @@ export function StationsPage() {
                   key={station.id}
                   className={`border-2 shadow-sm transition-all hover:shadow-md ${
                     isActive
-                      ? 'border-[#06b6d4] animate-blinkCyan'
+                      ? activeLink?.reachable ? 'border-[#06b6d4] animate-blinkCyan' : 'border-[#0000ff] animate-blinkRed'
                       : 'border-border'
                   }`}
                 >
@@ -287,7 +287,10 @@ export function StationsPage() {
                         >
                           {station.name}
                         </span>
-                        {isActive ? (
+                        {isActive && !activeLink?.reachable ? (
+                          <Badge variant="destructive">Unreachable Active</Badge>
+                        ):
+                        isActive ? (
                           <Badge variant="default">Active</Badge>
                         ) : station.stationLinks.every(
                             (l) => l.reachable === false,

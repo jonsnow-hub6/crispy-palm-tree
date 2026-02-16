@@ -52,8 +52,12 @@ export function NavBar() {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center gap-2">
-              <LayoutDashboard className="h-6 w-6" />
-              <span className="font-bold text-lg">System Control</span>
+              <img
+                src="../../../public/icon.png"
+                alt="splinter logo"
+                className="h-16 w-16 object-contain"
+              />
+              <span className="font-bold text-lg">Splinter</span>
             </Link>
             <div className="flex items-center gap-1">
               {visibleItems.map((item) => {

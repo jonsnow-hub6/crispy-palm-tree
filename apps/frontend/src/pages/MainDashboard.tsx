@@ -3,6 +3,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store';
 import { fetchPresets, setActivePreset } from '@/store/slices/presetsSlice';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { fetchStations } from '@/store/slices/stationsSlice';
+import StationGraph from '@/components/StationGraph';
+import { AlertOctagon } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -37,6 +41,18 @@ export function MainDashboard() {
     text: string;
   } | null>(null);
 
+  const { stations, activeStationId } = useSelector(
+    (state: RootState) => state.stations,
+  );
+
+  useEffect(() => {
+    dispatch(fetchStations());
+  }, [dispatch]);
+
+  const activeStation = stations.find((s) => s.id === activeStationId) || null;
+
+  const activeLink = activeStation?.stationLinks.find((l) => l.active);
+  const isReachable = activeLink?.reachable !== false;
   useEffect(() => {
     dispatch(fetchPresets());
   }, [dispatch]);
@@ -55,7 +71,6 @@ export function MainDashboard() {
       // Call backend preset set endpoint
       await pb.send(`/api/presets/${selectedPresetId}/set`, { method: 'POST' });
       dispatch(setActivePreset(selectedPresetId));
-
     } catch (err: any) {
       console.error('Failed to apply preset:', err);
       const text = err?.message || 'Failed to apply preset to stations';
@@ -74,19 +89,17 @@ export function MainDashboard() {
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-3xl mx-auto">
-
-
         {activePresetId && (
-  <div className="mb-4">
-    <Card>
-      <CardHeader>
-        <CardTitle>Active Preset</CardTitle>
-        <CardDescription>
-          Currently applied configuration
-        </CardDescription>
-      </CardHeader>
+          <div className="mb-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Active Preset</CardTitle>
+                <CardDescription>
+                  Currently applied configuration
+                </CardDescription>
+              </CardHeader>
 
-      <CardContent>
+              <CardContent>
                 {(() => {
                   const ap = presets.find((p) => p.id === activePresetId);
                   if (!ap) return null;
@@ -257,6 +270,83 @@ export function MainDashboard() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        <div className="mt-8">
+          {activeStation ? (
+            <Card
+              className={`
+    relative overflow-hidden border-2
+    ${
+      isReachable
+        ? 'border-cyan-400 shadow-[0_0_25px_rgba(34,211,238,0.7)]'
+        : 'border-red-600 shadow-[0_0_25px_rgba(220,38,38,0.7)]'
+    }
+    animate-softPulse
+  `}
+            >
+              {/* animated glow ring */}
+              <div
+                className={`
+      pointer-events-none absolute inset-0 rounded-xl ring-2
+      ${isReachable ? 'ring-cyan-400/70' : 'ring-red-600/70'}
+      ring-offset-2 ring-offset-background
+      animate-pulse
+    `}
+              />{' '}
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold text-primary">
+                      {activeStation.name}
+                    </span>
+
+                    {isReachable ? (
+                      <Badge variant="default">Active</Badge>
+                    ) : (
+                      <Badge variant="destructive">Unreachable Active</Badge>
+                    )}
+                    {(() => {
+                      const activeLink = activeStation.stationLinks.find(
+                        (l) => l.active,
+                      );
+                      return (
+                        activeLink?.counter !== undefined && (
+                          <Badge variant="secondary">
+                            Counter: {activeLink.counter}
+                          </Badge>
+                        )
+                      );
+                    })()}
+                  </div>
+                </CardTitle>
+
+                <CardDescription>Currently active station</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <StationGraph station={activeStation} onActivate={() => {}} />
+              </CardContent>
+            </Card>
+          ) : (
+            <Card
+              className="
+        border-2 border-red-900/60
+        bg-destructive text-destructive-foreground
+        shadow-[0_0_25px_rgba(220,38,38,0.35)]
+        animate-softPulse
+      "
+            >
+              <CardContent className="py-8 flex flex-col items-center justify-center gap-3">
+                <AlertOctagon className="h-10 w-10 animate-pulse" />
+
+                <div className="text-lg font-semibold">No Active Station</div>
+
+                <div className="text-sm opacity-90 text-center max-w-xs">
+                  No station is currently active. Activate a station to start
+                  streaming.
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -73,6 +73,10 @@ module.exports = {
           '0%, 100%': { borderColor: '#06b6d4', boxShadow: '0 0 0px #06b6d4' },
           '50%': { borderColor: 'transparent', boxShadow: '0 0 12px #06b6d4' },
         },
+        blinkRed: {
+          '0%, 100%': { borderColor: '#ff0000', boxShadow: '0 0 0px #ff0000' },
+          '50%': { borderColor: 'transparent', boxShadow: '0 0 12px #ff0000' },
+        },
         toastIn: {
           '0%': {
             transform: 'translateX(-120%)',
@@ -112,6 +116,7 @@ module.exports = {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         blinkCyan: 'blinkCyan 1.2s infinite ease-in-out',
+        blinkRed: 'blinkRed 1.2s infinite ease-in-out',
         toastIn: 'toastIn 0.4s ease-out forwards',
         toastOut: 'toastOut 0.3s ease-in forwards',
         softPulse: 'softPulse 0.5s ease-in-out infinite',
