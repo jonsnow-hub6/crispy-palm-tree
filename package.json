@@ -7,6 +7,9 @@
     "dev:backend": "nx run backend:serve",
     "dev:all": "nx run-many --target=serve --all --parallel",
     "start": "nx run-many --target=serve --all --parallel",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up",
+    "docker:down": "docker compose down",
     "build": "nx run-many --target=build --all",
     "workers:counter": "node apps/backend/workers/counterMonitor.js",
     "workers:active": "node apps/backend/workers/activeMonitor.js"
