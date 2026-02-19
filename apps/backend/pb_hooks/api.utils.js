@@ -69,7 +69,7 @@ function httpPostSetPreset(link, preset) {
   }
 }
 
-async function httpGetPreset(link) {
+function httpGetPreset(link) {
   const url = `http://${link.host}:${link.port}/api/getPreset`;
   try {
     const res = $http.send({
@@ -138,6 +138,39 @@ function probeLink(link) {
   });
 }
 
+function httpGetActiveForCron(link) {
+    const url = `http://${link.host}:${link.port}/api/getActive`;
+    try {
+        const res = $http.send({ url: url, method: 'GET', timeout: 3000 });
+        if (res.statusCode !== 200) return { ok: false };
+
+        // Clean the body of quotes and newlines
+        let text = res.body.replace(/['"\n\r\t]/g, '').trim().toLowerCase();
+        
+        // Match against all possible "true" values
+        const active = (text === 'true' || text === '1');
+        return { ok: true, value: active };
+    } catch (err) {
+        return { ok: false };
+    }
+}
+
+function httpGetCounterForCron(link) {
+    const url = `http://${link.host}:${link.port}/api/getCounter`;
+    try {
+        const res = $http.send({ url: url, method: 'GET', timeout: 3000 });
+        if (res.statusCode !== 200) return { ok: false };
+
+        let text = res.body.replace(/['"\n\r\t]/g, '').trim();
+        const num = Number(text);
+        
+        return { ok: Number.isFinite(num), value: Number.isFinite(num) ? num : null };
+    } catch (err) {
+        return { ok: false };
+    }
+}
+
+
 module.exports = {
   httpPostSetActive,
   httpGetActive,
@@ -147,4 +180,6 @@ module.exports = {
   probeLink,
   httpPostSetPreset,
   httpGetPreset,
+  httpGetActiveForCron,
+  httpGetCounterForCron,
 };
