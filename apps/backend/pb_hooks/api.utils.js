@@ -23,11 +23,23 @@ function httpGetActive(link) {
     const res = $http.send({ url: url, method: 'GET', timeout: 3000 });
     if (res.statusCode >= 200 && res.statusCode < 300) {
       // Expect boolean in body (raw)
-      let body = res.body;
+      // support either res.json (already parsed) or res.body
+      let body = res.json !== undefined ? res.json : res.body;
       try {
-        body = JSON.parse(res.body);
+        if (typeof body === 'string') body = JSON.parse(body);
       } catch (e) {}
-      return { ok: true, value: Boolean(body) };
+
+      // If response is an object, try common keys
+      if (body && typeof body === 'object') {
+        if (typeof body.active !== 'undefined') body = body.active;
+        else if (typeof body.value !== 'undefined') body = body.value;
+        else if (typeof body.ok !== 'undefined') body = body.ok;
+      }
+
+      // Normalize boolean-like responses: true/'true'/1/'1' => true
+      const value = body === true || body === 'true' || body === 1 || body === '1';
+
+      return { ok: true, value };
     }
     return { ok: false, error: `status ${res.statusCode}` };
   } catch (err) {
@@ -40,12 +52,24 @@ function httpGetCounter(link) {
   try {
     const res = $http.send({ url: url, method: 'GET', timeout: 3000 });
     if (res.statusCode >= 200 && res.statusCode < 300) {
-      let body = res.body;
+      // support either res.json (already parsed) or res.body
+      let body = res.json !== undefined ? res.json : res.body;
       try {
-        body = JSON.parse(res.body);
+        if (typeof body === 'string') body = JSON.parse(body);
       } catch (e) {}
+
+      // If response is an object, try common keys
+      if (body && typeof body === 'object') {
+        if (typeof body.counter !== 'undefined') body = body.counter;
+        else if (typeof body.value !== 'undefined') body = body.value;
+      }
+
+      // Coerce to number
       const num = Number(body);
-      return { ok: true, value: Number.isFinite(num) ? num : null };
+      if (!Number.isFinite(num)) {
+        return { ok: false, error: 'invalid counter' };
+      }
+      return { ok: true, value: num };
     }
     return { ok: false, error: `status ${res.statusCode}` };
   } catch (err) {
@@ -138,38 +162,6 @@ function probeLink(link) {
   });
 }
 
-function httpGetActiveForCron(link) {
-    const url = `http://${link.host}:${link.port}/api/getActive`;
-    try {
-        const res = $http.send({ url: url, method: 'GET', timeout: 3000 });
-        if (res.statusCode !== 200) return { ok: false };
-
-        // Clean the body of quotes and newlines
-        let text = res.body.replace(/['"\n\r\t]/g, '').trim().toLowerCase();
-        
-        // Match against all possible "true" values
-        const active = (text === 'true' || text === '1');
-        return { ok: true, value: active };
-    } catch (err) {
-        return { ok: false };
-    }
-}
-
-function httpGetCounterForCron(link) {
-    const url = `http://${link.host}:${link.port}/api/getCounter`;
-    try {
-        const res = $http.send({ url: url, method: 'GET', timeout: 3000 });
-        if (res.statusCode !== 200) return { ok: false };
-
-        let text = res.body.replace(/['"\n\r\t]/g, '').trim();
-        const num = Number(text);
-        
-        return { ok: Number.isFinite(num), value: Number.isFinite(num) ? num : null };
-    } catch (err) {
-        return { ok: false };
-    }
-}
-
 
 module.exports = {
   httpPostSetActive,
@@ -180,6 +172,4 @@ module.exports = {
   probeLink,
   httpPostSetPreset,
   httpGetPreset,
-  httpGetActiveForCron,
-  httpGetCounterForCron,
 };
