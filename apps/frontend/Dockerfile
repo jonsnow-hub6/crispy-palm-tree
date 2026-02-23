@@ -1,25 +1,24 @@
-FROM node:18-alpine AS builder
+FROM registry-1.docker.io/library/node:24 AS base
 
 WORKDIR /app
+ADD ./app
 
-# Install base deps
-COPY package.json package-lock.json ./
-RUN npm ci --legacy-peer-deps
+# Add certificates
 
-# Copy repository and build frontend
-COPY . .
 
-# Build the frontend app (uses nx). Falls back to full workspace build if needed.
-RUN npx nx build frontend --configuration=production
+FROM base AS builder
+RUN npm i --legacy-peer-deps
+RUN npm run build
 
-FROM nginx:stable-alpine
+FROM registry-1.docker.io/library/nginx:1.27.1 AS final
 
-# Copy built assets from builder
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Add custom nginx config
-COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY ./apps/frontend/nginx/nginx.conf.template /nginxtemplate/nginx.conf.template
+COPY --from=builder /app/dist/apps/frontend/ /etc/nginx/html
 
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/bin/sh", "-c", "envsubst ' \
+$$SERVER_URL \
+'< /nginxtemplate/nginx.conf.template \
+> /etc/nginx/nginx.conf \
+&& nginx -g 'daemon off;'"]
