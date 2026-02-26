@@ -53,7 +53,7 @@ export function NavBar() {
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center gap-2">
               <img
-                src="../../../public/icon.png"
+                src="icon.png"
                 alt="splinter logo"
                 className="h-16 w-16 object-contain"
               />
