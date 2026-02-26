@@ -95,21 +95,21 @@ export const importPresetFromJson = createAsyncThunk(
 
         // Check if action already exists
         try {
-          const existingActions = await pb.collection('actions').getFullList({
-            filter: `payload="${payload}" && project="${projectId}"`,
-          });
+          // const existingActions = await pb.collection('actions').getFullList({
+          //   filter: `payload="${payload}" && project="${projectId}"`,
+          // });
 
           let actionId: string;
-          if (existingActions.length > 0) {
-            actionId = existingActions[0].id;
-          } else {
+          // if (existingActions.length > 0) {
+          //   actionId = existingActions[0].id;
+          // } else {
             // Create new action first
             const action = await pb.collection('actions').create({
               payload: String(payload),
               project: projectId,
             });
             actionId = action.id;
-          }
+          // }
 
           actionIds.push(actionId);
         } catch (error: any) {
@@ -128,6 +128,7 @@ export const importPresetFromJson = createAsyncThunk(
       if (actionIds.length > 0) {
         presetCreateData.actions = actionIds;
       }
+
 
       const preset = await pb.collection('presets').create<Preset>(presetCreateData);
 
