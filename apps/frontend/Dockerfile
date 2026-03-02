@@ -1,7 +1,7 @@
 FROM registry-1.docker.io/library/node:24 AS base
 
 WORKDIR /app
-ADD ./app
+ADD . /app
 
 # Add certificates
 
