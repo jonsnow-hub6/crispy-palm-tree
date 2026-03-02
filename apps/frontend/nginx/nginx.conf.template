@@ -1,23 +1,23 @@
 events {}
 http {
-    include       etc/nginx/mime.types;
+    include       /etc/nginx/mime.types;
     upstream server {
         server ${SERVER_URL};
     }
-}
 
-server {
-    gzip on;
-    gzip_types application/javascript image/png image/jpeg
+    server {
+        gzip on;
+        gzip_types application/javascript image/png image/jpeg
 
-    location / {
-        error_page 404 = @react-router;
-    }
-    location /api/ {
-        proxy_pass http://server/api/;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-    location @react-router {
-        try_files $uri $uri/ /index.html;
+        location / {
+            error_page 404 = @react-router;
+        }
+        location /api/ {
+            proxy_pass http://server/api/;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+        location @react-router {
+            try_files $uri $uri/ /index.html;
+        }
     }
 }
