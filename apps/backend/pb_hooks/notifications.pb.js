@@ -1,10 +1,10 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-onRecordAfterCreateSuccess((e) => {
+onRecordAfterCreateSuccess(async (e) => {
   const MAX = 10000
   const DELETE_BATCH = 1000
 
-  $app.runInTransaction((txApp) => {
+  await $app.runInTransaction((txApp) => {
     const total = txApp.findAllRecords("notifications").length
 
     if (total <= MAX) return
@@ -21,5 +21,7 @@ onRecordAfterCreateSuccess((e) => {
       txApp.delete(r)
     }
   })
+
+  e.next()
 
 }, "notifications")
