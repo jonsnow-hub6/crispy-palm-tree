@@ -11,7 +11,7 @@ services:
     image: /splinter-client:dev
     container_name: splinter-client
     environment:
-      - SERVER_URL: splinter-server:8090
+      - SERVER_URL=splinter-server:8090
     ports:
       - "4200:4200"
     depends_on:
@@ -33,6 +33,5 @@ services:
       - N8N_SECURE_COOKIE=false
     volumes:
       - ./apps/n8n/data:/home/node/.n8n
-    restart: unless-stopped
-    depends_on:
-      - server
+    restart: always
+    

@@ -1,0 +1,84 @@
+const PocketBase = require('pocketbase/cjs');
+
+const PB_URL = process.env.PB_URL || 'http://127.0.0.1:8090';
+const ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.PB_ADMIN_PASSWORD;
+
+const pb = new PocketBase(PB_URL);
+
+// ----------------------------
+// Optional admin login
+// ----------------------------
+async function loginAdmin() {
+  if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+    console.log('No admin credentials provided, skipping login...');
+    return;
+  }
+
+  try {
+    await pb.admins.authWithPassword(ADMIN_EMAIL, ADMIN_PASSWORD);
+    console.log('Admin authenticated');
+  } catch (err) {
+    console.error('Admin auth failed:', err.message);
+  }
+}
+
+// ----------------------------
+// Insert one rapha cycle
+// ----------------------------
+async function insertRaphaData() {
+  try {
+    // pllLockState (0 or 1)
+    await pb.collection('rapha').create({
+      name: 'pllLockState',
+      parameters: {
+        pllLockState: Math.random() > 0.5 ? 0 : 0,
+      },
+      decoderId: 'decoder3',
+    });
+
+    console.log('Inserted pllLockState');
+
+    // dllM2 (signed 32-bit safe range)
+    const dllM2 = Math.floor(Math.random() * 100);
+
+    await pb.collection('rapha').create({
+      name: 'dllM2',
+      parameters: {
+        dllM2: dllM2,
+      },
+      decoderId: 'decoder3',
+    });
+
+    console.log('Inserted dllM2:', dllM2);
+
+    // dllM4
+    const dllM4 = Math.floor(Math.random() * 50);
+
+    await pb.collection('rapha').create({
+      name: 'dllM4',
+      parameters: {
+        dllM4: dllM4,
+      },
+      decoderId: 'decoder3',
+    });
+
+    console.log('Inserted dllM4:', dllM4);
+
+  } catch (err) {
+    console.error('Insert failed:', err.response || err.message);
+  }
+}
+
+// ----------------------------
+// Run once
+// ----------------------------
+async function main() {
+  await loginAdmin();
+  await insertRaphaData();
+
+  // 🔥 Uncomment to simulate realtime stream
+  setInterval(insertRaphaData, 500);
+}
+
+main();

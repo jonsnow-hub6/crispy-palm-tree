@@ -3,6 +3,7 @@ import { MainDashboard } from '@/pages/MainDashboard';
 import { StationsPage } from '@/pages/StationsPage';
 import { ProjectsPage } from '@/pages/ProjectsPage';
 import { PresetsPage } from '@/pages/PresetsPage';
+import RaphaPage from '@/pages/RaphaPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { NavBar } from '@/components/NavBar';
@@ -54,6 +55,14 @@ export function App() {
               element={
                 <ProtectedRoute>
                   <PresetsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/rapha"
+              element={
+                <ProtectedRoute>
+                  <RaphaPage />
                 </ProtectedRoute>
               }
             />

@@ -12,6 +12,7 @@ import {
   Home,
   Moon,
   Sun,
+  ChartLine
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -39,6 +40,7 @@ export function NavBar() {
     { path: '/stations', label: 'Stations', icon: Radio, public: false },
     { path: '/projects', label: 'Projects', icon: FolderOpen, public: false },
     { path: '/presets', label: 'Presets', icon: Palette, public: false },
+    { path: '/rapha', label: 'Rapha', icon: ChartLine, public: false },
   ];
 
   const visibleItems = navItems.filter(
