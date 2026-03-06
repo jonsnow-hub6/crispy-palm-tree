@@ -12,10 +12,15 @@ import {
   Home,
   Moon,
   Sun,
-  ChartLine
+  ChartLine,
+  CheckCircle2,
+  XCircle,
+  AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
+import { usePresetStatus } from '@/hooks/usePresetStatus';
+import { useLeoContext } from '@/contexts/LeoContext';
 
 export function NavBar() {
   const location = useLocation();
@@ -29,6 +34,9 @@ export function NavBar() {
     (state: RootState) => state.presets,
   );
   const { theme, toggleTheme } = useTheme();
+  
+  const { records } = useLeoContext();
+  const presetStatus = usePresetStatus(records);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -84,15 +92,26 @@ export function NavBar() {
           </div>
 
           {activePreset && (
-            <div className="flex items-center gap-2 px-3 py-1 rounded-md border bg-muted/40">
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-md border shadow-sm transition-colors ${presetStatus.isMatched ? 'bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400'}`}>
               <div
-                className="h-3 w-3 rounded-full"
+                className="h-3 w-3 rounded-full animate-pulse"
                 style={{ backgroundColor: activePreset.color }}
               />
-              <span className="text-sm font-medium text-muted-foreground">
+              <span className="text-sm font-medium opacity-80">
                 Preset:
               </span>
-              <span className="text-sm font-semibold">{activePreset.name}</span>
+              <span className="text-sm font-semibold mr-2">{activePreset.name}</span>
+              {presetStatus.isMatched ? (
+                 <div className="flex items-center gap-1.5 bg-green-500/20 px-2 py-0.5 rounded text-xs font-bold">
+                   <CheckCircle2 className="w-3.5 h-3.5" />
+                   VERIFIED
+                 </div>
+              ) : (
+                 <div className="flex items-center gap-1.5 bg-red-500/20 px-2 py-0.5 rounded text-xs font-bold">
+                   <XCircle className="w-3.5 h-3.5" />
+                   WAITING
+                 </div>
+              )}
             </div>
           )}
           <div className="flex items-center gap-2">

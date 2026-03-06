@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Play, Pause, Search, Trash2, TerminalSquare } from 'lucide-react';
 import type { LeoRecord } from '@/types/leo.types';
 import useLeoRealtime from '@/hooks/useLeoRealtime';
+import { usePresetStatus } from '@/hooks/usePresetStatus';
 import { pb } from '@/lib/pocketbase';
 
 const SOFT_CAP = 10_000;
@@ -113,6 +114,8 @@ export default function LeoLogger({ decoderId }: Props) {
         r.magic.toString().includes(lowerQ)
     );
   }, [records, searchQuery]);
+
+  const presetStatus = usePresetStatus(records);
 
   const virtualizer = useVirtualizer({
     count: displayedRecords.length,
@@ -226,10 +229,24 @@ export default function LeoLogger({ decoderId }: Props) {
                 const item = displayedRecords[virtualRow.index];
                 if (!item) return null;
 
-                const bg =
+                // Check if this log matches the active preset
+                const isPresetLog = presetStatus.isActive && presetStatus.actions.some(
+                  (a) => a.project === item.projectId && a.payload === item.payload
+                );
+
+                let bg =
                   virtualRow.index % 2 === 0
                     ? 'hover:bg-muted/50'
                     : 'bg-muted/20 hover:bg-muted/50';
+
+                // Colorize row if a preset is active
+                if (presetStatus.isActive) {
+                   if (isPresetLog) {
+                     bg = 'bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20';
+                   } else {
+                     bg = 'bg-red-500/10 text-red-700 dark:text-red-400 hover:bg-red-500/20';
+                   }
+                }
 
                 return (
                   <div
@@ -247,7 +264,7 @@ export default function LeoLogger({ decoderId }: Props) {
                     <div className="text-muted-foreground truncate" title={item.decoderId}>
                       {item.decoderId || '—'}
                     </div>
-                    <div className="truncate text-primary/80" title={item.projectId}>
+                    <div className={`truncate ${presetStatus.isActive && !isPresetLog ? 'text-red-700 dark:text-red-400' : 'text-primary/80'}`} title={item.projectId}>
                       {item.projectId}
                     </div>
                     <div className="text-muted-foreground">#{item.counter}</div>

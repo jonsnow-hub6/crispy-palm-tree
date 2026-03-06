@@ -12,6 +12,7 @@ import useRealtime from '@/hooks/useRealtime';
 import { Notifications } from '@/components/Notifications';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import { LeoProvider } from '@/contexts/LeoContext';
 import { fetchPresets } from '@/store/slices/presetsSlice';
 import type { AppDispatch } from '@/store';
 import { fetchStations } from '@/store/slices/stationsSlice';
@@ -27,7 +28,8 @@ export function App() {
 
   return (
     <ThemeProvider>
-      <BrowserRouter>
+      <LeoProvider>
+        <BrowserRouter>
         <div className="flex flex-col h-screen overflow-hidden bg-background">
           <NavBar />
           <Notifications toasts={toasts} onClose={removeToast} />
@@ -70,6 +72,7 @@ export function App() {
           </Routes>
         </div>
       </BrowserRouter>
+      </LeoProvider>
     </ThemeProvider>
   );
 }

@@ -30,16 +30,51 @@ async function loginAdmin() {
 async function insertLeoData() {
   try {
     const record = {
-      projectId: `project-${Math.floor(Math.random() * 10)}`,
+      projectId: `1234`,
       counter: Math.floor(Math.random() * 1000),
       magic: Math.floor(Math.random() * 9999),
-      payload: `${Math.random().toString(36).substring(2, 10)}`,
+      payload: `0x23454`,
       timeOfArrival: new Date().toISOString(),
       decoderId: `decoder${Math.floor(Math.random() * 2) + 1}`, // decoder1..decoder5
     };
 
     const created = await pb.collection('leo').create(record);
     console.log('Inserted leo record:', created);
+
+    const record1 = {
+      projectId: `1234`,
+      counter: Math.floor(Math.random() * 1000),
+      magic: Math.floor(Math.random() * 9999),
+      payload: `0x23e4fa54`,
+      timeOfArrival: new Date().toISOString(),
+      decoderId: `decoder${Math.floor(Math.random() * 2) + 1}`, // decoder1..decoder5
+    };
+
+    const created1 = await pb.collection('leo').create(record1);
+    console.log('Inserted leo record:', created1);
+
+    const record2 = {
+      projectId: `1234`,
+      counter: Math.floor(Math.random() * 1000),
+      magic: Math.floor(Math.random() * 9999),
+      payload: `0x23454`,
+      timeOfArrival: new Date().toISOString(),
+      decoderId: `decoder${Math.floor(Math.random() * 2) + 1}`, // decoder1..decoder5
+    };
+
+    const created2 = await pb.collection('leo').create(record2);
+    console.log('Inserted leo record:', created1);
+
+    const record3 = {
+      projectId: `12345`,
+      counter: Math.floor(Math.random() * 1000),
+      magic: Math.floor(Math.random() * 9999),
+      payload: `0x23454`,
+      timeOfArrival: new Date().toISOString(),
+      decoderId: `decoder${Math.floor(Math.random() * 2) + 1}`, // decoder1..decoder5
+    };
+
+    const created3 = await pb.collection('leo').create(record3);
   } catch (err) {
     console.error('Insert failed:', err.response || err.message);
   }
@@ -55,7 +90,7 @@ async function main() {
   await insertLeoData();
 
   // 🔥 Uncomment to simulate realtime stream every 500ms
-  setInterval(insertLeoData, 500);
+  setInterval(insertLeoData, 1000);
 }
 
 main();

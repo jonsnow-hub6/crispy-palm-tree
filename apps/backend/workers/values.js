@@ -32,9 +32,9 @@ async function insertRaphaData() {
     await pb.collection('rapha').create({
       name: 'pllLockState',
       parameters: {
-        pllLockState: Math.random() > 0.5 ? 0 : 0,
+        pllLockState: Math.random() > 0.5 ? 1 : 0,
       },
-      decoderId: 'decoder3',
+      decoderId: 'decoder2',
     });
 
     console.log('Inserted pllLockState');
@@ -47,7 +47,7 @@ async function insertRaphaData() {
       parameters: {
         dllM2: dllM2,
       },
-      decoderId: 'decoder3',
+      decoderId: 'decoder2',
     });
 
     console.log('Inserted dllM2:', dllM2);
@@ -60,7 +60,7 @@ async function insertRaphaData() {
       parameters: {
         dllM4: dllM4,
       },
-      decoderId: 'decoder3',
+      decoderId: 'decoder2',
     });
 
     console.log('Inserted dllM4:', dllM4);
