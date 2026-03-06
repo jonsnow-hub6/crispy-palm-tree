@@ -1,0 +1,211 @@
+import { useEffect } from 'react';
+import { pb } from '@/lib/pocketbase';
+import type {
+  RaphaRecord,
+  RaphaDllM2,
+  RaphaDllM4,
+  RaphaPllLockState,
+} from '@/types/rapha';
+import { store } from '@/store';
+import { addPllPoints, addDllResults } from '@/store/slices/raphaSlice';
+
+type Point = { ts: number; value: number; decoderId?: string };
+
+const subscriptionState = {
+  unsubscribe: null as (() => void) | null,
+  // track last dllM2 per decoderId
+  lastDllM2: {} as Record<string, number | null>,
+  pllBuffer: [] as Point[],
+  dllBuffer: [] as Point[],
+  flushTimer: null as NodeJS.Timeout | null,
+};
+
+// Reduce batch size and flush frequency to lower memory / render pressure
+const MAX_BATCH = 200;
+const FLUSH_INTERVAL = 1000; // 1 updates per second
+
+function scheduleFlush() {
+  if (subscriptionState.flushTimer) return;
+
+  subscriptionState.flushTimer = setTimeout(() => {
+    subscriptionState.flushTimer = null;
+
+    if (subscriptionState.pllBuffer.length) {
+      store.dispatch(addPllPoints(subscriptionState.pllBuffer));
+      subscriptionState.pllBuffer.length = 0;
+    }
+
+    if (subscriptionState.dllBuffer.length) {
+      store.dispatch(addDllResults(subscriptionState.dllBuffer));
+      subscriptionState.dllBuffer.length = 0;
+    }
+  }, FLUSH_INTERVAL);
+}
+
+async function loadInitialData() {
+  try {
+    const since = new Date(Date.now() - 60_000)
+      .toISOString()
+      .replace('T', ' ')
+      .slice(0, 19);
+    // PLL data
+    const pll = await pb.collection('rapha').getFullList({
+      filter: `name="pllLockState" && created >= "${since}"`,
+      sort: 'created',
+    });
+
+    const pllPoints = pll
+      .map((r: any) => {
+        const v = r.parameters?.pllLockState;
+        if (v === 0 || v === 1) {
+          return {
+            ts: new Date(r.created).getTime(),
+            value: v,
+            decoderId: (r as any).decoderId ?? undefined,
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    if (pllPoints.length) {
+      store.dispatch(addPllPoints(pllPoints as Point[]));
+    }
+
+    // DLL data
+    const dll = await pb.collection('rapha').getFullList({
+      filter: `(name="dllM2" || name="dllM4") && created >= "${since}"`,
+      sort: 'created',
+    });
+
+    let lastM2: number | null = null;
+    const dllPoints: Point[] = [];
+
+    // track lastM2 per decoderId so pairing is decoder-specific
+    const lastM2ByDecoder: Record<string, number | null> = {};
+    for (const r of dll) {
+      const dec = (r as any).decoderId ?? 'unknown';
+      if (r.name === 'dllM2') {
+        const v = r.parameters?.dllM2;
+        if (typeof v === 'number') lastM2ByDecoder[dec] = Math.trunc(v);
+        continue;
+      }
+
+      if (r.name === 'dllM4') {
+        const v = r.parameters?.dllM4;
+        const m2 = lastM2ByDecoder[dec] ?? null;
+
+        if (typeof v === 'number' && m2 !== null) {
+          dllPoints.push({
+            ts: new Date(r.created).getTime(),
+            value: m2 * Math.trunc(v),
+            decoderId: dec,
+          });
+        }
+      }
+    }
+
+    if (dllPoints.length) {
+      store.dispatch(addDllResults(dllPoints));
+    }
+  } catch (err) {
+    console.error('Failed loading initial rapha data', err);
+  }
+}
+
+async function ensureSubscription() {
+  if (subscriptionState.unsubscribe) return;
+
+  try {
+    // @ts-ignore
+    subscriptionState.unsubscribe = await pb
+      .collection('rapha')
+      .subscribe('*', (e: unknown) => {
+        try {
+          if (!e || typeof e !== 'object') return;
+          const evt = e as { action?: string; record?: unknown };
+          if (evt.action !== 'create') return;
+
+          const rec = evt.record as RaphaRecord | undefined;
+          if (!rec) return;
+
+          const ts = Date.now();
+
+          if (rec.name === 'pllLockState') {
+            const v = (rec as RaphaPllLockState).parameters?.pllLockState;
+            const dec = (rec as any).decoderId ?? undefined;
+
+            if (v === 0 || v === 1) {
+              subscriptionState.pllBuffer.push({ ts, value: v, decoderId: dec });
+
+              if (subscriptionState.pllBuffer.length > MAX_BATCH) {
+                subscriptionState.pllBuffer.splice(0, subscriptionState.pllBuffer.length - MAX_BATCH);
+              }
+
+              scheduleFlush();
+            }
+
+            return;
+          }
+
+          if (rec.name === 'dllM2') {
+            const v = (rec as RaphaDllM2).parameters?.dllM2;
+            const dec = (rec as any).decoderId ?? 'unknown';
+
+            if (typeof v === 'number' && Number.isFinite(v)) {
+              subscriptionState.lastDllM2[dec] = Math.trunc(v);
+            }
+
+            return;
+          }
+
+          if (rec.name === 'dllM4') {
+            const v = (rec as RaphaDllM4).parameters?.dllM4;
+            const dec = (rec as any).decoderId ?? 'unknown';
+
+            if (typeof v === 'number' && Number.isFinite(v)) {
+              const m2 = subscriptionState.lastDllM2[dec] ?? null;
+
+              if (m2 !== null) {
+                subscriptionState.dllBuffer.push({ ts, value: m2 * Math.trunc(v), decoderId: dec });
+
+                if (subscriptionState.dllBuffer.length > MAX_BATCH) {
+                  subscriptionState.dllBuffer.splice(0, subscriptionState.dllBuffer.length - MAX_BATCH);
+                }
+
+                scheduleFlush();
+              }
+            }
+
+            return;
+          }
+        } catch (err) {
+          console.error('rapha realtime handler', err);
+        }
+      });
+
+    // subscription established
+  } catch (err) {
+    console.error('Failed to subscribe to rapha', err);
+  }
+}
+
+export function useRaphaRealtime() {
+  useEffect(() => {
+    async function start() {
+      if (
+        store.getState().rapha.pllPoints.length === 0 &&
+        store.getState().rapha.dllResults.length === 0
+      ) {
+        await loadInitialData(); // 👈 load last minute
+      }
+      await ensureSubscription(); // 👈 start realtime
+    }
+
+    void start();
+  }, []);
+
+  return {} as const;
+}
+
+export default useRaphaRealtime;

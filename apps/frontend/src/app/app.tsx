@@ -3,6 +3,7 @@ import { MainDashboard } from '@/pages/MainDashboard';
 import { StationsPage } from '@/pages/StationsPage';
 import { ProjectsPage } from '@/pages/ProjectsPage';
 import { PresetsPage } from '@/pages/PresetsPage';
+import RaphaPage from '@/pages/RaphaPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { NavBar } from '@/components/NavBar';
@@ -11,6 +12,7 @@ import useRealtime from '@/hooks/useRealtime';
 import { Notifications } from '@/components/Notifications';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import { LeoProvider } from '@/contexts/LeoContext';
 import { fetchPresets } from '@/store/slices/presetsSlice';
 import type { AppDispatch } from '@/store';
 import { fetchStations } from '@/store/slices/stationsSlice';
@@ -26,8 +28,9 @@ export function App() {
 
   return (
     <ThemeProvider>
-      <BrowserRouter>
-        <div className="min-h-screen bg-background">
+      <LeoProvider>
+        <BrowserRouter>
+        <div className="flex flex-col h-screen overflow-hidden bg-background">
           <NavBar />
           <Notifications toasts={toasts} onClose={removeToast} />
           <Routes>
@@ -57,10 +60,19 @@ export function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/decoder"
+              element={
+                <ProtectedRoute>
+                  <RaphaPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </BrowserRouter>
+      </LeoProvider>
     </ThemeProvider>
   );
 }

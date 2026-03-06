@@ -24,6 +24,9 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { pb } from '@/lib/pocketbase';
+import { usePresetStatus } from '@/hooks/usePresetStatus';
+import { useLeoContext } from '@/contexts/LeoContext';
+import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 
 export function MainDashboard() {
   const dispatch = useDispatch<AppDispatch>();
@@ -44,6 +47,9 @@ export function MainDashboard() {
   const { stations, activeStationId } = useSelector(
     (state: RootState) => state.stations,
   );
+
+  const { records } = useLeoContext();
+  const presetStatus = usePresetStatus(records);
 
   useEffect(() => {
     dispatch(fetchStations());
@@ -87,7 +93,14 @@ export function MainDashboard() {
   const selectedPreset = presets.find((p) => p.id === selectedPresetId) || null;
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="flex-1 bg-background p-8 overflow-auto">
+      <div id="debug-preset-status" style={{display: 'none'}} data-status={JSON.stringify({
+        isActive: presetStatus.isActive,
+        isMatched: presetStatus.isMatched,
+        actionsTotal: presetStatus.actions.length,
+        recordsTotal: records.length,
+        matchedWindow: presetStatus.actions.length * 10
+      })} />
       <div className="max-w-3xl mx-auto">
         {activePresetId && (
           <div className="mb-4">
@@ -111,8 +124,21 @@ export function MainDashboard() {
                           style={{ backgroundColor: ap.color }}
                         />
                         <div>
-                          <div className="text-xl font-bold">{ap.name}</div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-xl font-bold flex items-center gap-3">
+                            {ap.name}
+                            {presetStatus.isMatched ? (
+                              <Badge className="bg-green-500/20 text-green-700 dark:text-green-400 hover:bg-green-500/30 border-green-500/30 gap-1.5 py-0">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                Verified in Logs
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-muted-foreground gap-1.5 py-0 border-dashed">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                Waiting for Logs ({presetStatus.actions.length * 10} window)
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground mt-1">
                             Active preset • {ap.expand?.actions?.length || 0}{' '}
                             action(s)
                           </div>
