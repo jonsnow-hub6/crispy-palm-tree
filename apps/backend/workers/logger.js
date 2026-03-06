@@ -33,7 +33,7 @@ async function insertLeoData() {
       projectId: `project-${Math.floor(Math.random() * 10)}`,
       counter: Math.floor(Math.random() * 1000),
       magic: Math.floor(Math.random() * 9999),
-      payload: `Payload data ${Math.random().toString(36).substring(2, 10)}`,
+      payload: `${Math.random().toString(36).substring(2, 10)}`,
       timeOfArrival: new Date().toISOString(),
       decoderId: `decoder${Math.floor(Math.random() * 2) + 1}`, // decoder1..decoder5
     };

@@ -40,7 +40,7 @@ export function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
+    <div className="flex-1 flex items-center justify-center p-4 bg-background overflow-auto">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Authentication Required</CardTitle>

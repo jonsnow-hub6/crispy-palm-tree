@@ -6,6 +6,7 @@ type Listener = (batch: LeoRecord[]) => void;
 
 const subscriptionState = {
   unsubscribe: null as (() => void) | null,
+  isSubscribing: false,
   listeners: new Set<Listener>(),
   buffer: [] as LeoRecord[],
   flushTimer: null as NodeJS.Timeout | null,
@@ -35,11 +36,12 @@ function scheduleFlush() {
 }
 
 async function ensureSubscription() {
-  if (subscriptionState.unsubscribe) return;
+  if (subscriptionState.unsubscribe || subscriptionState.isSubscribing) return;
 
+  subscriptionState.isSubscribing = true;
   try {
     // @ts-ignore - pocketbase types for subscribe are loose here
-    subscriptionState.unsubscribe = await pb.collection('leo').subscribe('*', (e: unknown) => {
+    const unsub = await pb.collection('leo').subscribe('*', (e: unknown) => {
       try {
         if (!e || typeof e !== 'object') return;
         const evt = e as { action?: string; record?: unknown };
@@ -69,9 +71,19 @@ async function ensureSubscription() {
         console.error('leo realtime handler', err);
       }
     });
+
+    // If all listeners were removed while we were awaiting the subscription
+    if (subscriptionState.listeners.size === 0) {
+      unsub();
+      subscriptionState.unsubscribe = null;
+    } else {
+      subscriptionState.unsubscribe = unsub;
+    }
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('Failed to subscribe to leo', err);
+  } finally {
+    subscriptionState.isSubscribing = false;
   }
 }
 
@@ -83,14 +95,15 @@ export function useLeoRealtime(onRecords: (batch: LeoRecord[]) => void) {
 
     return () => {
       subscriptionState.listeners.delete(onRecords);
-      if (subscriptionState.listeners.size === 0 && subscriptionState.unsubscribe) {
+      if (subscriptionState.listeners.size === 0) {
         try {
-          subscriptionState.unsubscribe();
+          pb.collection('leo').unsubscribe('*');
         } catch (err) {
           // eslint-disable-next-line no-console
           console.error('Failed to unsubscribe leo', err);
         }
         subscriptionState.unsubscribe = null;
+        subscriptionState.isSubscribing = false;
       }
     };
   }, [onRecords]);

@@ -87,7 +87,7 @@ export function MainDashboard() {
   const selectedPreset = presets.find((p) => p.id === selectedPresetId) || null;
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="flex-1 bg-background p-8 overflow-auto">
       <div className="max-w-3xl mx-auto">
         {activePresetId && (
           <div className="mb-4">

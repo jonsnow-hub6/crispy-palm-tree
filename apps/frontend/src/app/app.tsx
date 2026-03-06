@@ -28,7 +28,7 @@ export function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
-        <div className="min-h-screen bg-background">
+        <div className="flex flex-col h-screen overflow-hidden bg-background">
           <NavBar />
           <Notifications toasts={toasts} onClose={removeToast} />
           <Routes>
@@ -59,7 +59,7 @@ export function App() {
               }
             />
             <Route
-              path="/rapha"
+              path="/decoder"
               element={
                 <ProtectedRoute>
                   <RaphaPage />

@@ -107,7 +107,7 @@ export function ProjectsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="flex-1 bg-background p-8 overflow-auto">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-4xl font-bold">Projects Management</h1>

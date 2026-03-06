@@ -51,3 +51,30 @@ onRecordAfterCreateSuccess(async (e) => {
   e.next()
 
 }, "rapha")
+
+
+onRecordAfterCreateSuccess(async (e) => {
+  const MAX = 1000
+  const DELETE_BATCH = 100
+
+  await $app.runInTransaction((txApp) => {
+    const total = txApp.findAllRecords("leo").length
+
+    if (total <= MAX) return
+
+    const oldest = txApp.findRecordsByFilter(
+      "leo",
+      "",
+      "created",   // oldest first
+      DELETE_BATCH,
+      0
+    )
+
+    for (const r of oldest) {
+      txApp.delete(r)
+    }
+  })
+
+  e.next()
+
+}, "leo")
