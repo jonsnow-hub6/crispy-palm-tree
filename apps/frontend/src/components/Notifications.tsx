@@ -1,13 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  X,
-  Info,
-  AlertTriangle,
-  XCircle,
-  AlertOctagon,
-} from 'lucide-react';
+import { X, Info, AlertTriangle, XCircle, AlertOctagon } from 'lucide-react';
 
 const AUTO_CLOSE = 6000;
 
@@ -54,7 +48,7 @@ const levelStyles: Record<
     badge: 'default',
     icon: AlertOctagon,
     banner: 'shadow-xl border-b-4 border-red-900 animate-softPulse',
-    glow: 'shadow-[0_0_25px_5px_rgba(220,38,38,0.45)]'
+    glow: 'shadow-[0_0_25px_5px_rgba(220,38,38,0.45)]',
   },
 };
 
@@ -122,35 +116,20 @@ function ToastItem({
         {/* Content */}
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <Badge variant={style.badge}>
-              {toast.level}
-            </Badge>
+            <Badge variant={style.badge}>{toast.level}</Badge>
 
-            <div className="text-sm font-semibold">
-              {toast.type}
-            </div>
+            <div className="text-sm font-semibold">{toast.type}</div>
+
+            {toast.stationName && (
+              <div className="text-sm font-semibold">{toast.stationName}</div>
+            )}
           </div>
 
-          <div className="text-sm text-muted-foreground">
-            {toast.content}
-          </div>
-
-          {toast.stationName && (
-            <div className="text-xs text-muted-foreground mt-2">
-              Station:{' '}
-              <span className="font-medium">
-                {toast.stationName}
-              </span>
-            </div>
-          )}
+          <div className="text-sm text-muted-foreground">{toast.content}</div>
         </div>
 
         {/* Close */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleClose}
-        >
+        <Button variant="ghost" size="icon" onClick={handleClose}>
           <X className="h-4 w-4" />
         </Button>
       </div>
@@ -168,11 +147,7 @@ export function Notifications({
   return (
     <div className="fixed left-4 bottom-4 z-50 flex flex-col-reverse gap-3 max-w-sm w-full">
       {toasts.map((t) => (
-        <ToastItem
-          key={t.id}
-          toast={t}
-          onClose={onClose}
-        />
+        <ToastItem key={t.id} toast={t} onClose={onClose} />
       ))}
     </div>
   );

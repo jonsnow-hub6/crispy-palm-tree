@@ -71,6 +71,7 @@ routerAdd('POST', '/api/stations/{id}/activate', async (c) => {
     if (!activatedLink) {
       notification.set("level", "error");
       notification.set("type", "connection");
+      notification.set("stationName", newStation.get('name'));
       notification.set("content", `Failed to activate station "${newStation.get('name')}" - no links reachable`);
       $app.save(notification);
 
@@ -130,6 +131,7 @@ routerAdd('POST', '/api/stations/{id}/activate', async (c) => {
 
         notification.set("level", "error");
         notification.set("type", "connection");
+        notification.set("stationName", newStation.get('name'));
         notification.set("content", `Failed to deactivate previous station "${prevStation.get('name')}" after activating "${newStation.get('name')}" - rollback applied`);
         $app.save(notification);
 
@@ -156,6 +158,7 @@ routerAdd('POST', '/api/stations/{id}/activate', async (c) => {
 
     notification.set("level", "info");
     notification.set("type", "connection");
+    notification.set("stationName", newStation.get('name'));
     notification.set("content", `Station "${newStation.get('name')}" activated successfully${prevStation ? `, previous station was "${prevStation.get('name')}"` : ''}`);
     $app.save(notification);
 
@@ -171,6 +174,7 @@ routerAdd('POST', '/api/stations/{id}/activate', async (c) => {
 
     notification.set("level", "error");
     notification.set("type", "connection");
+    notification.set("stationName", newStation.get('name'));
     notification.set("content", `Error during station activation: ${err.message || String(err)}`);
     $app.save(notification);
 
@@ -227,6 +231,7 @@ routerAdd('POST', '/api/stations/{id}/deactivate', async (c) => {
     if (failed) {
       notification.set('level', 'error');
       notification.set('type', 'connection');
+      notification.set("stationName", station.get('name'));
       notification.set(
         'content',
         `Failed to fully deactivate station "${station.get('name')}"`
@@ -256,6 +261,7 @@ routerAdd('POST', '/api/stations/{id}/deactivate', async (c) => {
 
     notification.set('level', 'info');
     notification.set('type', 'connection');
+    notification.set("stationName", station.get('name'));
     notification.set(
       'content',
       `Station "${station.get('name')}" deactivated successfully`
@@ -273,6 +279,7 @@ routerAdd('POST', '/api/stations/{id}/deactivate', async (c) => {
 
     notification.set('level', 'error');
     notification.set('type', 'connection');
+    notification.set("stationName", station.get('name'));
     notification.set(
       'content',
       `Error during station deactivation: ${err.message || String(err)}`
