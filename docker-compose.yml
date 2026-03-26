@@ -4,18 +4,30 @@ services:
   server:
     container_name: splinter-server
     image: /splinter-server:dev
+    restart: unless-stopped
     ports:
       - "8090:8090"
+    environment:
+      - LOGSTASH_URL=http://localhost:5000
+    volumes:
+      - ./compose_data/pb_data:/pb/pb_data
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
 
   client:
     image: /splinter-client:dev
     container_name: splinter-client
+    restart: unless-stopped
     environment:
       - SERVER_URL=splinter-server:8090
     ports:
-      - "4200:4200"
+      - "80:80"
     depends_on:
       - server
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
 
   n8n:
     image: n8nio/n8n:latest
@@ -33,5 +45,6 @@ services:
       - N8N_SECURE_COOKIE=false
     volumes:
       - ./apps/n8n/data:/home/node/.n8n
-    restart: always
+      - ./splinter_cron_flow.json:/home/node/splinter_cron_flow.json
+    restart: unless-stopped
     
