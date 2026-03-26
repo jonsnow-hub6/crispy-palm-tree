@@ -1,4 +1,10 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+} from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +15,7 @@ import useLeoRealtime from '@/hooks/useLeoRealtime';
 import { usePresetStatus } from '@/hooks/usePresetStatus';
 import { pb } from '@/lib/pocketbase';
 
-const SOFT_CAP = 10_000;
+const SOFT_CAP = 200; // only keep the latest 200 logs in this view
 
 type Props = {
   decoderId?: string | null;
@@ -18,7 +24,7 @@ type Props = {
 export default function LeoLogger({ decoderId }: Props) {
   const [records, setRecords] = useState<LeoRecord[]>([]);
   const parentRef = useRef<HTMLDivElement | null>(null);
-  
+
   const [isPaused, setIsPaused] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,23 +50,40 @@ export default function LeoLogger({ decoderId }: Props) {
         });
         if (!isMounted) return;
 
-        const history = result.items.reverse().map(r => ({
-          id: r.id,
-          projectId: String(r.projectId ?? ''),
-          counter: Number(r.counter ?? 0),
-          magic: Number(r.magic ?? 0),
-          payload: String(r.payload ?? ''),
-          timeOfArrival: String(r.timeOfArrival ?? ''),
-          decoderId: String(r.decoderId ?? ''),
-          created: r.created,
-        }));
+        const MAX_PAYLOAD_STORED = 1024;
+        const history = result.items.reverse().map((r) => {
+          const RAW_PAYLOAD = String(r.payload ?? '');
+          return {
+            id: r.id,
+            projectId: String(r.projectId ?? ''),
+            counter: Number(r.counter ?? 0),
+            magic: Number(r.magic ?? 0),
+            payload:
+              RAW_PAYLOAD.length > MAX_PAYLOAD_STORED
+                ? RAW_PAYLOAD.slice(0, MAX_PAYLOAD_STORED)
+                : RAW_PAYLOAD,
+            reserved: String(r.reserved ?? ''),
+            messageType: Number(r.messageType ?? 0),
+            management: Number(r.management ?? 0),
+            threshold: Number(r.threshold ?? 0),
+            timeOfArrival: String(r.timeOfArrival ?? ''),
+            decoderId: String(r.decoderId ?? ''),
+            created: r.created,
+          };
+        });
 
         setRecords((prev) => {
           const existingIds = new Set(prev.map((p) => p.id));
-          const newHistory = history.filter((h) => h.id && !existingIds.has(h.id));
-          
+          const newHistory = history.filter(
+            (h) => h.id && !existingIds.has(h.id),
+          );
+
           let merged = [...newHistory, ...prev];
-          merged.sort((a, b) => new Date(a.timeOfArrival).getTime() - new Date(b.timeOfArrival).getTime());
+          merged.sort(
+            (a, b) =>
+              new Date(a.timeOfArrival).getTime() -
+              new Date(b.timeOfArrival).getTime(),
+          );
 
           if (merged.length > SOFT_CAP) {
             merged = merged.slice(merged.length - SOFT_CAP);
@@ -86,19 +109,22 @@ export default function LeoLogger({ decoderId }: Props) {
       if (isPausedRef.current) return;
 
       setRecords((prev) => {
-        const filtered = batch.filter((r) => (decoderId ? r.decoderId === decoderId : true));
+        const filtered = batch.filter((r) =>
+          decoderId ? r.decoderId === decoderId : true,
+        );
         if (!filtered.length) return prev;
-        
-        const existingIds = new Set(prev.map(p => p.id));
-        const newBatch = filtered.filter(f => f.id && !existingIds.has(f.id));
+
+        const existingIds = new Set(prev.map((p) => p.id));
+        const newBatch = filtered.filter((f) => f.id && !existingIds.has(f.id));
         if (!newBatch.length) return prev;
 
         const merged = prev.concat(newBatch);
-        if (merged.length > SOFT_CAP) return merged.slice(merged.length - SOFT_CAP);
+        if (merged.length > SOFT_CAP)
+          return merged.slice(merged.length - SOFT_CAP);
         return merged;
       });
     },
-    [decoderId]
+    [decoderId],
   );
 
   useLeoRealtime(appendRecords);
@@ -111,7 +137,12 @@ export default function LeoLogger({ decoderId }: Props) {
         r.payload.toLowerCase().includes(lowerQ) ||
         r.projectId.toLowerCase().includes(lowerQ) ||
         r.decoderId.toLowerCase().includes(lowerQ) ||
-        r.magic.toString().includes(lowerQ)
+        r.magic.toString().includes(lowerQ) ||
+        r.messageType.toString().includes(lowerQ) ||
+        r.management.toString().includes(lowerQ) ||
+        r.threshold.toString().includes(lowerQ) ||
+        r.timeOfArrival.toLowerCase().includes(lowerQ) ||
+        r.reserved.toLowerCase().includes(lowerQ),
     );
   }, [records, searchQuery]);
 
@@ -157,7 +188,8 @@ export default function LeoLogger({ decoderId }: Props) {
                 )}
               </CardTitle>
               <div className="text-xs text-muted-foreground mt-0.5">
-                {records.length} records {searchQuery ? `(${displayedRecords.length} matched)` : ''}
+                {records.length} records{' '}
+                {searchQuery ? `(${displayedRecords.length} matched)` : ''}
               </div>
             </div>
           </div>
@@ -173,7 +205,7 @@ export default function LeoLogger({ decoderId }: Props) {
               />
             </div>
             <Button
-              variant={isPaused ? "default" : "secondary"}
+              variant={isPaused ? 'default' : 'secondary'}
               size="sm"
               className="h-9 px-3 gap-2"
               onClick={() => {
@@ -181,7 +213,11 @@ export default function LeoLogger({ decoderId }: Props) {
                 if (isPaused) setAutoScroll(true); // turning play back on -> auto scroll
               }}
             >
-              {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+              {isPaused ? (
+                <Play className="w-4 h-4" />
+              ) : (
+                <Pause className="w-4 h-4" />
+              )}
             </Button>
             <Button
               variant="outline"
@@ -196,20 +232,29 @@ export default function LeoLogger({ decoderId }: Props) {
       </CardHeader>
 
       <CardContent className="p-0 flex flex-col flex-1 overflow-hidden">
-        {/* Sticky Header */}
-        <div className="grid grid-cols-[80px_100px_80px_80px_1fr_100px] gap-3 px-4 py-2 border-b border-border text-xs font-semibold text-muted-foreground bg-muted/40 z-10 shrink-0">
-          <div>Decoder</div>
-          <div>Project ID</div>
-          <div>Counter</div>
-          <div>Magic</div>
-          <div>Payload</div>
+        <div className="grid grid-cols-[60px_80px_90px_80px_50px_40px_40px_1fr] gap-3 px-4 py-2 border-b border-border text-xs font-semibold text-muted-foreground bg-muted/40 z-10 shrink-0">
+          <div className="truncate text-left" title="Project ID">
+            Project ID
+          </div>
+          <div className="truncate text-right">Counter</div>
+          <div className="truncate text-right">Magic</div>
+          <div className="truncate text-right">Reserved</div>
+          <div className="truncate text-center" title="Message Type">
+            Msg
+          </div>
+          <div className="truncate text-center" title="Management">
+            Mgmt
+          </div>
+          <div className="truncate text-center" title="Threshold">
+            Thr
+          </div>
           <div className="text-right">Time</div>
         </div>
 
         {/* Scrollable Virtualized List */}
-        <div 
-          ref={parentRef} 
-          className="overflow-auto flex-1 bg-background/50 relative"
+        <div
+          ref={parentRef}
+          className="overflow-auto flex-1 bg-background/50 relative scrollbar"
           onScroll={handleScroll}
         >
           {displayedRecords.length === 0 ? (
@@ -230,9 +275,13 @@ export default function LeoLogger({ decoderId }: Props) {
                 if (!item) return null;
 
                 // Check if this log matches the active preset
-                const isPresetLog = presetStatus.isActive && presetStatus.actions.some(
-                  (a) => a.project === item.projectId && a.payload === item.payload
-                );
+                const isPresetLog =
+                  presetStatus.isActive &&
+                  presetStatus.actions.some(
+                    (a) =>
+                      a.project === item.projectId &&
+                      a.payload === item.payload,
+                  );
 
                 let bg =
                   virtualRow.index % 2 === 0
@@ -241,11 +290,13 @@ export default function LeoLogger({ decoderId }: Props) {
 
                 // Colorize row if a preset is active
                 if (presetStatus.isActive) {
-                   if (isPresetLog) {
-                     bg = 'bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20';
-                   } else {
-                     bg = 'bg-red-500/10 text-red-700 dark:text-red-400 hover:bg-red-500/20';
-                   }
+                  if (isPresetLog) {
+                    bg =
+                      'bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20';
+                  } else {
+                    bg =
+                      'bg-red-500/10 text-red-700 dark:text-red-400 hover:bg-red-500/20';
+                  }
                 }
 
                 return (
@@ -259,21 +310,37 @@ export default function LeoLogger({ decoderId }: Props) {
                       height: virtualRow.size,
                       transform: `translateY(${virtualRow.start}px)`,
                     }}
-                    className={`${bg} border-b border-border/50 font-mono text-[13px] grid grid-cols-[80px_100px_80px_80px_1fr_100px] items-center gap-3 px-4 transition-colors`}
+                    className={`${bg} border-b border-border/50 font-mono tabular-nums text-[12px] sm:text-[13px] grid grid-cols-[60px_80px_90px_80px_50px_40px_40px_1fr] items-center gap-3 px-4 transition-colors`}
                   >
-                    <div className="text-muted-foreground truncate" title={item.decoderId}>
-                      {item.decoderId || '—'}
-                    </div>
-                    <div className={`truncate ${presetStatus.isActive && !isPresetLog ? 'text-red-700 dark:text-red-400' : 'text-primary/80'}`} title={item.projectId}>
+                    <div
+                      className={`truncate text-left ${presetStatus.isActive && !isPresetLog ? 'text-red-700 dark:text-red-400' : 'text-primary/80'}`}
+                      title={item.projectId}
+                    >
                       {item.projectId}
                     </div>
-                    <div className="text-muted-foreground">#{item.counter}</div>
-                    <div className="text-muted-foreground">{item.magic}</div>
-                    <div className="truncate pr-4" title={item.payload}>
-                      {item.payload}
+                    <div className="text-muted-foreground text-right">
+                      #{item.counter}
+                    </div>
+                    <div className="text-muted-foreground text-right">
+                      {item.magic}
+                    </div>
+                    <div
+                      className="text-muted-foreground text-right truncate"
+                      title={item.reserved}
+                    >
+                      {item.reserved}
+                    </div>
+                    <div className="text-muted-foreground text-center truncate">
+                      {item.messageType}
+                    </div>
+                    <div className="text-muted-foreground text-center truncate">
+                      {item.management}
+                    </div>
+                    <div className="text-muted-foreground text-center truncate">
+                      {item.threshold}
                     </div>
                     <div className="text-right text-[11px] text-muted-foreground whitespace-nowrap">
-                      {item.timeOfArrival.substring(11, 23)} {/* showing usually HH:mm:ss.SSS if it's ISO, or whatever String it is */}
+                      {item.timeOfArrival}
                     </div>
                   </div>
                 );

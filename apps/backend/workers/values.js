@@ -78,7 +78,7 @@ async function main() {
   await insertRaphaData();
 
   // 🔥 Uncomment to simulate realtime stream
-  setInterval(insertRaphaData, 500);
+  setInterval(insertRaphaData, 1000);
 }
 
 main();

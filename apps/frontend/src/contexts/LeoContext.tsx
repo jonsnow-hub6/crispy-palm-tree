@@ -2,7 +2,7 @@ import { createContext, useContext, useState, ReactNode, useCallback, useRef } f
 import useLeoRealtime from '@/hooks/useLeoRealtime';
 import type { LeoRecord } from '@/types/leo.types';
 
-const SOFT_CAP = 10_000;
+const SOFT_CAP = 200; // keep only most recent 200 records globally
 
 interface LeoContextType {
   records: LeoRecord[];

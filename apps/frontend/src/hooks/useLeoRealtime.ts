@@ -12,8 +12,8 @@ const subscriptionState = {
   flushTimer: null as NodeJS.Timeout | null,
 };
 
-const MAX_BATCH = 500;
-const FLUSH_INTERVAL = 300; // flush up to ~3x/sec
+const MAX_BATCH = 200;
+const FLUSH_INTERVAL = 500; // flush up to ~2x/sec
 
 function scheduleFlush() {
   if (subscriptionState.flushTimer) return;
@@ -50,12 +50,22 @@ async function ensureSubscription() {
         const r = evt.record as any;
         if (!r) return;
 
+        // Trim large payloads to avoid unbounded memory growth in the UI.
+        const RAW_PAYLOAD = String(r.payload ?? '');
+        const MAX_PAYLOAD_STORED = 1024; // keep at most 1KB per record in-memory
         const rec: LeoRecord = {
           id: r.id,
           projectId: String(r.projectId ?? ''),
           counter: Number(r.counter ?? 0),
           magic: Number(r.magic ?? 0),
-          payload: String(r.payload ?? ''),
+          payload:
+            RAW_PAYLOAD.length > MAX_PAYLOAD_STORED
+              ? RAW_PAYLOAD.slice(0, MAX_PAYLOAD_STORED)
+              : RAW_PAYLOAD,
+          reserved: String(r.reserved ?? ''),
+          messageType: Number(r.messageType ?? 0),
+          management: Number(r.management ?? 0),
+          threshold: Number(r.threshold ?? 0),
           timeOfArrival: String(r.timeOfArrival ?? ''),
           decoderId: String(r.decoderId ?? ''),
           created: r.created,
