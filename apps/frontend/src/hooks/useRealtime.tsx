@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { pb } from '@/lib/pocketbase';
 import { store } from '@/store';
 import { upsertStation, removeStation } from '@/store/slices/stationsSlice';
-import { useRef } from 'react';
+import { useRef, useCallback } from 'react';
 
 type Toast = {
   id: string;
@@ -10,11 +10,15 @@ type Toast = {
   type: 'counter' | 'connection';
   content: string;
   stationName?: string | null;
+  timestamp?: number;
 };
 
 export function useRealtime() {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [history, setHistory] = useState<Toast[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const okShownRef = useRef(false);
+  const seenIdsRef = useRef(new Set<string>());
 
   useEffect(() => {
     let unsubStations: (() => void) | null = null;
@@ -42,70 +46,71 @@ export function useRealtime() {
     };
 
     const ensureCounterToast = (present: boolean) => {
-  setToasts((t) => {
-    const hasMismatchToast = t.some(
-      (x) => x.id === 'counter-mismatch'
-    );
+      setToasts((t) => {
+        const hasMismatchToast = t.some((x) => x.id === 'counter-mismatch');
 
-    // --------------------
-    // MISMATCH PRESENT
-    // --------------------
-    if (present) {
-      okShownRef.current = false; // reset OK flag
+        // --------------------
+        // MISMATCH PRESENT
+        // --------------------
+        if (present) {
+          okShownRef.current = false; // reset OK flag
 
-      // show warning if not exists
-      if (!hasMismatchToast) {
-        const toast: Toast = {
-          id: 'counter-mismatch',
-          level: 'warning',
-          type: 'counter',
-          content: 'Counter mismatch detected across stations',
-          stationName: null,
-        };
+          // show warning if not exists
+          // if (!hasMismatchToast) {
+          //   const toast: Toast = {
+          //     id: 'counter-mismatch',
+          //     level: 'warning',
+          //     type: 'counter',
+          //     content: 'Counter mismatch detected across stations',
+          //     stationName: null,
+          //     timestamp: Date.now(),
+          //   };
 
-        return [toast, ...t].slice(0, 6);
-      }
+          //   setHistory((h) => [toast, ...h].slice(0, 20));
+          //   setUnreadCount((c) => c + 1);
 
-      return t;
-    }
+          //   return [toast, ...t].slice(0, 6);
+          // }
 
-    // --------------------
-    // NOW CONSISTENT
-    // --------------------
-    if (!present) {
-      // remove mismatch toast
-      const next = t.filter(
-        (x) => x.id !== 'counter-mismatch'
-      );
+          return t;
+        }
 
-      // already showed OK → do nothing
-      if (okShownRef.current) {
-        return next;
-      }
+        // --------------------
+        // NOW CONSISTENT
+        // --------------------
+        if (!present) {
+          // remove mismatch toast
+          const next = t.filter((x) => x.id !== 'counter-mismatch');
 
-      okShownRef.current = true;
+          // already showed OK → do nothing
+          if (okShownRef.current) {
+            return next;
+          }
 
-      const okToast: Toast = {
-        id: `counter-ok-${Date.now()}`,
-        level: 'info',
-        type: 'counter',
-        content: 'Counters are now consistent',
-        stationName: null,
-      };
+          okShownRef.current = true;
 
-      setTimeout(() => {
-        setToasts((t2) =>
-          t2.filter((x) => x.id !== okToast.id)
-        );
-      }, 3000);
+          const okToast: Toast = {
+            id: `counter-ok-${Date.now()}`,
+            level: 'info',
+            type: 'counter',
+            content: 'Counters are now consistent',
+            stationName: null,
+            timestamp: Date.now(),
+          };
 
-      return [okToast, ...next].slice(0, 6);
-    }
+          setHistory((h) => [okToast, ...h].slice(0, 20));
+          setUnreadCount((c) => c + 1);
 
-    return t;
-  });
-};
+          setTimeout(() => {
+            setToasts((t2) => t2.filter((x) => x.id !== okToast.id));
+          }, 3000);
 
+          return [okToast, ...next].slice(0, 6);
+        }
+
+        return t;
+      });
+    };
 
     (async () => {
       // initial server check to detect any existing mismatch
@@ -172,10 +177,14 @@ export function useRealtime() {
             const rec = e.record;
             if (!rec) return;
 
+            // Prevent duplicate processing from double-subscriptions in React Strict Mode
+            if (seenIdsRef.current.has(rec.id)) return;
+            seenIdsRef.current.add(rec.id);
+
             // If this is a counter-type notification, rely on aggregated counterMismatch state
-            if ((rec.type ?? '') === 'counter') {
-              return;
-            }
+            // if ((rec.type ?? '') === 'counter') {
+            //   return;
+            // }
 
             const exists = (prevToasts: Toast[]) =>
               prevToasts.some((t) => t.id === rec.id);
@@ -185,10 +194,13 @@ export function useRealtime() {
               level: rec.level ?? 'info',
               type: rec.type ?? 'connection',
               content: rec.content ?? '',
-              stationName: null,
+              stationName: rec.stationName ?? null,
+              timestamp: Date.now(),
             };
 
-            setToasts((t) => (exists(t) ? t : [toast, ...t].slice(0, 6)));
+            setToasts((t) => [toast, ...t].slice(0, 6));
+            setHistory((h) => [toast, ...h].slice(0, 20));
+            setUnreadCount((c) => c + 1);
 
             if (toast.level !== 'critical') {
               setTimeout(() => {
@@ -213,6 +225,9 @@ export function useRealtime() {
 
   return {
     toasts,
+    history,
+    unreadCount,
+    markAllRead: useCallback(() => setUnreadCount(0), []),
     removeToast: (id: string) => setToasts((t) => t.filter((x) => x.id !== id)),
   };
 }

@@ -38,7 +38,7 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
       if (!projectId) continue;
 
       commands.push({
-        id: +projectId,               // project id
+        id: +projectId, // project id
         payload: action.get('payload'),
       });
     }
@@ -70,8 +70,11 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
         try {
           const res = httpPostSetPreset(link, presetPayload);
           if (!res.ok) {
-            errorNotification.set("level", "error");
-            errorNotification.set("content", `Failed to send preset to station "${stationName}" at ${link.host}:${link.port} - ${res.error}`);
+            errorNotification.set('level', 'error');
+            errorNotification.set(
+              'content',
+              `Failed to send preset to station "${stationName}" at ${link.host}:${link.port} - ${res.error}`,
+            );
             $app.save(errorNotification);
           }
           return {
@@ -83,8 +86,11 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
             error: res.ok ? null : res.error,
           };
         } catch (err) {
-          errorNotification.set("level", "error");
-          errorNotification.set("content", `Failed to send preset to station "${stationName}" at ${link.host}:${link.port} - ${String(err)}`);
+          errorNotification.set('level', 'error');
+          errorNotification.set(
+            'content',
+            `Failed to send preset to station "${stationName}" at ${link.host}:${link.port} - ${String(err)}`,
+          );
           $app.save(errorNotification);
 
           return {
@@ -96,12 +102,15 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
             error: String(err),
           };
         }
-      })
+      }),
     );
 
-    notification.set("level", "info");
-    notification.set("type", "preset");
-    notification.set("content", `Preset "${preset.get('name')}" activated and sent to ${results.length} station links`);
+    notification.set('level', 'info');
+    notification.set('type', 'preset');
+    notification.set(
+      'content',
+      `Preset "${preset.get('name')}" activated and sent to ${results.length} station links`,
+    );
     $app.save(notification);
 
     return c.json(200, {
@@ -109,19 +118,19 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
       preset: presetPayload,
       results,
     });
-
   } catch (err) {
-    notification.set("level", "error");
-    notification.set("content", `Error during preset activation - ${String(err)}`);
+    notification.set('level', 'error');
+    notification.set(
+      'content',
+      `Error during preset activation - ${String(err)}`,
+    );
     $app.save(notification);
-    
+
     return c.json(500, { error: String(err) });
   }
 });
 
-
 routerAdd('POST', '/api/presets/{id}/set-link', async (c) => {
-
   const notifications = $app.findCollectionByNameOrId('notifications');
   let notification = new Record(notifications);
 
@@ -151,7 +160,6 @@ routerAdd('POST', '/api/presets/{id}/set-link', async (c) => {
     const commands = [];
 
     for (const actionId of actionIds) {
-
       const action = $app.findRecordById('actions', actionId);
       if (!action) continue;
 
@@ -178,23 +186,18 @@ routerAdd('POST', '/api/presets/{id}/set-link', async (c) => {
     const stations = $app.findRecordsByFilter('stations', '');
 
     for (const station of stations) {
-
       let links = JSON.parse(station.get('stationLinks') || '[]');
 
       let changed = false;
 
-      links = links.map(l => {
-
+      links = links.map((l) => {
         if (l.host === host && l.port === port) {
-
           changed = true;
 
           return {
             ...l,
-            currentPreset: res.ok
-              ? preset.get('name')
-              : 'unknown',
-            reachable: res.ok
+            currentPreset: res.ok ? preset.get('name') : 'unknown',
+            reachable: res.ok,
           };
         }
 
@@ -211,21 +214,18 @@ routerAdd('POST', '/api/presets/{id}/set-link', async (c) => {
     // Notifications
     // =============================
     if (!res.ok) {
-
-      notification.set("level", "error");
-      notification.set("type", "preset");
+      notification.set('level', 'error');
+      notification.set('type', 'preset');
       notification.set(
-        "content",
-        `Failed to send preset "${preset.get('name')}" to ${host}:${port} - ${res.error}`
+        'content',
+        `Failed to send preset "${preset.get('name')}" to ${host}:${port} - ${res.error}`,
       );
-
     } else {
-
-      notification.set("level", "info");
-      notification.set("type", "preset");
+      notification.set('level', 'info');
+      notification.set('type', 'preset');
       notification.set(
-        "content",
-        `Preset "${preset.get('name')}" sent to ${host}:${port}`
+        'content',
+        `Preset "${preset.get('name')}" sent to ${host}:${port}`,
       );
     }
 
@@ -237,14 +237,12 @@ routerAdd('POST', '/api/presets/{id}/set-link', async (c) => {
       preset: presetPayload,
       error: res.ok ? null : res.error,
     });
-
   } catch (err) {
-
-    notification.set("level", "error");
-    notification.set("type", "preset");
+    notification.set('level', 'error');
+    notification.set('type', 'preset');
     notification.set(
-      "content",
-      `Error sending preset to single link - ${String(err)}`
+      'content',
+      `Error sending preset to single link - ${String(err)}`,
     );
 
     $app.save(notification);
@@ -254,5 +252,3 @@ routerAdd('POST', '/api/presets/{id}/set-link', async (c) => {
     return c.json(500, { error: String(err) });
   }
 });
-
-console.log('presets.pb.js: /api/presets/{id}/set registered');
