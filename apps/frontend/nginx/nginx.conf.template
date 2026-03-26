@@ -1,13 +1,13 @@
 events {}
 http {
-    include       /etc/nginx/mime.types;
+    include /etc/nginx/mime.types;
     upstream server {
         server ${SERVER_URL};
     }
 
     server {
         gzip on;
-        gzip_types application/javascript image/png image/jpeg
+        gzip_types application/javascript image/png image/jpeg;
 
         location / {
             error_page 404 = @react-router;
