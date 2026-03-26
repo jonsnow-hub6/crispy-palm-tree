@@ -7,7 +7,7 @@ import type {
   RaphaPllLockState,
 } from '@/types/rapha';
 import { store } from '@/store';
-import { addPllPoints, addDllResults } from '@/store/slices/raphaSlice';
+import { addPllPoints, addDllResults, trimToLast60s } from '@/store/slices/raphaSlice';
 
 type Point = { ts: number; value: number; decoderId?: string };
 
@@ -18,6 +18,7 @@ const subscriptionState = {
   pllBuffer: [] as Point[],
   dllBuffer: [] as Point[],
   flushTimer: null as NodeJS.Timeout | null,
+  cleanupTimer: null as NodeJS.Timeout | null,
 };
 
 // Reduce batch size and flush frequency to lower memory / render pressure
@@ -185,6 +186,17 @@ async function ensureSubscription() {
       });
 
     // subscription established
+    // start periodic cleanup to ensure redux only keeps last 60s
+    if (!subscriptionState.cleanupTimer) {
+      subscriptionState.cleanupTimer = setInterval(() => {
+        try {
+          store.dispatch(trimToLast60s());
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.error('rapha cleanup error', err);
+        }
+      }, 1000);
+    }
   } catch (err) {
     console.error('Failed to subscribe to rapha', err);
   }
@@ -203,6 +215,21 @@ export function useRaphaRealtime() {
     }
 
     void start();
+    return () => {
+      if (subscriptionState.unsubscribe) {
+        try {
+          subscriptionState.unsubscribe();
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.error('Failed to unsubscribe rapha on unmount', err);
+        }
+        subscriptionState.unsubscribe = null;
+      }
+      if (subscriptionState.cleanupTimer) {
+        clearInterval(subscriptionState.cleanupTimer);
+        subscriptionState.cleanupTimer = null;
+      }
+    };
   }, []);
 
   return {} as const;

@@ -31,10 +31,14 @@ async function insertLeoData() {
   try {
     const record = {
       projectId: `1234`,
-      counter: Math.floor(Math.random() * 1000),
-      magic: Math.floor(Math.random() * 9999),
+      counter: Math.floor(Math.random() * 10000000),
+      magic: Math.floor(Math.random() * 99999999),
       payload: `0x23454`,
       timeOfArrival: new Date().toISOString(),
+      reserved: `0x23454`,
+      messageType: Math.floor(Math.random() * 10),
+      management: Math.floor(Math.random() * 10),
+      threshold: Math.floor(Math.random() * 10),
       decoderId: `decoder${Math.floor(Math.random() * 2) + 1}`, // decoder1..decoder5
     };
 
@@ -43,10 +47,14 @@ async function insertLeoData() {
 
     const record1 = {
       projectId: `1234`,
-      counter: Math.floor(Math.random() * 1000),
-      magic: Math.floor(Math.random() * 9999),
-      payload: `0x23e4fa54`,
+      counter: Math.floor(Math.random() * 10000000),
+      magic: Math.floor(Math.random() * 99999999),
+      payload: `0xefa4`,
       timeOfArrival: new Date().toISOString(),
+      reserved: `0xefa4`,
+      messageType: Math.floor(Math.random() * 10),
+      management: Math.floor(Math.random() * 10),
+      threshold: Math.floor(Math.random() * 10),
       decoderId: `decoder${Math.floor(Math.random() * 2) + 1}`, // decoder1..decoder5
     };
 
@@ -55,9 +63,13 @@ async function insertLeoData() {
 
     const record2 = {
       projectId: `1234`,
-      counter: Math.floor(Math.random() * 1000),
-      magic: Math.floor(Math.random() * 9999),
+      counter: Math.floor(Math.random() * 10000000),
+      magic: Math.floor(Math.random() * 99999999),
       payload: `0x23454`,
+      reserved: `0x23454`,
+      messageType: Math.floor(Math.random() * 10),
+      management: Math.floor(Math.random() * 10),
+      threshold: Math.floor(Math.random() * 10),
       timeOfArrival: new Date().toISOString(),
       decoderId: `decoder${Math.floor(Math.random() * 2) + 1}`, // decoder1..decoder5
     };
@@ -66,10 +78,14 @@ async function insertLeoData() {
     console.log('Inserted leo record:', created1);
 
     const record3 = {
-      projectId: `12345`,
-      counter: Math.floor(Math.random() * 1000),
-      magic: Math.floor(Math.random() * 9999),
+      projectId: `1245`,
+      counter: Math.floor(Math.random() * 10000000),
+      magic: Math.floor(Math.random() * 99999999),
       payload: `0x23454`,
+      reserved: `0x23454`,
+      messageType: Math.floor(Math.random() * 10),
+      management: Math.floor(Math.random() * 10),
+      threshold: Math.floor(Math.random() * 10),
       timeOfArrival: new Date().toISOString(),
       decoderId: `decoder${Math.floor(Math.random() * 2) + 1}`, // decoder1..decoder5
     };
@@ -84,7 +100,7 @@ async function insertLeoData() {
 // Run once or simulate stream
 // ----------------------------
 async function main() {
-//   await loginAdmin();
+  //   await loginAdmin();
 
   // Insert once
   await insertLeoData();

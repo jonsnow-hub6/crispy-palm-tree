@@ -147,7 +147,7 @@ export function StationsPage() {
   // display stations in stored order (do not reorder)
 
   return (
-    <div className="flex-1 bg-background p-8 overflow-auto">
+    <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-end">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

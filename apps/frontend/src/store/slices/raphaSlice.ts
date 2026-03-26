@@ -17,17 +17,17 @@ const initialState: RaphaState = {
 function pruneInPlace(points: Point[], maxPoints: number) {
   const cutoff = Date.now() - 60_000;
 
-  // Remove old points by time (fast forward removal)
-  let removeCount = 0;
-  while (removeCount < points.length && points[removeCount].ts < cutoff) {
-    removeCount++;
+  // Ensure we only keep points within the last 60s regardless of ordering.
+  let write = 0;
+  for (let read = 0; read < points.length; read++) {
+    if (points[read].ts >= cutoff) {
+      if (write !== read) points[write] = points[read];
+      write++;
+    }
   }
+  if (write !== points.length) points.splice(write);
 
-  if (removeCount > 0) {
-    points.splice(0, removeCount);
-  }
-
-  // Hard cap by size
+  // Hard cap by size (keep newest by slicing end)
   if (points.length > maxPoints) {
     points.splice(0, points.length - maxPoints);
   }
@@ -38,27 +38,51 @@ const raphaSlice = createSlice({
   initialState,
   reducers: {
     addPllPoints: (state, action: PayloadAction<Point[]>) => {
-      for (const p of action.payload) {
-        state.pllPoints.push(p);
+      // Merge incoming points, then keep only last 60s and enforce maxPoints.
+      const cutoff = Date.now() - 60_000;
+      const merged = state.pllPoints.concat(action.payload);
+      const filtered = merged.filter((p) => p.ts >= cutoff);
+      filtered.sort((a, b) => a.ts - b.ts);
+      if (filtered.length > state.maxPoints) {
+        state.pllPoints = filtered.slice(filtered.length - state.maxPoints);
+      } else {
+        state.pllPoints = filtered;
       }
-
-      pruneInPlace(state.pllPoints, state.maxPoints);
     },
 
     addDllResults: (state, action: PayloadAction<Point[]>) => {
-      for (const p of action.payload) {
-        state.dllResults.push(p);
+      // Merge incoming points, then keep only last 60s and enforce maxPoints.
+      const cutoff = Date.now() - 60_000;
+      const merged = state.dllResults.concat(action.payload);
+      const filtered = merged.filter((p) => p.ts >= cutoff);
+      filtered.sort((a, b) => a.ts - b.ts);
+      if (filtered.length > state.maxPoints) {
+        state.dllResults = filtered.slice(filtered.length - state.maxPoints);
+      } else {
+        state.dllResults = filtered;
       }
-
-      pruneInPlace(state.dllResults, state.maxPoints);
     },
 
     resetRapha: (state) => {
       state.pllPoints.length = 0;
       state.dllResults.length = 0;
     },
+
+    // Force-trim both series to the last 60s and enforce maxPoints.
+    trimToLast60s: (state) => {
+      const cutoff = Date.now() - 60_000;
+      state.pllPoints = state.pllPoints.filter((p) => p.ts >= cutoff);
+      state.dllResults = state.dllResults.filter((p) => p.ts >= cutoff);
+
+      if (state.pllPoints.length > state.maxPoints) {
+        state.pllPoints.splice(0, state.pllPoints.length - state.maxPoints);
+      }
+      if (state.dllResults.length > state.maxPoints) {
+        state.dllResults.splice(0, state.dllResults.length - state.maxPoints);
+      }
+    },
   },
 });
 
-export const { addPllPoints, addDllResults, resetRapha } = raphaSlice.actions;
+export const { addPllPoints, addDllResults, resetRapha, trimToLast60s } = raphaSlice.actions;
 export default raphaSlice.reducer;
