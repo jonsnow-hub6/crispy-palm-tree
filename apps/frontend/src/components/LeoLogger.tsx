@@ -9,7 +9,14 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Play, Pause, Search, Trash2, TerminalSquare } from 'lucide-react';
+import {
+  Play,
+  Pause,
+  Search,
+  Trash2,
+  TerminalSquare,
+  Wand2,
+} from 'lucide-react';
 import type { LeoRecord } from '@/types/leo.types';
 import useLeoRealtime from '@/hooks/useLeoRealtime';
 import { usePresetStatus } from '@/hooks/usePresetStatus';
@@ -28,6 +35,18 @@ export default function LeoLogger({ decoderId }: Props) {
   const [isPaused, setIsPaused] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [expectedMagic, setExpectedMagic] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('leoLoggerExpectedMagic') || '';
+    }
+    return '';
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('leoLoggerExpectedMagic', expectedMagic);
+    }
+  }, [expectedMagic]);
 
   // We need to keep a ref to isPaused so the callback doesn't need to rebuild on toggle
   const isPausedRef = useRef(isPaused);
@@ -196,6 +215,16 @@ export default function LeoLogger({ decoderId }: Props) {
 
           <div className="flex items-center gap-2">
             <div className="relative">
+              <Wand2 className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Expected Magic..."
+                value={expectedMagic}
+                onChange={(e) => setExpectedMagic(e.target.value)}
+                className="w-[140px] sm:w-[160px] h-9 pl-9 text-sm bg-background border-dashed focus-visible:border-solid"
+                title="Highlight logs that do not match this magic number"
+              />
+            </div>
+            <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Filter logs..."
@@ -299,6 +328,20 @@ export default function LeoLogger({ decoderId }: Props) {
                   }
                 }
 
+                const magicMismatch =
+                  expectedMagic.trim() !== '' &&
+                  item.magic.toString() !== expectedMagic.trim();
+
+                if (magicMismatch) {
+                  if (presetStatus.isActive) {
+                    bg +=
+                      ' border-l-4 border-l-red-600 dark:border-l-red-500 font-bold bg-opacity-80';
+                  } else {
+                    bg =
+                      'bg-red-500/20 dark:bg-red-900/30 border-l-4 border-l-red-600 dark:border-l-red-500 hover:bg-red-500/30 dark:hover:bg-red-900/40 [&>div]:!text-red-700 dark:[&>div]:!text-red-300 font-bold';
+                  }
+                }
+
                 return (
                   <div
                     key={`${item.id}-${virtualRow.index}`}
@@ -321,7 +364,9 @@ export default function LeoLogger({ decoderId }: Props) {
                     <div className="text-muted-foreground text-right">
                       #{item.counter}
                     </div>
-                    <div className="text-muted-foreground text-right">
+                    <div
+                      className={`text-right ${magicMismatch ? '!text-red-600 dark:!text-red-500 font-bold underline' : 'text-muted-foreground'}`}
+                    >
                       {item.magic}
                     </div>
                     <div

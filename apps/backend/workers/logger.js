@@ -48,7 +48,7 @@ async function insertLeoData() {
     const record1 = {
       projectId: `1234`,
       counter: Math.floor(Math.random() * 10000000),
-      magic: Math.floor(Math.random() * 99999999),
+      magic: 12345678,
       payload: `0xefa4`,
       timeOfArrival: new Date().toISOString(),
       reserved: `0xefa4`,
@@ -64,7 +64,7 @@ async function insertLeoData() {
     const record2 = {
       projectId: `1234`,
       counter: Math.floor(Math.random() * 10000000),
-      magic: Math.floor(Math.random() * 99999999),
+      magic: 12345678,
       payload: `0x23454`,
       reserved: `0x23454`,
       messageType: Math.floor(Math.random() * 10),
@@ -80,7 +80,7 @@ async function insertLeoData() {
     const record3 = {
       projectId: `1245`,
       counter: Math.floor(Math.random() * 10000000),
-      magic: Math.floor(Math.random() * 99999999),
+      magic: 12345678,
       payload: `0x23454`,
       reserved: `0x23454`,
       messageType: Math.floor(Math.random() * 10),
