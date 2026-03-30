@@ -5,15 +5,20 @@ import LeoLogger from '@/components/LeoLogger';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useRaphaRealtime } from '@/hooks/useRaphaRealtime';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { raphaStore } from '@/lib/raphaStore';
 import { ChevronDown, Layers, Activity } from 'lucide-react';
 
 export default function RaphaPage() {
   useRaphaRealtime();
 
-  const pllPoints = useSelector((s: RootState) => s.rapha?.pllPoints ?? []);
-  const dllPoints = useSelector((s: RootState) => s.rapha?.dllResults ?? []);
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    return raphaStore.subscribe(() => setTick((t) => t + 1));
+  }, []);
+
+  const pllPoints = raphaStore.pllPoints;
+  const dllPoints = raphaStore.dllResults;
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedDecoder, setSelectedDecoder] = useState<string | null>(null);
@@ -27,7 +32,8 @@ export default function RaphaPage() {
   }, [pllPoints, dllPoints]);
 
   useEffect(() => {
-    if (!selectedDecoder && decoders.length > 0) setSelectedDecoder(decoders[0]);
+    if (!selectedDecoder && decoders.length > 0)
+      setSelectedDecoder(decoders[0]);
   }, [decoders, selectedDecoder]);
 
   // click outside handler for menu
@@ -50,8 +56,13 @@ export default function RaphaPage() {
   const total = recent.length;
   const ones = recent.filter((p) => p.value === 1).length;
   const percentage = total > 0 ? Math.round((ones / total) * 100) : 0;
-  const lastOne = filteredPllPoints.slice().reverse().find((p) => p.value === 1 && p.ts >= cutoff);
-  const lastOneLabel = lastOne ? new Date(lastOne.ts).toLocaleTimeString() : '—';
+  const lastOne = filteredPllPoints
+    .slice()
+    .reverse()
+    .find((p) => p.value === 1 && p.ts >= cutoff);
+  const lastOneLabel = lastOne
+    ? new Date(lastOne.ts).toLocaleTimeString()
+    : '—';
 
   return (
     <div className="flex-1 flex flex-col lg:flex-row gap-6 p-4 bg-background overflow-auto">
@@ -63,23 +74,31 @@ export default function RaphaPage() {
               <Activity className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold leading-none tracking-tight">Decoder</h2>
-              <p className="text-sm text-muted-foreground mt-1">Real-time status of connected decoders</p>
+              <h2 className="text-xl font-semibold leading-none tracking-tight">
+                Decoder
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Real-time status of connected decoders
+              </p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-6">
             <div ref={menuRef} className="relative">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setMenuOpen((s) => !s)}
                 className="w-[180px] justify-between font-medium"
               >
                 <div className="flex items-center gap-2 truncate">
                   <Layers className="w-4 h-4 text-muted-foreground" />
-                  <span className="truncate">{selectedDecoder ?? 'No decoders'}</span>
+                  <span className="truncate">
+                    {selectedDecoder ?? 'No decoders'}
+                  </span>
                 </div>
-                <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`w-4 h-4 text-muted-foreground transition-transform ${menuOpen ? 'rotate-180' : ''}`}
+                />
               </Button>
               {menuOpen && (
                 <div className="absolute right-0 mt-2 w-full sm:w-56 bg-card border rounded-md shadow-lg z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
@@ -101,8 +120,18 @@ export default function RaphaPage() {
               )}
             </div>
             <div className="text-sm text-right bg-muted/50 px-4 py-2 rounded-lg border">
-              <div className="text-muted-foreground mb-0.5">Last locked: <span className="font-medium text-foreground">{lastOneLabel}</span></div>
-              <div className="text-muted-foreground">Locked %: <span className="font-medium text-foreground">{percentage}%</span></div>
+              <div className="text-muted-foreground mb-0.5">
+                Last locked:{' '}
+                <span className="font-medium text-foreground">
+                  {lastOneLabel}
+                </span>
+              </div>
+              <div className="text-muted-foreground">
+                Locked %:{' '}
+                <span className="font-medium text-foreground">
+                  {percentage}%
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -112,7 +141,9 @@ export default function RaphaPage() {
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-medium flex items-center justify-between">
                 <span>PLL Lock State</span>
-                <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded">last 60s</span>
+                <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                  last 60s
+                </span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -124,7 +155,9 @@ export default function RaphaPage() {
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-medium flex items-center justify-between">
                 <span>DLL multiply (dllM2 × dllM4)</span>
-                <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded">last 60s</span>
+                <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                  last 60s
+                </span>
               </CardTitle>
             </CardHeader>
             <CardContent>

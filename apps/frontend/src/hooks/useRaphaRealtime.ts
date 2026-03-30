@@ -7,9 +7,9 @@ import type {
   RaphaPllLockState,
 } from '@/types/rapha';
 import { store } from '@/store';
-import { addPllPoints, addDllResults, trimToLast60s } from '@/store/slices/raphaSlice';
+import { raphaStore, RaphaPoint } from '@/lib/raphaStore';
 
-type Point = { ts: number; value: number; decoderId?: string };
+type Point = RaphaPoint;
 
 const subscriptionState = {
   unsubscribe: null as (() => void) | null,
@@ -32,13 +32,13 @@ function scheduleFlush() {
     subscriptionState.flushTimer = null;
 
     if (subscriptionState.pllBuffer.length) {
-      store.dispatch(addPllPoints(subscriptionState.pllBuffer));
-      subscriptionState.pllBuffer.length = 0;
+      raphaStore.addPoints('pll', subscriptionState.pllBuffer);
+      subscriptionState.pllBuffer = [];
     }
 
     if (subscriptionState.dllBuffer.length) {
-      store.dispatch(addDllResults(subscriptionState.dllBuffer));
-      subscriptionState.dllBuffer.length = 0;
+      raphaStore.addPoints('dll', subscriptionState.dllBuffer);
+      subscriptionState.dllBuffer = [];
     }
   }, FLUSH_INTERVAL);
 }
@@ -70,7 +70,7 @@ async function loadInitialData() {
       .filter(Boolean);
 
     if (pllPoints.length) {
-      store.dispatch(addPllPoints(pllPoints as Point[]));
+      raphaStore.addPoints('pll', pllPoints as Point[]);
     }
 
     // DLL data
@@ -107,7 +107,7 @@ async function loadInitialData() {
     }
 
     if (dllPoints.length) {
-      store.dispatch(addDllResults(dllPoints));
+      raphaStore.addPoints('dll', dllPoints);
     }
   } catch (err) {
     console.error('Failed loading initial rapha data', err);
@@ -184,19 +184,6 @@ async function ensureSubscription() {
           console.error('rapha realtime handler', err);
         }
       });
-
-    // subscription established
-    // start periodic cleanup to ensure redux only keeps last 60s
-    if (!subscriptionState.cleanupTimer) {
-      subscriptionState.cleanupTimer = setInterval(() => {
-        try {
-          store.dispatch(trimToLast60s());
-        } catch (err) {
-          // eslint-disable-next-line no-console
-          console.error('rapha cleanup error', err);
-        }
-      }, 1000);
-    }
   } catch (err) {
     console.error('Failed to subscribe to rapha', err);
   }
@@ -206,8 +193,8 @@ export function useRaphaRealtime() {
   useEffect(() => {
     async function start() {
       if (
-        store.getState().rapha.pllPoints.length === 0 &&
-        store.getState().rapha.dllResults.length === 0
+        raphaStore.pllPoints.length === 0 &&
+        raphaStore.dllResults.length === 0
       ) {
         await loadInitialData(); // 👈 load last minute
       }

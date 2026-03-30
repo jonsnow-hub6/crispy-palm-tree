@@ -3,10 +3,9 @@ import uPlot from 'uplot';
 import 'uplot/dist/uPlot.min.css';
 
 import useRaphaRealtime from '@/hooks/useRaphaRealtime';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { raphaStore, RaphaPoint } from '@/lib/raphaStore';
 
-type Point = { ts: number; value: 0 | 1; decoderId?: string };
+type Point = RaphaPoint;
 
 export default function RaphaPllGraph({
   decoderId,
@@ -19,10 +18,6 @@ export default function RaphaPllGraph({
   const xRef = useRef<Float64Array>(new Float64Array(800));
   const yRef = useRef<Float64Array>(new Float64Array(800));
   const lastTsRef = useRef(0);
-
-  const allPoints = useSelector(
-    (s: RootState) => s.rapha?.pllPoints ?? []
-  );
 
   // INIT
   useEffect(() => {
@@ -63,53 +58,49 @@ export default function RaphaPllGraph({
     };
   }, []);
 
-  // UPDATE (fast)
+  // CONTINUOUS UPDATE & PAN (no react state renders)
   useEffect(() => {
-    const now = Date.now();
-    const cutoff = now - 60_000;
+    const interval = setInterval(() => {
+      const plot = plotRef.current;
+      if (!plot) return;
 
-    const x = xRef.current;
-    const y = yRef.current;
+      const now = Date.now();
+      const cutoff = now - 60_000;
+      const allPoints = raphaStore.pllPoints;
 
-    let len = 0;
+      const x = xRef.current;
+      const y = yRef.current;
 
-    for (let i = allPoints.length - 1; i >= 0 && len < 800; i--) {
-      const p = allPoints[i];
+      let len = 0;
 
-      if (decoderId && p.decoderId !== decoderId) continue;
-      if (p.ts < cutoff) break;
+      for (let i = allPoints.length - 1; i >= 0 && len < 800; i--) {
+        const p = allPoints[i];
 
-      const idx = 799 - len;
+        if (decoderId && p.decoderId !== decoderId) continue;
+        if (p.ts < cutoff) break;
 
-      x[idx] = p.ts / 1000;
-      y[idx] = p.value;
+        const idx = 799 - len;
 
-      len++;
-    }
+        x[idx] = p.ts / 1000;
+        y[idx] = p.value;
 
-    if (len === 0) return;
+        len++;
+      }
 
-    const start = 800 - len;
+      if (len > 0) {
+        const start = 800 - len;
 
-    const lastTs = x[799];
-    if (lastTs === lastTsRef.current) return;
-    lastTsRef.current = lastTs;
+        plot.setData([x.subarray(start, 800), y.subarray(start, 800)]);
+      }
 
-    const plot = plotRef.current;
-    if (!plot) return;
-
-    plot.setData([
-      x.subarray(start, 800),
-      y.subarray(start, 800),
-    ]);
-
-    const nowSec = now / 1000;
-
-    plot.setScale('x', {
-      min: nowSec - 60,
-      max: nowSec,
-    });
-  }, [allPoints, decoderId]);
+      const nowSec = now / 1000;
+      plot.setScale('x', {
+        min: nowSec - 60,
+        max: nowSec,
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [decoderId]);
 
   // RESIZE
   useEffect(() => {

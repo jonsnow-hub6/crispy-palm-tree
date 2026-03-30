@@ -5,6 +5,7 @@ const ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.PB_ADMIN_PASSWORD;
 
 const pb = new PocketBase(PB_URL);
+pb.autoCancellation(false);
 
 // ----------------------------
 // Optional admin login
@@ -64,7 +65,6 @@ async function insertRaphaData() {
     });
 
     console.log('Inserted dllM4:', dllM4);
-
   } catch (err) {
     console.error('Insert failed:', err.response || err.message);
   }
@@ -74,11 +74,11 @@ async function insertRaphaData() {
 // Run once
 // ----------------------------
 async function main() {
-  await loginAdmin();
+  // await loginAdmin();
   await insertRaphaData();
 
   // 🔥 Uncomment to simulate realtime stream
-  setInterval(insertRaphaData, 1000);
+  setInterval(insertRaphaData, 20);
 }
 
 main();
