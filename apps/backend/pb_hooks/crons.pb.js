@@ -3,21 +3,107 @@
 routerAdd('POST', '/api/cron/probe-all', async (c) => {
   const notifications = $app.findCollectionByNameOrId('notifications');
 
-  // --- HELPER FUNCTION TO PREVENT SPAM ---
-  const createNotification = (level, type, content, stationName = '') => {
+  // Fetch recent notifications to use as state context
+  const recentNotifications = $app.findRecordsByFilter(
+    'notifications',
+    '1=1',
+    '-created',
+    500,
+    0,
+  );
+
+  const PAIRS = {
+    preset: {
+      isMatch: (c, args) => c.includes('preset') && c.includes(args.hostPort),
+      isBad: (c) => c.includes('Failed to') || c.includes('Error fetching'),
+    },
+    active_unreachable: {
+      isMatch: (c, args) =>
+        (c.includes('has one active link') ||
+          c.includes('active link is now reachable')) &&
+        c.includes(args.stationName),
+      isBad: (c) => c.includes('unreachable'),
+    },
+    multiple_active: {
+      isMatch: (c) =>
+        c.includes('multiple active links') ||
+        c.includes('while another station is active') ||
+        c.includes('Only one link is active across all stations'),
+      isBad: (c) => c.includes('multiple') || c.includes('while another'),
+    },
+    link_inactive: {
+      isMatch: (c, args) => c.includes(`Link ${args.hostPort} became`),
+      isBad: (c) => c.includes('inactive'),
+    },
+    active_station_no_links: {
+      isMatch: (c, args) =>
+        c.includes(`Active station ${args.stationName} has`) &&
+        c.includes('active link'),
+      isBad: (c) => c.includes('has no'),
+    },
+    active_station_unreachable: {
+      isMatch: (c, args) =>
+        c.includes(`Active station ${args.stationName} is`) &&
+        c.includes('reachable'),
+      isBad: (c) => c.includes('is unreachable'),
+    },
+    counter_decreased: {
+      isMatch: (c) =>
+        c.includes('Counter decreased') || c.includes('Counter increased'),
+      isBad: (c) => c.includes('decreased'),
+    },
+    counter_mismatch: {
+      isMatch: (c) => c.includes('Global counter'),
+      isBad: (c) => c.includes('mismatch'),
+    },
+    no_active_stations: {
+      isMatch: (c) =>
+        c.toLowerCase().includes('active station') &&
+        c.toLowerCase().includes('detected'),
+      isBad: (c) => c.toLowerCase().includes('no active'),
+    },
+  };
+
+  const createNotification = (
+    level,
+    type,
+    content,
+    stationName = '',
+    pairKey = null,
+    pairArgs = {},
+    isBadState = true,
+  ) => {
+    if (pairKey && PAIRS[pairKey]) {
+      const pair = PAIRS[pairKey];
+      const lastMatch = recentNotifications.find((n) =>
+        pair.isMatch(n.get('content'), pairArgs),
+      );
+
+      if (lastMatch) {
+        const lastContent = lastMatch.get('content');
+        const wasBad = pair.isBad(lastContent);
+        if (isBadState && wasBad) return;
+        if (!isBadState && !wasBad) return;
+      }
+
+      const record = new Record(notifications);
+      record.set('level', level);
+      record.set('type', type);
+      record.set('content', content);
+      if (stationName) record.set('stationName', stationName);
+      $app.save(record);
+      recentNotifications.unshift(record);
+      return;
+    }
+
+    // Default 30s deduplication for non-paired notifications
     const thirtySecondsAgo = new Date(Date.now() - 30 * 1000)
       .toISOString()
       .replace('T', ' ');
-
-    // Check if an identical notification exists in the last 30 seconds
-    // We escape single quotes in content to prevent filter errors
-    const notificationsByFilter = $app.findRecordsByFilter(
-      'notifications',
-      `content = '${content}'`,
-    );
-
-    const existingNotification = notificationsByFilter.find((n) => {
-      return n.get('created') >= thirtySecondsAgo;
+    const existingNotification = recentNotifications.find((n) => {
+      return (
+        n.get('content') === content && n.get('created') >= thirtySecondsAgo
+      );
     });
 
     if (!existingNotification) {
@@ -27,6 +113,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
       record.set('content', content);
       if (stationName) record.set('stationName', stationName);
       $app.save(record);
+      recentNotifications.unshift(record);
     }
   };
 
@@ -37,6 +124,8 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
     const stations = $app.findRecordsByFilter('stations', '');
     let allCounters = [];
     let counterDecreased = false;
+    let counterIncreased = false;
+    let totalActiveLinksCount = 0;
 
     const activeStation = stations.find((st) => {
       const links = JSON.parse(st.get('stationLinks') || '[]');
@@ -94,12 +183,24 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
             updatedLinks[i].currentPreset =
               presetRes.value.presetName || 'unknown';
             updatedLinks[i].reachable = true;
+            createNotification(
+              'info',
+              'connection',
+              `Successfully got preset from station "${st.get('name')}" (${existing.host}:${existing.port})`,
+              st.get('name'),
+              'preset',
+              { hostPort: `${existing.host}:${existing.port}` },
+              false,
+            );
           } else {
             createNotification(
               'error',
               'connection',
               `Failed to get preset from station "${st.get('name')}" (${existing.host}:${existing.port}) - ${presetRes.error}`,
               st.get('name'),
+              'preset',
+              { hostPort: `${existing.host}:${existing.port}` },
+              true,
             );
             updatedLinks[i].currentPreset = 'unknown';
           }
@@ -109,12 +210,16 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
             'connection',
             `Error fetching preset from ${existing.host}:${existing.port} - ${String(e)}`,
             st.get('name'),
+            'preset',
+            { hostPort: `${existing.host}:${existing.port}` },
+            true,
           );
           updatedLinks[i].currentPreset = 'unknown';
         }
       }
 
       const activeLinks = updatedLinks.filter((l) => l.active === true);
+      totalActiveLinksCount += activeLinks.length;
 
       if (activeLinks.length === 1 && !activeLinks[0].reachable) {
         createNotification(
@@ -122,6 +227,19 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
           'connection',
           `Station ${st.get('name')} has one active link but it's unreachable`,
           st.get('name'),
+          'active_unreachable',
+          { stationName: st.get('name') },
+          true,
+        );
+      } else if (activeLinks.length === 1 && activeLinks[0].reachable) {
+        createNotification(
+          'info',
+          'connection',
+          `Station ${st.get('name')} active link is now reachable`,
+          st.get('name'),
+          'active_unreachable',
+          { stationName: st.get('name') },
+          false,
         );
       }
 
@@ -131,6 +249,9 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
           'connection',
           `Station ${st.get('name')} has multiple active links (${activeLinks.length})`,
           st.get('name'),
+          'multiple_active',
+          {},
+          true,
         );
       }
 
@@ -140,6 +261,9 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
           'connection',
           `Station ${st.get('name')} has active link while another station is active`,
           st.get('name'),
+          'multiple_active',
+          {},
+          true,
         );
       }
 
@@ -155,6 +279,19 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
             'connection',
             `Link ${old.host}:${old.port} became inactive`,
             st.get('name'),
+            'link_inactive',
+            { hostPort: `${old.host}:${old.port}` },
+            true,
+          );
+        } else if (old?.active === false && updated?.active === true) {
+          createNotification(
+            'info',
+            'connection',
+            `Link ${updated.host}:${updated.port} became active`,
+            st.get('name'),
+            'link_inactive',
+            { hostPort: `${updated.host}:${updated.port}` },
+            false,
           );
         }
 
@@ -165,6 +302,19 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
               'connection',
               `Active station ${st.get('name')} has no active links`,
               st.get('name'),
+              'active_station_no_links',
+              { stationName: st.get('name') },
+              true,
+            );
+          } else {
+            createNotification(
+              'info',
+              'connection',
+              `Active station ${st.get('name')} has an active link`,
+              st.get('name'),
+              'active_station_no_links',
+              { stationName: st.get('name') },
+              false,
             );
           }
         }
@@ -174,6 +324,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
           typeof updated?.counter === 'number'
         ) {
           if (updated.counter < old.counter) counterDecreased = true;
+          if (updated.counter > old.counter) counterIncreased = true;
           allCounters.push(updated.counter);
         }
       }
@@ -185,6 +336,19 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
             'connection',
             `Active station ${activeStation.get('name')} is unreachable`,
             activeStation.get('name'),
+            'active_station_unreachable',
+            { stationName: activeStation.get('name') },
+            true,
+          );
+        } else {
+          createNotification(
+            'info',
+            'connection',
+            `Active station ${activeStation.get('name')} is reachable again`,
+            activeStation.get('name'),
+            'active_station_unreachable',
+            { stationName: activeStation.get('name') },
+            false,
           );
         }
       }
@@ -193,20 +357,97 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
       $app.save(st);
     }
 
+    if (totalActiveLinksCount === 1) {
+      createNotification(
+        'info',
+        'connection',
+        `Only one link is active across all stations`,
+        '',
+        'multiple_active',
+        {},
+        false,
+      );
+    }
+
     if (counterDecreased) {
       createNotification(
         'error',
         'counter',
         'Counter decreased on at least one link',
+        '',
+        'counter_decreased',
+        {},
+        true,
+      );
+    } else if (counterIncreased) {
+      createNotification(
+        'info',
+        'counter',
+        'Counter increased on at least one link',
+        '',
+        'counter_decreased',
+        {},
+        false,
       );
     }
 
     const uniqueCounters = Array.from(new Set(allCounters));
+    let finalUniqueCount = uniqueCounters.length;
+    let isMismatch = false;
+
     if (uniqueCounters.length > 1) {
+      isMismatch = true;
+      // Wait 1.5s to check if the mismatch is transient (due to network latency/staggered counting)
+      // await new Promise((r) => setTimeout(r, 1500));
+
+      let secondCounters = [];
+      for (const st of stations) {
+        let links = [];
+        try {
+          links = JSON.parse(st.get('stationLinks') || '[]');
+        } catch {
+          links = [];
+        }
+        links = links.filter(
+          (l) =>
+            l.active === true ||
+            l.active === 'true' ||
+            l.active === 1 ||
+            l.active === '1',
+        );
+
+        const probes = await Promise.all(links.map((l) => httpGetCounter(l)));
+        probes.forEach((p) => {
+          if (p.ok) secondCounters.push(p.value);
+        });
+      }
+
+      const secondUnique = Array.from(new Set(secondCounters));
+      if (secondUnique.length <= 1) {
+        isMismatch = false;
+        finalUniqueCount = 1;
+      }
+    }
+
+    if (isMismatch) {
       createNotification(
         'warning',
         'counter',
         `Global counter mismatch detected across stations`,
+        '',
+        'counter_mismatch',
+        {},
+        true,
+      );
+    } else if (finalUniqueCount === 1 && allCounters.length > 0) {
+      createNotification(
+        'info',
+        'counter',
+        `Global counters are matching across stations`,
+        '',
+        'counter_mismatch',
+        {},
+        false,
       );
     }
 
@@ -215,6 +456,20 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
         'critical',
         'connection',
         `No active stations detected`,
+        '',
+        'no_active_stations',
+        {},
+        true,
+      );
+    } else {
+      createNotification(
+        'info',
+        'connection',
+        `Active station detected`,
+        '',
+        'no_active_stations',
+        {},
+        false,
       );
     }
 

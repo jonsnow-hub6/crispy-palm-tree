@@ -78,35 +78,35 @@ export function useRealtime() {
         // --------------------
         // NOW CONSISTENT
         // --------------------
-        if (!present) {
-          // remove mismatch toast
-          const next = t.filter((x) => x.id !== 'counter-mismatch');
+        // if (!present) {
+        //   // remove mismatch toast
+        //   const next = t.filter((x) => x.id !== 'counter-mismatch');
 
-          // already showed OK → do nothing
-          if (okShownRef.current) {
-            return next;
-          }
+        //   // already showed OK → do nothing
+        //   if (okShownRef.current) {
+        //     return next;
+        //   }
 
-          okShownRef.current = true;
+        //   okShownRef.current = true;
 
-          const okToast: Toast = {
-            id: `counter-ok-${Date.now()}`,
-            level: 'info',
-            type: 'counter',
-            content: 'Counters are now consistent',
-            stationName: null,
-            timestamp: Date.now(),
-          };
+        //   const okToast: Toast = {
+        //     id: `counter-ok-${Date.now()}`,
+        //     level: 'info',
+        //     type: 'counter',
+        //     content: 'Counters are now consistent',
+        //     stationName: null,
+        //     timestamp: Date.now(),
+        //   };
 
-          setHistory((h) => [okToast, ...h].slice(0, 20));
-          setUnreadCount((c) => c + 1);
+        //   setHistory((h) => [okToast, ...h].slice(0, 20));
+        //   setUnreadCount((c) => c + 1);
 
-          setTimeout(() => {
-            setToasts((t2) => t2.filter((x) => x.id !== okToast.id));
-          }, 3000);
+        //   setTimeout(() => {
+        //     setToasts((t2) => t2.filter((x) => x.id !== okToast.id));
+        //   }, 3000);
 
-          return [okToast, ...next].slice(0, 6);
-        }
+        //   return [okToast, ...next].slice(0, 6);
+        // }
 
         return t;
       });
