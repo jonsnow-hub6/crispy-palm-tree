@@ -85,16 +85,16 @@
     background: transparent;
   }
 
+  .scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--primary) / 0.7);
+  }
 
-.scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: hsl(var(--primary) / 0.7);
-}
+  .scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
 
-.scrollbar::-webkit-scrollbar {
-  width: 6px;
-}
-
-.scrollbar::-webkit-scrollbar-thumb {
-  background-color: hsl(var(--muted-foreground) / 0.2);
-}
+  .scrollbar::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.2);
+    border-radius: 9999px;
+  }
 }
