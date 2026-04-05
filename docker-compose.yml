@@ -1,33 +1,33 @@
 version: '3.8'
 
 services:
-  # server:
-  #   container_name: splinter-server
-  #   image: /splinter-server:dev
-  #   restart: unless-stopped
-  #   ports:
-  #     - '8090:8090'
-  #   environment:
-  #     - LOGSTASH_URL=http://localhost:5000
-  #   volumes:
-  #     - ./compose_data/pb_data:/pb/pb_data
-  #   build:
-  #     context: .
-  #     dockerfile: apps/backend/Dockerfile
+  server:
+    container_name: splinter-server
+    image: /splinter-server:dev
+    restart: unless-stopped
+    ports:
+      - '8090:8090'
+    environment:
+      - LOGSTASH_URL=http://localhost:5000
+    volumes:
+      - ./compose_data/pb_data:/pb/pb_data
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
 
-  # client:
-  #   image: /splinter-client:dev
-  #   container_name: splinter-client
-  #   restart: unless-stopped
-  #   environment:
-  #     - SERVER_URL=splinter-server:8090
-  #   ports:
-  #     - '80:80'
-  #   depends_on:
-  #     - server
-  #   build:
-  #     context: .
-  #     dockerfile: apps/frontend/Dockerfile
+  client:
+    image: /splinter-client:dev
+    container_name: splinter-client
+    restart: unless-stopped
+    environment:
+      - SERVER_URL=splinter-server:8090
+    ports:
+      - '80:80'
+    depends_on:
+      - server
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
 
   n8n:
     image: n8nio/n8n:latest
