@@ -1,41 +1,41 @@
 version: '3.8'
 
 services:
-  server:
-    container_name: splinter-server
-    image: /splinter-server:dev
-    restart: unless-stopped
-    ports:
-      - "8090:8090"
-    environment:
-      - LOGSTASH_URL=http://localhost:5000
-    volumes:
-      - ./compose_data/pb_data:/pb/pb_data
-    build:
-      context: .
-      dockerfile: apps/backend/Dockerfile
+  # server:
+  #   container_name: splinter-server
+  #   image: /splinter-server:dev
+  #   restart: unless-stopped
+  #   ports:
+  #     - '8090:8090'
+  #   environment:
+  #     - LOGSTASH_URL=http://localhost:5000
+  #   volumes:
+  #     - ./compose_data/pb_data:/pb/pb_data
+  #   build:
+  #     context: .
+  #     dockerfile: apps/backend/Dockerfile
 
-  client:
-    image: /splinter-client:dev
-    container_name: splinter-client
-    restart: unless-stopped
-    environment:
-      - SERVER_URL=splinter-server:8090
-    ports:
-      - "80:80"
-    depends_on:
-      - server
-    build:
-      context: .
-      dockerfile: apps/frontend/Dockerfile
+  # client:
+  #   image: /splinter-client:dev
+  #   container_name: splinter-client
+  #   restart: unless-stopped
+  #   environment:
+  #     - SERVER_URL=splinter-server:8090
+  #   ports:
+  #     - '80:80'
+  #   depends_on:
+  #     - server
+  #   build:
+  #     context: .
+  #     dockerfile: apps/frontend/Dockerfile
 
   n8n:
     image: n8nio/n8n:latest
     container_name: splinter-n8n
     ports:
-      - "5678:5678"
+      - '5678:5678'
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - 'host.docker.internal:host-gateway'
     environment:
       - N8N_HOST=localhost
       - N8N_PORT=5678
@@ -43,8 +43,9 @@ services:
       - NODE_ENV=production
       - TZ=Asia/Jerusalem
       - N8N_SECURE_COOKIE=false
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - SERVER_API_URL=http://host.docker.internal:8090/api
     volumes:
       - ./apps/n8n/data:/home/node/.n8n
       - ./splinter_cron_flow.json:/home/node/splinter_cron_flow.json
     restart: unless-stopped
-    
