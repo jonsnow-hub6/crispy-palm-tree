@@ -1,0 +1,68 @@
+{
+  "name": "splinter_cron_flow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 3
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "bb3af45e-6f75-4bbf-82d9-88f6f8099cb0",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.SERVER_API_URL}}/cron/probe-all",
+        "options": {
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "f159e606-d03c-479c-898e-fcb6e4961fc4",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "543dd067-1ffd-4817-a7ed-a679415ec3cf",
+  "meta": {
+    "instanceId": "32b83b87c92f43765d70ad13436213ce95f3a0200aff629d15a17d3ac77469cc"
+  },
+  "id": "twBFNshiT4P6vFMd",
+  "tags": []
+}
