@@ -118,6 +118,6 @@ export default function RaphaPllGraph({
     observer.observe(containerRef.current);
     return () => observer.disconnect();
   }, []);
-
-  return <div ref={containerRef} style={{ width: '100%', height: 140 }} />;
+  return <div></div>;
+  // return <div ref={containerRef} style={{ width: '100%', height: 140 }} />;
 }

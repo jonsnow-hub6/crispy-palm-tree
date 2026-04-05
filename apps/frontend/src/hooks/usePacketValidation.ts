@@ -11,11 +11,17 @@ export function usePacketValidation() {
   const { activePresetId } = useSelector((state: RootState) => state.presets);
 
   useEffect(() => {
-    // Subscribe to project updates
-    const unsubscribe = pb.collection('projects').subscribe('*', (e) => {
+    let unsubscribe: (() => void) | null = null;
+    let isMounted = true;
+
+    // Subscribe to project updates properly awaiting the promise
+    pb.collection('projects').subscribe('*', (e) => {
       // Handle real-time updates if packet data is added to schema
       console.log('Project update:', e);
-    });
+    }).then(fn => {
+      if (isMounted) unsubscribe = fn;
+      else fn(); // unsubscribe immediately if component already unmounted
+    }).catch(console.error);
 
     // Poll for packet validation status
     // Since we can't store packet data in schema, we'll need to poll the API
@@ -25,7 +31,8 @@ export function usePacketValidation() {
     }, 5000);
 
     return () => {
-      unsubscribe();
+      isMounted = false;
+      if (unsubscribe) unsubscribe();
       clearInterval(interval);
     };
   }, [dispatch, projects, activePresetId]);

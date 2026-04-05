@@ -10,6 +10,9 @@ export default defineConfig(() => ({
   server: {
     port: 4200,
     host: '0.0.0.0',
+    watch: {
+      ignored: ['**/pb_data/**', '**/compose_data/**'],
+    },
   },
   preview: {
     port: 4200,
