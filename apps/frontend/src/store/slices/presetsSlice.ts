@@ -83,16 +83,6 @@ export const importPresetFromJson = createAsyncThunk(
         const projectId = command.id;
         const payload = command.payload;
 
-        // Verify project exists
-        try {
-          await pb.collection('projects').getOne(projectId);
-        } catch (error) {
-          const errorMsg = `Project with ID ${projectId} not found`;
-          console.warn(errorMsg);
-          errors.push(errorMsg);
-          continue;
-        }
-
         // Check if action already exists
         try {
           // const existingActions = await pb.collection('actions').getFullList({

@@ -53,7 +53,6 @@ export function NavBar({
   const navItems = [
     { path: '/', label: 'Dashboard', icon: Home, public: true },
     { path: '/stations', label: 'Stations', icon: Radio, public: false },
-    { path: '/projects', label: 'Projects', icon: FolderOpen, public: false },
     { path: '/presets', label: 'Presets', icon: Palette, public: false },
     { path: '/decoder', label: 'Decoder', icon: ChartLine, public: false },
   ];

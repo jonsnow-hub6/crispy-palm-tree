@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { MainDashboard } from '@/pages/MainDashboard';
 import { StationsPage } from '@/pages/StationsPage';
-import { ProjectsPage } from '@/pages/ProjectsPage';
 import { PresetsPage } from '@/pages/PresetsPage';
 import RaphaPage from '@/pages/RaphaPage';
 import { LoginPage } from '@/pages/LoginPage';
@@ -56,14 +55,7 @@ export function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/projects"
-                element={
-                  <ProtectedRoute>
-                    <ProjectsPage />
-                  </ProtectedRoute>
-                }
-              />
+
               <Route
                 path="/presets"
                 element={
