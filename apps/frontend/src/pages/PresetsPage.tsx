@@ -128,7 +128,11 @@ export function PresetsPage() {
       const jsonData = JSON.parse(text);
 
       // Validate new format
-      if (!jsonData.presetName || !jsonData.commands) {
+      if (
+        !jsonData.presetName ||
+        typeof jsonData.presetName !== 'string' ||
+        !jsonData.commands
+      ) {
         setImportError(
           'Invalid JSON format. Expected { presetName: string, commands: [...] }',
         );
@@ -143,6 +147,20 @@ export function PresetsPage() {
       for (const cmd of jsonData.commands) {
         if (!cmd.id || !cmd.payload) {
           setImportError('Each command must have both id and payload fields');
+          return;
+        }
+        if (typeof cmd.id !== 'string') {
+          setImportError('Command id must be a string');
+          return;
+        }
+        if (typeof cmd.payload !== 'string') {
+          setImportError('Command payload must be a string');
+          return;
+        }
+        if (!/^0x[0-9a-fA-F]{14}$/.test(cmd.payload)) {
+          setImportError(
+            'Command payload must be a 7-byte hex string starting with 0x (e.g. "0x00000000000001")',
+          );
           return;
         }
       }
@@ -364,113 +382,117 @@ export function PresetsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {presets.map((preset) => (
               <Card
-  key={preset.id}
-  className="group flex flex-col h-full transition-all duration-300 hover:shadow-lg"
-  style={{ borderLeft: `4px solid ${preset.color}` }}
->
-
+                key={preset.id}
+                className="group flex flex-col h-full transition-all duration-300 hover:shadow-lg"
+                style={{ borderLeft: `4px solid ${preset.color}` }}
+              >
                 <CardHeader>
-  <div className="flex items-center justify-between">
-    {/* Left: Name */}
-    <h3 className="font-semibold text-lg truncate">
-      {preset.name}
-    </h3>
+                  <div className="flex items-center justify-between">
+                    {/* Left: Name */}
+                    <h3 className="font-semibold text-lg truncate">
+                      {preset.name}
+                    </h3>
 
-    {/* Right: Color + Menu */}
-    <div className="flex items-center gap-2">
-      {/* Color */}
-      <div
-        className="h-5 w-5 rounded-full shadow-md"
-        style={{ backgroundColor: preset.color }}
-      />
+                    {/* Right: Color + Menu */}
+                    <div className="flex items-center gap-2">
+                      {/* Color */}
+                      <div
+                        className="h-5 w-5 rounded-full shadow-md"
+                        style={{ backgroundColor: preset.color }}
+                      />
 
-      {/* Menu */}
-      <div className="relative" data-menu-id={preset.id}>
-        <button
-          aria-haspopup="menu"
-          aria-expanded={menuOpenFor === preset.id}
-          onClick={() =>
-            setMenuOpenFor(menuOpenFor === preset.id ? null : preset.id)
-          }
-          className="p-1 rounded-md hover:bg-accent"
-        >
-          <MoreVertical className="h-5 w-5" />
-        </button>
+                      {/* Menu */}
+                      <div className="relative" data-menu-id={preset.id}>
+                        <button
+                          aria-haspopup="menu"
+                          aria-expanded={menuOpenFor === preset.id}
+                          onClick={() =>
+                            setMenuOpenFor(
+                              menuOpenFor === preset.id ? null : preset.id,
+                            )
+                          }
+                          className="p-1 rounded-md hover:bg-accent"
+                        >
+                          <MoreVertical className="h-5 w-5" />
+                        </button>
 
-        {menuOpenFor === preset.id && (
-          <div
-            role="menu"
-            className="absolute right-0 top-7 w-40 bg-card border rounded-md shadow-md z-40"
-          >
-            <div className="py-1">
-              <button
-                role="menuitem"
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60"
-                onClick={() => {
-                  setMenuOpenFor(null);
-                  handleEdit(preset);
-                }}
-              >
-                <Edit className="h-4 w-4" />
-                Edit
-              </button>
+                        {menuOpenFor === preset.id && (
+                          <div
+                            role="menu"
+                            className="absolute right-0 top-7 w-40 bg-card border rounded-md shadow-md z-40"
+                          >
+                            <div className="py-1">
+                              <button
+                                role="menuitem"
+                                className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60"
+                                onClick={() => {
+                                  setMenuOpenFor(null);
+                                  handleEdit(preset);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                                Edit
+                              </button>
 
-              <div className="border-t my-1" />
+                              <div className="border-t my-1" />
 
-              <button
-                role="menuitem"
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-destructive"
-                onClick={() => {
-                  setMenuOpenFor(null);
-                  handleDelete(preset.id);
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
-</CardHeader>
+                              <button
+                                role="menuitem"
+                                className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-destructive"
+                                onClick={() => {
+                                  setMenuOpenFor(null);
+                                  handleDelete(preset.id);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
 
                 <CardContent className="flex flex-col h-full">
-  {(() => {
-    const actions = preset.expand?.actions || [];
-    const visible = actions.slice(0, 3);
-    const remaining = actions.slice(3);
+                  {(() => {
+                    const actions = preset.expand?.actions || [];
+                    const visible = actions.slice(0, 3);
+                    const remaining = actions.slice(3);
 
-    return actions.length > 0 ? (
-      <div className="space-y-2">
-        {/* VISIBLE ACTIONS */}
-        {visible.map((a) => (
-          <div key={a.id} className="flex items-start gap-3 text-sm">
-            <Badge
-              variant="secondary"
-              className="font-mono text-[11px] px-2 py-0.5 shrink-0"
-            >
-              {a.project}
-            </Badge>
+                    return actions.length > 0 ? (
+                      <div className="space-y-2">
+                        {/* VISIBLE ACTIONS */}
+                        {visible.map((a) => (
+                          <div
+                            key={a.id}
+                            className="flex items-start gap-3 text-sm"
+                          >
+                            <Badge
+                              variant="secondary"
+                              className="font-mono text-[11px] px-2 py-0.5 shrink-0"
+                            >
+                              {a.project}
+                            </Badge>
 
-            <span title={a.payload} className="truncate">
-              {a.payload}
-            </span>
-          </div>
-        ))}
+                            <span title={a.payload} className="truncate">
+                              {a.payload}
+                            </span>
+                          </div>
+                        ))}
 
-        {/* +X MORE */}
-        {remaining.length > 0 && (
-          <div className="relative w-fit group/more">
-            <div className="text-xs text-primary cursor-default">
-              +{remaining.length} more action
-              {remaining.length > 1 ? 's' : ''}
-            </div>
+                        {/* +X MORE */}
+                        {remaining.length > 0 && (
+                          <div className="relative w-fit group/more">
+                            <div className="text-xs text-primary cursor-default">
+                              +{remaining.length} more action
+                              {remaining.length > 1 ? 's' : ''}
+                            </div>
 
-            {/* HOVER POPOVER */}
-            <div
-              className="
+                            {/* HOVER POPOVER */}
+                            <div
+                              className="
                 pointer-events-none
                 absolute left-0 bottom-full mb-2
                 w-72 rounded-md border bg-card shadow-lg p-3
@@ -479,32 +501,36 @@ export function PresetsPage() {
                 group-hover/more:opacity-100
                 group-hover/more:translate-y-0
               "
-            >
-              <div className="space-y-2 max-h-60 overflow-auto">
-                {actions.map((a) => (
-                  <div key={a.id} className="flex gap-2 text-xs">
-                    <Badge
-                      variant="secondary"
-                      className="font-mono text-[10px]"
-                    >
-                      {a.project}
-                    </Badge>
-                    <span className="break-words">{a.payload}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    ) : (
-      <span className="text-sm text-muted-foreground">No actions</span>
-    );
-  })()}
-</CardContent>
-
-
-
+                            >
+                              <div className="space-y-2 max-h-60 overflow-auto">
+                                {actions.map((a) => (
+                                  <div
+                                    key={a.id}
+                                    className="flex gap-2 text-xs"
+                                  >
+                                    <Badge
+                                      variant="secondary"
+                                      className="font-mono text-[10px]"
+                                    >
+                                      {a.project}
+                                    </Badge>
+                                    <span className="break-words">
+                                      {a.payload}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">
+                        No actions
+                      </span>
+                    );
+                  })()}
+                </CardContent>
               </Card>
             ))}
           </div>
