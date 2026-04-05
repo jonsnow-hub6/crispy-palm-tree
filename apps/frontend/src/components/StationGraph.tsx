@@ -25,7 +25,7 @@ export function StationGraph({
   onActivate,
 }: {
   station: Station;
-  onActivate: (stationId: string) => void;
+  onActivate: (stationId: string, linkHost?: string, linkPort?: number) => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [syncing, setSyncing] = useState<string | null>(null);
@@ -219,7 +219,7 @@ export function StationGraph({
                 onClick={() =>
                   link.reachable !== false &&
                   !link.active &&
-                  onActivate(station.id)
+                  onActivate(station.id, link.host, link.port)
                 }
                 disabled={link.reachable === false || link.active}
                 aria-disabled={link.reachable === false || link.active}

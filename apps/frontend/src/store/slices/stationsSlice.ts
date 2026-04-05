@@ -83,6 +83,29 @@ export const activateStation = createAsyncThunk(
   },
 );
 
+export const activateStationLink = createAsyncThunk(
+  'stations/activateLink',
+  async (
+    { stationId, host, port }: { stationId: string; host: string; port: number },
+    thunkAPI,
+  ) => {
+    try {
+      await pb.send(`/api/stations/${stationId}/activate-link`, {
+        method: 'POST',
+        body: { host, port },
+      });
+    } catch (err: any) {
+      console.error('Failed to activate specific station link:', err);
+      return thunkAPI.rejectWithValue({ error: err?.message || String(err) });
+    }
+
+    await thunkAPI.dispatch(fetchStations());
+
+    const updated = await pb.collection('stations').getOne<Station>(stationId);
+    return updated;
+  },
+);
+
 export const deactivateStation = createAsyncThunk(
   'stations/deactivate',
   async ({ stationId }: { stationId: string }, thunkAPI) => {
@@ -195,6 +218,28 @@ const stationsSlice = createSlice({
         }
       })
       .addCase(activateStation.fulfilled, (state, action) => {
+        const index = state.stations.findIndex(
+          (s) => s.id === action.payload.id,
+        );
+        if (index !== -1) {
+          state.stations[index] = action.payload;
+        }
+        // Update all stations to reflect deactivation for others
+        state.stations = state.stations.map((s) => {
+          if (s.id === action.payload.id) {
+            return action.payload;
+          }
+          return {
+            ...s,
+            stationLinks: s.stationLinks.map((link) => ({
+              ...link,
+              active: false,
+            })),
+          } as Station;
+        });
+        state.activeStationId = action.payload.id;
+      })
+      .addCase(activateStationLink.fulfilled, (state, action) => {
         const index = state.stations.findIndex(
           (s) => s.id === action.payload.id,
         );
