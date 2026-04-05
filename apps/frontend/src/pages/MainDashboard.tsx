@@ -49,10 +49,9 @@ export function MainDashboard() {
     dispatch(fetchStations());
   }, [dispatch]);
 
-  const activeStation = stations.find((s) => s.id === activeStationId) || null;
-
-  const activeLink = activeStation?.stationLinks.find((l) => l.active);
-  const isReachable = activeLink?.reachable !== false;
+  const activeStations = stations.filter((s) =>
+    s.stationLinks.some((l) => l.active),
+  );
   useEffect(() => {
     dispatch(fetchPresets());
   }, [dispatch]);
@@ -87,193 +86,207 @@ export function MainDashboard() {
   const selectedPreset = presets.find((p) => p.id === selectedPresetId) || null;
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-3xl mx-auto">
-        {activePresetId && (
-          <div className="mb-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Active Preset</CardTitle>
-                <CardDescription>
-                  Currently applied configuration
-                </CardDescription>
-              </CardHeader>
+    <div className="flex-1 overflow-y-auto bg-background p-8 min-h-0 scrollbar">
+      <div className="max-w-7xl mx-auto">
+        <div className="max-w-3xl mx-auto">
+          {activePresetId && (
+            <div className="mb-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Active Preset</CardTitle>
+                  <CardDescription>
+                    Currently applied configuration
+                  </CardDescription>
+                </CardHeader>
 
-              <CardContent>
-                {(() => {
-                  const ap = presets.find((p) => p.id === activePresetId);
-                  if (!ap) return null;
-                  return (
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-4">
+                <CardContent>
+                  {(() => {
+                    const ap = presets.find((p) => p.id === activePresetId);
+                    if (!ap) return null;
+                    return (
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                          <div
+                            className="h-12 w-12 rounded-md shadow-md"
+                            style={{ backgroundColor: ap.color }}
+                          />
+                          <div>
+                            <div className="text-xl font-bold">{ap.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              Active preset • {ap.expand?.actions?.length || 0}{' '}
+                              action(s)
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <Button
+                            variant="ghost"
+                            onClick={() => openConfirm(ap.id)}
+                            style={{ borderColor: ap.color, color: ap.color }}
+                          >
+                            Re-apply
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Presets</CardTitle>
+              <CardDescription>
+                Choose a preset and confirm to apply it to all stations
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {presetsLoading ? (
+                <p>Loading presets...</p>
+              ) : presets.length === 0 ? (
+                <p className="text-muted-foreground">No presets available</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {presets.map((preset) => (
+                    <div
+                      key={preset.id}
+                      className="flex items-center justify-between p-3 border rounded-md"
+                      style={{ borderColor: preset.color }}
+                    >
+                      <div className="flex items-center gap-3">
                         <div
-                          className="h-12 w-12 rounded-md shadow-md"
-                          style={{ backgroundColor: ap.color }}
+                          className="h-6 w-6 rounded-full shadow-sm"
+                          style={{ backgroundColor: preset.color }}
                         />
                         <div>
-                          <div className="text-xl font-bold">{ap.name}</div>
+                          <div className="font-semibold">{preset.name}</div>
                           <div className="text-sm text-muted-foreground">
-                            Active preset • {ap.expand?.actions?.length || 0}{' '}
-                            action(s)
+                            {preset.expand?.actions?.length || 0} action(s)
                           </div>
                         </div>
                       </div>
                       <div>
                         <Button
-                          variant="ghost"
-                          onClick={() => openConfirm(ap.id)}
-                          style={{ borderColor: ap.color, color: ap.color }}
+                          variant={
+                            activePresetId === preset.id
+                              ? 'secondary'
+                              : 'outline'
+                          }
+                          disabled={activePresetId === preset.id}
+                          onClick={() => openConfirm(preset.id)}
                         >
-                          Re-apply
+                          Change
                         </Button>
                       </div>
                     </div>
-                  );
-                })()}
-              </CardContent>
-            </Card>
-          </div>
-        )}
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Presets</CardTitle>
-            <CardDescription>
-              Choose a preset and confirm to apply it to all stations
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {presetsLoading ? (
-              <p>Loading presets...</p>
-            ) : presets.length === 0 ? (
-              <p className="text-muted-foreground">No presets available</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {presets.map((preset) => (
-                  <div
-                    key={preset.id}
-                    className="flex items-center justify-between p-3 border rounded-md"
-                    style={{ borderColor: preset.color }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="h-6 w-6 rounded-full shadow-sm"
-                        style={{ backgroundColor: preset.color }}
-                      />
-                      <div>
-                        <div className="font-semibold">{preset.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {preset.expand?.actions?.length || 0} action(s)
-                        </div>
+          {message && (
+            <div
+              className={`mt-4 p-3 rounded-md ${message.type === 'success' ? 'bg-green-50 text-green-800 border border-green-100' : 'bg-destructive/10 text-destructive border border-destructive/20'}`}
+            >
+              {message.text}
+            </div>
+          )}
+
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={(v) => {
+              setIsDialogOpen(v);
+              if (!v) {
+                setSelectedPresetId(null);
+                setMessage(null);
+              }
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirm apply preset</DialogTitle>
+                <DialogDescription>
+                  This will send the preset to all configured station links.
+                  Stations may take a few seconds to apply the new preset.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="mt-4 space-y-4">
+                {selectedPreset ? (
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="h-10 w-10 rounded-md shadow-sm"
+                      style={{ backgroundColor: selectedPreset.color }}
+                    />
+                    <div>
+                      <div className="font-semibold text-lg">
+                        {selectedPreset.name}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {selectedPreset.expand?.actions?.length || 0} action(s)
                       </div>
                     </div>
-                    <div>
-                      <Button
-                        variant={
-                          activePresetId === preset.id ? 'secondary' : 'outline'
-                        }
-                        disabled={activePresetId === preset.id}
-                        onClick={() => openConfirm(preset.id)}
-                      >
-                        Change
-                      </Button>
-                    </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                ) : (
+                  <div>Loading preset...</div>
+                )}
 
-        {message && (
-          <div
-            className={`mt-4 p-3 rounded-md ${message.type === 'success' ? 'bg-green-50 text-green-800 border border-green-100' : 'bg-destructive/10 text-destructive border border-destructive/20'}`}
-          >
-            {message.text}
-          </div>
-        )}
-
-        <Dialog
-          open={isDialogOpen}
-          onOpenChange={(v) => {
-            setIsDialogOpen(v);
-            if (!v) {
-              setSelectedPresetId(null);
-              setMessage(null);
-            }
-          }}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Confirm apply preset</DialogTitle>
-              <DialogDescription>
-                This will send the preset to all configured station links.
-                Stations may take a few seconds to apply the new preset.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="mt-4 space-y-4">
-              {selectedPreset ? (
-                <div className="flex items-center gap-4">
+                {message && (
                   <div
-                    className="h-10 w-10 rounded-md shadow-sm"
-                    style={{ backgroundColor: selectedPreset.color }}
-                  />
-                  <div>
-                    <div className="font-semibold text-lg">
-                      {selectedPreset.name}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {selectedPreset.expand?.actions?.length || 0} action(s)
-                    </div>
+                    className={`p-2 rounded-md ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-destructive/10 text-destructive'}`}
+                  >
+                    {message.text}
                   </div>
-                </div>
-              ) : (
-                <div>Loading preset...</div>
-              )}
+                )}
+              </div>
 
-              {message && (
-                <div
-                  className={`p-2 rounded-md ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-destructive/10 text-destructive'}`}
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsDialogOpen(false);
+                    setSelectedPresetId(null);
+                    setMessage(null);
+                  }}
+                  disabled={loadingApply}
                 >
-                  {message.text}
-                </div>
-              )}
-            </div>
-
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsDialogOpen(false);
-                  setSelectedPresetId(null);
-                  setMessage(null);
-                }}
-                disabled={loadingApply}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleConfirmApply}
-                style={
-                  selectedPreset
-                    ? {
-                        backgroundColor: selectedPreset.color,
-                        borderColor: selectedPreset.color,
-                      }
-                    : undefined
-                }
-                disabled={loadingApply || !selectedPreset}
-              >
-                {loadingApply ? 'Applying...' : 'Apply preset'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleConfirmApply}
+                  style={
+                    selectedPreset
+                      ? {
+                          backgroundColor: selectedPreset.color,
+                          borderColor: selectedPreset.color,
+                        }
+                      : undefined
+                  }
+                  disabled={loadingApply || !selectedPreset}
+                >
+                  {loadingApply ? 'Applying...' : 'Apply preset'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
         <div className="mt-8">
-          {activeStation ? (
-            <Card
-              className={`
+          {activeStations.length > 0 ? (
+            <div className="flex flex-wrap justify-center gap-6 w-full">
+              {activeStations.map((activeStation) => {
+                const activeLink = activeStation.stationLinks.find(
+                  (l) => l.active,
+                );
+                const isReachable = activeLink?.reachable !== false;
+
+                return (
+                  <Card
+                    key={activeStation.id}
+                    className={`
+    w-full md:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)]
     relative overflow-hidden border-2
     ${
       isReachable
@@ -282,49 +295,52 @@ export function MainDashboard() {
     }
     animate-softPulse
   `}
-            >
-              {/* animated glow ring */}
-              <div
-                className={`
+                  >
+                    {/* animated glow ring */}
+                    <div
+                      className={`
       pointer-events-none absolute inset-0 rounded-xl ring-2
       ${isReachable ? 'ring-cyan-400/70' : 'ring-red-600/70'}
       ring-offset-2 ring-offset-background
       animate-pulse
     `}
-              />{' '}
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="font-semibold text-primary">
-                      {activeStation.name}
-                    </span>
+                    />{' '}
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="font-semibold text-primary">
+                            {activeStation.name}
+                          </span>
 
-                    {isReachable ? (
-                      <Badge variant="default">Active</Badge>
-                    ) : (
-                      <Badge variant="destructive">Unreachable Active</Badge>
-                    )}
-                    {(() => {
-                      const activeLink = activeStation.stationLinks.find(
-                        (l) => l.active,
-                      );
-                      return (
-                        activeLink?.counter !== undefined && (
-                          <Badge variant="secondary">
-                            Counter: {activeLink.counter}
-                          </Badge>
-                        )
-                      );
-                    })()}
-                  </div>
-                </CardTitle>
+                          {isReachable ? (
+                            <Badge variant="default">Active</Badge>
+                          ) : (
+                            <Badge variant="destructive">
+                              Unreachable Active
+                            </Badge>
+                          )}
+                          {activeLink?.counter !== undefined && (
+                            <Badge variant="secondary">
+                              Counter: {activeLink.counter}
+                            </Badge>
+                          )}
+                        </div>
+                      </CardTitle>
 
-                <CardDescription>Currently active station</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <StationGraph station={activeStation} onActivate={() => {}} />
-              </CardContent>
-            </Card>
+                      <CardDescription>
+                        Currently active station
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <StationGraph
+                        station={activeStation}
+                        onActivate={() => {}}
+                      />
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           ) : (
             <Card
               className="
