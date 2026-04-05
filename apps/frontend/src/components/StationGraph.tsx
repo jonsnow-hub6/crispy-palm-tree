@@ -30,22 +30,23 @@ export function StationGraph({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [syncing, setSyncing] = useState<string | null>(null);
   const [openTooltip, setOpenTooltip] = useState<string | null>(null);
-const closeTimer = useRef<NodeJS.Timeout | null>(null);
+  const closeTimer = useRef<NodeJS.Timeout | null>(null);
   const [dims, setDims] = useState({ w: 320, h: 220 });
   const { presets, activePresetId } = useSelector(
     (state: RootState) => state.presets,
   );
 
   useEffect(() => {
-    function measure() {
-      const el = containerRef.current;
-      if (!el) return;
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new ResizeObserver(() => {
       const r = el.getBoundingClientRect();
       setDims({ w: Math.max(280, r.width), h: 220 });
-    }
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   const stationX = Math.round(dims.w / 2);
@@ -194,20 +195,20 @@ const closeTimer = useRef<NodeJS.Timeout | null>(null);
             className="absolute flex items-center justify-center pointer-events-none transform -translate-x-1/2"
           >
             <div
-  className="relative"
-  onMouseEnter={() => {
-    if (closeTimer.current) {
-      clearTimeout(closeTimer.current);
-      closeTimer.current = null;
-    }
-    setOpenTooltip(`${link.host}:${link.port}`);
-  }}
-  onMouseLeave={() => {
-    closeTimer.current = setTimeout(() => {
-      setOpenTooltip(null);
-    }, 120);
-  }}
->
+              className="relative"
+              onMouseEnter={() => {
+                if (closeTimer.current) {
+                  clearTimeout(closeTimer.current);
+                  closeTimer.current = null;
+                }
+                setOpenTooltip(`${link.host}:${link.port}`);
+              }}
+              onMouseLeave={() => {
+                closeTimer.current = setTimeout(() => {
+                  setOpenTooltip(null);
+                }, 120);
+              }}
+            >
               {/* Out of sync warning badge */}
               {isOutOfSync && (
                 <div className="absolute -top-2 -right-2 z-20 flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold shadow">
@@ -247,82 +248,76 @@ const closeTimer = useRef<NodeJS.Timeout | null>(null);
               )}
 
               {/* tooltip */}
-{openTooltip === `${link.host}:${link.port}` && (
-  <div
-    className="
+              {openTooltip === `${link.host}:${link.port}` && (
+                <div
+                  className="
       absolute -bottom-28 left-1/2 -translate-x-1/2
       z-50
       animate-in fade-in zoom-in-95
     "
-  >
-    <div className="bg-card border rounded-md p-2 text-xs shadow-md w-56 pointer-events-auto">
+                >
+                  <div className="bg-card border rounded-md p-2 text-xs shadow-md w-56 pointer-events-auto">
+                    <div className="space-y-1 text-card-foreground">
+                      <div className="text-[12px]">
+                        <span className="font-medium">IP:</span>
+                        <span className="ml-1 text-muted-foreground">
+                          {String(link.host)}
+                        </span>
+                      </div>
 
-      <div className="space-y-1 text-card-foreground">
+                      <div className="text-[12px]">
+                        <span className="font-medium">Port:</span>
+                        <span className="ml-1 text-muted-foreground">
+                          {String(link.port)}
+                        </span>
+                      </div>
 
-        <div className="text-[12px]">
-          <span className="font-medium">IP:</span>
-          <span className="ml-1 text-muted-foreground">
-            {String(link.host)}
-          </span>
-        </div>
+                      <div className="text-[12px]">
+                        <span className="font-medium">Status:</span>
+                        <span className="ml-1 text-muted-foreground">
+                          {link.reachable === false
+                            ? 'Unreachable'
+                            : link.active
+                              ? 'Active'
+                              : 'Inactive'}
+                        </span>
+                      </div>
 
-        <div className="text-[12px]">
-          <span className="font-medium">Port:</span>
-          <span className="ml-1 text-muted-foreground">
-            {String(link.port)}
-          </span>
-        </div>
+                      <div className="text-[12px]">
+                        <span className="font-medium">Counter:</span>
+                        <span className="ml-1 text-muted-foreground">
+                          {link.counter}
+                        </span>
+                      </div>
 
-        <div className="text-[12px]">
-          <span className="font-medium">Status:</span>
-          <span className="ml-1 text-muted-foreground">
-            {link.reachable === false
-              ? 'Unreachable'
-              : link.active
-                ? 'Active'
-                : 'Inactive'}
-          </span>
-        </div>
+                      <div className="text-[12px]">
+                        <span className="font-medium">Preset:</span>
+                        <span className="ml-1 text-muted-foreground">
+                          {link.currentPreset || 'N/A'}
+                        </span>
+                      </div>
 
-        <div className="text-[12px]">
-          <span className="font-medium">Counter:</span>
-          <span className="ml-1 text-muted-foreground">
-            {link.counter}
-          </span>
-        </div>
+                      {isOutOfSync && (
+                        <div className="mt-2 flex items-center justify-between gap-2">
+                          <Badge variant="destructive" className="text-[10px]">
+                            Out of Sync
+                          </Badge>
 
-        <div className="text-[12px]">
-          <span className="font-medium">Preset:</span>
-          <span className="ml-1 text-muted-foreground">
-            {link.currentPreset || 'N/A'}
-          </span>
-        </div>
-
-        {isOutOfSync && (
-          <div className="mt-2 flex items-center justify-between gap-2">
-
-            <Badge variant="destructive" className="text-[10px]">
-              Out of Sync
-            </Badge>
-
-            <button
-              disabled={syncing === `${link.host}:${link.port}`}
-              onClick={() => handleSync(link)}
-              className="px-2 py-1 text-[10px] rounded bg-cyan-500 text-white hover:bg-cyan-600 disabled:opacity-50"
-            >
-              {syncing === `${link.host}:${link.port}`
-                ? 'Syncing...'
-                : 'Sync Preset'}
-            </button>
-
-          </div>
-        )}
-
-      </div>
-    </div>
-  </div>
-)}
-
+                          <button
+                            disabled={syncing === `${link.host}:${link.port}`}
+                            onClick={() => handleSync(link)}
+                            className="px-2 py-1 text-[10px] rounded bg-cyan-500 text-white hover:bg-cyan-600 disabled:opacity-50"
+                          >
+                            {syncing === `${link.host}:${link.port}`
+                              ? 'Syncing...'
+                              : 'Sync Preset'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* subtle pulse for active link */}
               {active && (
