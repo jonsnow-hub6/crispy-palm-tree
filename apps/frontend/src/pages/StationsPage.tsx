@@ -7,6 +7,7 @@ import {
   updateStation,
   deleteStation,
   activateStation,
+  activateStationLink,
   deactivateStation,
   Station,
   StationLink,
@@ -49,6 +50,8 @@ export function StationsPage() {
   const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmStationId, setConfirmStationId] = useState<string | null>(null);
+  const [confirmLinkHost, setConfirmLinkHost] = useState<string | null>(null);
+  const [confirmLinkPort, setConfirmLinkPort] = useState<number | null>(null);
 
   useEffect(() => {
     dispatch(fetchStations());
@@ -91,22 +94,40 @@ export function StationsPage() {
     }
   };
 
-  const handleActivate = (stationId: string) => {
+  const handleActivate = (
+    stationId: string,
+    linkHost?: string,
+    linkPort?: number,
+  ) => {
     setConfirmStationId(stationId);
+    setConfirmLinkHost(linkHost || null);
+    setConfirmLinkPort(linkPort || null);
     setConfirmOpen(true);
   };
 
   const handleDeactivate = async (stationId: string) => {
-  await dispatch(deactivateStation({ stationId }));
-};
+    await dispatch(deactivateStation({ stationId }));
+  };
 
   const confirmActivate = async () => {
     if (!confirmStationId) return;
     setConfirmOpen(false);
     try {
-      await dispatch(activateStation({ stationId: confirmStationId }));
+      if (confirmLinkHost && confirmLinkPort) {
+        await dispatch(
+          activateStationLink({
+            stationId: confirmStationId,
+            host: confirmLinkHost,
+            port: confirmLinkPort,
+          }),
+        );
+      } else {
+        await dispatch(activateStation({ stationId: confirmStationId }));
+      }
     } finally {
       setConfirmStationId(null);
+      setConfirmLinkHost(null);
+      setConfirmLinkPort(null);
     }
   };
 
@@ -271,7 +292,9 @@ export function StationsPage() {
                   key={station.id}
                   className={`border-2 shadow-sm transition-all hover:shadow-md ${
                     isActive
-                      ? activeLink?.reachable ? 'border-[#06b6d4] animate-blinkCyan' : 'border-[#0000ff] animate-blinkRed'
+                      ? activeLink?.reachable
+                        ? 'border-[#06b6d4] animate-blinkCyan'
+                        : 'border-[#0000ff] animate-blinkRed'
                       : 'border-border'
                   }`}
                 >
@@ -288,9 +311,10 @@ export function StationsPage() {
                           {station.name}
                         </span>
                         {isActive && !activeLink?.reachable ? (
-                          <Badge variant="destructive">Unreachable Active</Badge>
-                        ):
-                        isActive ? (
+                          <Badge variant="destructive">
+                            Unreachable Active
+                          </Badge>
+                        ) : isActive ? (
                           <Badge variant="default">Active</Badge>
                         ) : station.stationLinks.every(
                             (l) => l.reachable === false,
@@ -329,68 +353,68 @@ export function StationsPage() {
                             className="absolute right-2 top-8 mt-2 w-44 bg-card border rounded-md shadow-md z-40"
                           >
                             <div className="py-1">
-  {/* Edit */}
-  <button
-    role="menuitem"
-    className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60"
-    onClick={() => {
-      setMenuOpenFor(null);
-      handleEdit(station);
-    }}
-  >
-    <Edit className="h-4 w-4 text-muted-foreground" />
-    <span>Edit</span>
-  </button>
+                              {/* Edit */}
+                              <button
+                                role="menuitem"
+                                className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60"
+                                onClick={() => {
+                                  setMenuOpenFor(null);
+                                  handleEdit(station);
+                                }}
+                              >
+                                <Edit className="h-4 w-4 text-muted-foreground" />
+                                <span>Edit</span>
+                              </button>
 
-  {/* Activate */}
-  <button
-    role="menuitem"
-    aria-disabled={isActive || !anyReachable}
-    className={`flex items-center gap-2 w-full px-3 py-2 text-sm ${
-      isActive || !anyReachable
-        ? 'opacity-50 pointer-events-none'
-        : 'hover:bg-accent/60'
-    }`}
-    onClick={() => {
-      setMenuOpenFor(null);
-      if (!isActive && anyReachable)
-        handleActivate(station.id);
-    }}
-  >
-    <Power className="h-4 w-4 text-green-500" />
-    <span>Activate</span>
-  </button>
+                              {/* Activate */}
+                              <button
+                                role="menuitem"
+                                aria-disabled={isActive || !anyReachable}
+                                className={`flex items-center gap-2 w-full px-3 py-2 text-sm ${
+                                  isActive || !anyReachable
+                                    ? 'opacity-50 pointer-events-none'
+                                    : 'hover:bg-accent/60'
+                                }`}
+                                onClick={() => {
+                                  setMenuOpenFor(null);
+                                  if (!isActive && anyReachable)
+                                    handleActivate(station.id);
+                                }}
+                              >
+                                <Power className="h-4 w-4 text-green-500" />
+                                <span>Activate</span>
+                              </button>
 
-  {/* Deactivate (only if active) */}
-  {isActive && (
-    <button
-      role="menuitem"
-      className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-yellow-600"
-      onClick={() => {
-        setMenuOpenFor(null);
-        handleDeactivate(station.id);
-      }}
-    >
-      <Power className="h-4 w-4 rotate-180" />
-      <span>Deactivate</span>
-    </button>
-  )}
+                              {/* Deactivate (only if active) */}
+                              {isActive && (
+                                <button
+                                  role="menuitem"
+                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-yellow-600"
+                                  onClick={() => {
+                                    setMenuOpenFor(null);
+                                    handleDeactivate(station.id);
+                                  }}
+                                >
+                                  <Power className="h-4 w-4 rotate-180" />
+                                  <span>Deactivate</span>
+                                </button>
+                              )}
 
-  <div className="border-t my-1" />
+                              <div className="border-t my-1" />
 
-  {/* Delete */}
-  <button
-    role="menuitem"
-    className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-destructive"
-    onClick={() => {
-      setMenuOpenFor(null);
-      handleDelete(station.id);
-    }}
-  >
-    <Trash2 className="h-4 w-4" />
-    <span>Delete</span>
-  </button>
-</div>
+                              {/* Delete */}
+                              <button
+                                role="menuitem"
+                                className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-destructive"
+                                onClick={() => {
+                                  setMenuOpenFor(null);
+                                  handleDelete(station.id);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span>Delete</span>
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -416,7 +440,9 @@ export function StationsPage() {
           <DialogHeader>
             <DialogTitle>Are you sure?</DialogTitle>
             <DialogDescription>
-              Activate this station? This will attempt to switch active links
+              {confirmLinkHost && confirmLinkPort
+                ? `Activate specific link ${confirmLinkHost}:${confirmLinkPort}? This will attempt to switch active links and specifically target this instance.`
+                : `Activate this station? This will attempt to switch active links.`}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
