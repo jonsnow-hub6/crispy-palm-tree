@@ -152,7 +152,7 @@ routerAdd('POST', '/api/stations/{id}/activate', async (c) => {
     notification.set('stationName', newStation.get('name'));
     notification.set(
       'content',
-      `Station "${newStation.get('name')}" activated successfully${prevStation ? `, previous station was "${prevStation.get('name')}"` : ''}`,
+      `Station "${newStation.get('name')}" (${activatedLink.host}:${activatedLink.port}) activated successfully${prevStation ? `, previous station was "${prevStation.get('name')}"` : ''}`,
     );
     $app.save(notification);
 
@@ -170,7 +170,7 @@ routerAdd('POST', '/api/stations/{id}/activate', async (c) => {
     notification.set('stationName', newStation.get('name'));
     notification.set(
       'content',
-      `Error during station activation: ${err.message || String(err)}`,
+      `Error during station ${newStation.get('name')} activation: ${err.message || String(err)}`,
     );
     $app.save(notification);
 
@@ -305,7 +305,7 @@ routerAdd('POST', '/api/stations/{id}/activate-link', async (c) => {
       notification.set('stationName', newStation.get('name'));
       notification.set(
         'content',
-        `Failed to deactivate previous active link(s) after activating link in "${newStation.get('name')}" - rollback applied`,
+        `Failed to deactivate previous active link(s) (${prevActiveLinks.reduce((acc, l) => acc + `${l.host}:${l.port} `, '')}) after activating link ${host}:${port} in "${newStation.get('name')}" - rollback applied`,
       );
       $app.save(notification);
 
@@ -357,7 +357,7 @@ routerAdd('POST', '/api/stations/{id}/activate-link', async (c) => {
     notification.set('stationName', newStation.get('name') || 'Unknown');
     notification.set(
       'content',
-      `Error during specific link activation: ${err.message || String(err)}`,
+      `Error during specific link ${host}:${port} in station "${newStation.get('name')}" activation: ${err.message || String(err)}`,
     );
     $app.save(notification);
 
@@ -437,7 +437,7 @@ routerAdd('POST', '/api/stations/{id}/deactivate', async (c) => {
     notification.set('stationName', station.get('name'));
     notification.set(
       'content',
-      `Station "${station.get('name')}" deactivated successfully`,
+      `Station "${station.get('name')}" (${activeLinks.reduce((acc, l) => acc + `${l.host}:${l.port} `, '')}) deactivated successfully`,
     );
 
     $app.save(notification);
@@ -454,7 +454,7 @@ routerAdd('POST', '/api/stations/{id}/deactivate', async (c) => {
     notification.set('stationName', station.get('name'));
     notification.set(
       'content',
-      `Error during station deactivation: ${err.message || String(err)}`,
+      `Error during station ${station.get('name')} (${activeLinks.reduce((acc, l) => acc + `${l.host}:${l.port} `, '')}) deactivation: ${err.message || String(err)}`,
     );
 
     $app.save(notification);

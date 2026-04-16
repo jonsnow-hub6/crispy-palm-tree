@@ -73,7 +73,7 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
             errorNotification.set('level', 'error');
             errorNotification.set(
               'content',
-              `Failed to send preset to station "${stationName}" at ${link.host}:${link.port} - ${res.error}`,
+              `Failed to send preset "${preset.get('name')}" to station "${stationName}" at ${link.host}:${link.port} - ${res.error}`,
             );
             $app.save(errorNotification);
           }
@@ -89,7 +89,7 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
           errorNotification.set('level', 'error');
           errorNotification.set(
             'content',
-            `Failed to send preset to station "${stationName}" at ${link.host}:${link.port} - ${String(err)}`,
+            `Failed to send preset "${preset.get('name')}" to station "${stationName}" at ${link.host}:${link.port} - ${String(err)}`,
           );
           $app.save(errorNotification);
 
@@ -122,7 +122,7 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
     notification.set('level', 'error');
     notification.set(
       'content',
-      `Error during preset activation - ${String(err)}`,
+      `Error during preset "${preset.get('name')}" activation - ${String(err)}`,
     );
     $app.save(notification);
 
@@ -133,8 +133,6 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
 routerAdd('POST', '/api/presets/{id}/set-link', async (c) => {
   const notifications = $app.findCollectionByNameOrId('notifications');
   let notification = new Record(notifications);
-
-  console.error('Received request to set preset for single link');
 
   try {
     const { httpPostSetPreset } = require(`${__hooks}/api.utils`);
@@ -242,7 +240,7 @@ routerAdd('POST', '/api/presets/{id}/set-link', async (c) => {
     notification.set('type', 'preset');
     notification.set(
       'content',
-      `Error sending preset to single link - ${String(err)}`,
+      `Error sending preset "${preset.get('name')}" to ${host}:${port} - ${String(err)}`,
     );
 
     $app.save(notification);

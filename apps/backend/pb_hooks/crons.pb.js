@@ -49,8 +49,9 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
     },
     counter_decreased: {
       isMatch: (c) =>
-        c.includes('Counter decreased') || c.includes('Counter increased'),
-      isBad: (c) => c.includes('decreased'),
+        c.includes('Counter did not increase') ||
+        c.includes('Counter increased'),
+      isBad: (c) => c.includes('did not increase'),
     },
     counter_mismatch: {
       isMatch: (c) => c.includes('Global counter'),
@@ -121,6 +122,9 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
     const { httpGetCounter, probeLink, httpGetPreset } = require(
       `${__hooks}/api.utils`,
     );
+
+    const currentPreset = $app.findRecordsByFilter('presets', 'active = true');
+
     const stations = $app.findRecordsByFilter('stations', '');
     let allCounters = [];
     let counterDecreased = false;
@@ -192,6 +196,21 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
               { hostPort: `${existing.host}:${existing.port}` },
               false,
             );
+            if (
+              presetRes.value.presetName !== existing.currentPreset &&
+              currentPreset.length > 0 &&
+              currentPreset[0].get('name') !== presetRes.value.presetName
+            ) {
+              const recordPreset = new Record(notifications);
+              recordPreset.set('level', 'warning');
+              recordPreset.set('type', 'preset');
+              recordPreset.set(
+                'content',
+                `Preset changed from "${existing.currentPreset}" to "${presetRes.value.presetName}" on station "${st.get('name')}" (${existing.host}:${existing.port})`,
+              );
+              recordPreset.set('stationName', st.get('name'));
+              $app.save(recordPreset);
+            }
           } else {
             createNotification(
               'error',
@@ -225,7 +244,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
         createNotification(
           'critical',
           'connection',
-          `Station ${st.get('name')} has one active link but it's unreachable`,
+          `Station ${st.get('name')} has one active link (${activeLinks[0].host}:${activeLinks[0].port}) but it's unreachable`,
           st.get('name'),
           'active_unreachable',
           { stationName: st.get('name') },
@@ -235,7 +254,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
         createNotification(
           'info',
           'connection',
-          `Station ${st.get('name')} active link is now reachable`,
+          `Station ${st.get('name')} active link (${activeLinks[0].host}:${activeLinks[0].port}) is now reachable`,
           st.get('name'),
           'active_unreachable',
           { stationName: st.get('name') },
@@ -247,7 +266,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
         createNotification(
           'critical',
           'connection',
-          `Station ${st.get('name')} has multiple active links (${activeLinks.length})`,
+          `Station ${st.get('name')} has multiple active links (${activeLinks.map((l) => `${l.host}:${l.port}`).join(', ')})`,
           st.get('name'),
           'multiple_active',
           {},
@@ -323,7 +342,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
           typeof old?.counter === 'number' &&
           typeof updated?.counter === 'number'
         ) {
-          if (updated.counter < old.counter) counterDecreased = true;
+          if (updated.counter <= old.counter) counterDecreased = true;
           if (updated.counter > old.counter) counterIncreased = true;
           allCounters.push(updated.counter);
         }
@@ -373,7 +392,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
       createNotification(
         'error',
         'counter',
-        'Counter decreased on at least one link',
+        'Counter did not increase on at least one link',
         '',
         'counter_decreased',
         {},
