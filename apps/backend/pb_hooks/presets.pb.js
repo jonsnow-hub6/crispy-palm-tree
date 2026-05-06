@@ -75,6 +75,7 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
               'content',
               `Failed to send preset "${preset.get('name')}" to station "${stationName}" at ${link.host}:${link.port} - ${res.error}`,
             );
+            errorNotification.set('type', 'preset');
             $app.save(errorNotification);
           }
           return {
@@ -91,6 +92,7 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
             'content',
             `Failed to send preset "${preset.get('name')}" to station "${stationName}" at ${link.host}:${link.port} - ${String(err)}`,
           );
+          errorNotification.set('type', 'preset');
           $app.save(errorNotification);
 
           return {

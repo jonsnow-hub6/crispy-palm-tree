@@ -20,7 +20,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
     active_unreachable: {
       isMatch: (c, args) =>
         (c.includes('has one active link') ||
-          c.includes('active link is now reachable')) &&
+          (c.includes('active link') && c.includes('is now reachable'))) &&
         c.includes(args.stationName),
       isBad: (c) => c.includes('unreachable'),
     },
