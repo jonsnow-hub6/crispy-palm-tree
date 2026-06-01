@@ -152,7 +152,7 @@ routerAdd('POST', '/api/stations/{id}/activate', async (c) => {
     notification.set('stationName', newStation.get('name'));
     notification.set(
       'content',
-      `Station "${newStation.get('name')}" (${activatedLink.host}:${activatedLink.port}) activated successfully${prevStation ? `, previous station was "${prevStation.get('name')}"` : ''}`,
+      `Station "${newStation.get('name')}" (${activatedLink.host}:${activatedLink.port}) activated successfully${prevStation ? `. Station "${prevStation.get('name')}" deactivated successfully` : ''}`,
     );
     $app.save(notification);
 
