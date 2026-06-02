@@ -75,6 +75,7 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
               'content',
               `Failed to send preset "${preset.get('name')}" to station "${stationName}" at ${link.host}:${link.port} - ${res.error}`,
             );
+            errorNotification.set('stationName', stationName);
             errorNotification.set('type', 'preset');
             $app.save(errorNotification);
           }
@@ -92,6 +93,7 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
             'content',
             `Failed to send preset "${preset.get('name')}" to station "${stationName}" at ${link.host}:${link.port} - ${String(err)}`,
           );
+          errorNotification.set('stationName', stationName);
           errorNotification.set('type', 'preset');
           $app.save(errorNotification);
 
@@ -135,6 +137,7 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
 routerAdd('POST', '/api/presets/{id}/set-link', async (c) => {
   const notifications = $app.findCollectionByNameOrId('notifications');
   let notification = new Record(notifications);
+  const stations = $app.findRecordsByFilter('stations', '');
 
   try {
     const { httpPostSetPreset } = require(`${__hooks}/api.utils`);
@@ -143,6 +146,15 @@ routerAdd('POST', '/api/presets/{id}/set-link', async (c) => {
     const body = c.requestInfo().body;
 
     const { host, port } = body || {};
+    let station = stations.find((s) =>
+      JSON.parse(s.get('stationLinks') || '[]').some(
+        (l) => l.host === host && l.port === port,
+      ),
+    );
+
+    if (!station) {
+      return c.json(404, { error: 'Station not found' });
+    }
 
     if (!host || !port) {
       return c.json(400, { error: 'Missing host or port' });
@@ -218,15 +230,17 @@ routerAdd('POST', '/api/presets/{id}/set-link', async (c) => {
       notification.set('type', 'preset');
       notification.set(
         'content',
-        `Failed to send preset "${preset.get('name')}" to ${host}:${port} - ${res.error}`,
+        `Failed to send preset "${preset.get('name')}" to station "${station.get('name')}" at ${host}:${port} - ${res.error}`,
       );
+      notification.set('stationName', station.get('name'));
     } else {
       notification.set('level', 'info');
       notification.set('type', 'preset');
       notification.set(
         'content',
-        `Preset "${preset.get('name')}" sent to ${host}:${port}`,
+        `Preset "${preset.get('name')}" sent to station "${station.get('name')}" at ${host}:${port}`,
       );
+      notification.set('stationName', station.get('name'));
     }
 
     $app.save(notification);
@@ -242,8 +256,9 @@ routerAdd('POST', '/api/presets/{id}/set-link', async (c) => {
     notification.set('type', 'preset');
     notification.set(
       'content',
-      `Error sending preset "${preset.get('name')}" to ${host}:${port} - ${String(err)}`,
+      `Error sending preset "${preset.get('name')}" to station "${station.get('name')}" at ${host}:${port} - ${String(err)}`,
     );
+    notification.set('stationName', station.get('name'));
 
     $app.save(notification);
 
