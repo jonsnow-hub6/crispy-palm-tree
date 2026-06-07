@@ -1,0 +1,27 @@
+{"level":"critical","type":"connection","content":"No active stations detected","stationName":"","timestamp":"2026-04-16 08:55:21.022Z"}
+{"level":"info","type":"connection","content":"Active station detected","stationName":"","timestamp":"2026-04-16 08:55:30.061Z"}
+{"level":"error","type":"","content":"Failed to send preset \"idle6\" to station \"green\" at localhost:5000 - error in http request to api: GoError: Post \"http://localhost:5000/api/setPreset\": dial tcp 127.0.0.1:5000: connect: connection refused","stationName":"","timestamp":"2026-04-16 08:55:47.626Z"}
+{"level":"info","type":"preset","content":"Preset \"idle6\" activated and sent to 5 station links","stationName":"","timestamp":"2026-04-16 08:55:47.642Z"}
+{"level":"info","type":"connection","content":"Station \"red\" (localhost:4001) activated successfully, previous station was \"blue\"","stationName":"red","timestamp":"2026-04-16 08:55:52.902Z"}
+{"level":"error","type":"","content":"Failed to send preset \"idle2\" to station \"green\" at localhost:5000 - error in http request to api: GoError: Post \"http://localhost:5000/api/setPreset\": dial tcp 127.0.0.1:5000: connect: connection refused","stationName":"","timestamp":"2026-04-16 08:55:59.042Z"}
+{"level":"info","type":"preset","content":"Preset \"idle2\" activated and sent to 5 station links","stationName":"","timestamp":"2026-04-16 08:55:59.072Z"}
+{"level":"info","type":"connection","content":"Link localhost:4002 in station \"green\" activated successfully, previous station was \"red\"","stationName":"green","timestamp":"2026-04-16 08:56:17.127Z"}
+{"level":"info","type":"connection","content":"Active station green has an active link","stationName":"green","timestamp":"2026-04-16 08:56:18.038Z"}
+{"level":"info","type":"connection","content":"Link localhost:4003 in station \"blue\" activated successfully, previous station was \"green\"","stationName":"blue","timestamp":"2026-04-16 08:56:20.165Z"}
+{"level":"info","type":"connection","content":"Station \"blue\" (localhost:4003 ) deactivated successfully","stationName":"blue","timestamp":"2026-04-16 08:56:23.409Z"}
+{"level":"critical","type":"connection","content":"No active stations detected","stationName":"","timestamp":"2026-04-16 08:56:24.080Z"}
+{"level":"info","type":"connection","content":"Link localhost:4001 in station \"red\" activated successfully","stationName":"red","timestamp":"2026-04-16 08:56:29.978Z"}
+{"level":"info","type":"connection","content":"Active station detected","stationName":"","timestamp":"2026-04-16 08:56:30.082Z"}
+{"level":"error","type":"","content":"Failed to send preset \"idle6\" to station \"green\" at localhost:5000 - error in http request to api: GoError: Post \"http://localhost:5000/api/setPreset\": dial tcp 127.0.0.1:5000: connect: connection refused","stationName":"","timestamp":"2026-04-16 08:56:35.439Z"}
+{"level":"info","type":"preset","content":"Preset \"idle6\" activated and sent to 5 station links","stationName":"","timestamp":"2026-04-16 08:56:35.454Z"}
+{"level":"error","type":"connection","content":"Failed to get preset from station \"red\" (localhost:4001) - error in http request to api: GoError: Get \"http://localhost:4001/api/getPreset\": dial tcp 127.0.0.1:4001: connect: connection refused","stationName":"red","timestamp":"2026-04-16 08:56:51.120Z"}
+{"level":"critical","type":"connection","content":"Station red has one active link (localhost:4001) but it's unreachable","stationName":"red","timestamp":"2026-04-16 08:56:51.146Z"}
+{"level":"critical","type":"connection","content":"Active station red is unreachable","stationName":"red","timestamp":"2026-04-16 08:56:51.178Z"}
+{"level":"error","type":"connection","content":"Link localhost:4001 became inactive","stationName":"red","timestamp":"2026-04-16 08:56:57.115Z"}
+{"level":"critical","type":"connection","content":"Active station red has no active links","stationName":"red","timestamp":"2026-04-16 08:56:57.121Z"}
+{"level":"info","type":"connection","content":"Active station red is reachable again","stationName":"red","timestamp":"2026-04-16 08:56:57.127Z"}
+{"level":"critical","type":"connection","content":"No active stations detected","stationName":"","timestamp":"2026-04-16 08:56:57.134Z"}
+{"level":"info","type":"preset","content":"Preset \"idle6\" sent to localhost:4001","stationName":"","timestamp":"2026-04-16 08:57:01.865Z"}
+{"level":"info","type":"connection","content":"Successfully got preset from station \"red\" (localhost:4001)","stationName":"red","timestamp":"2026-04-16 08:57:03.083Z"}
+{"level":"info","type":"connection","content":"Link localhost:4003 in station \"blue\" activated successfully","stationName":"blue","timestamp":"2026-04-16 08:57:04.572Z"}
+{"level":"info","type":"connection","content":"Active station detected","stationName":"","timestamp":"2026-04-16 08:57:06.149Z"}

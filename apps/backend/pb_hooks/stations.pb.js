@@ -6,9 +6,12 @@ routerAdd('POST', '/api/stations/{id}/activate', async (c) => {
   let notification = new Record(notifications);
 
   try {
-    const { activateLink, deactivateLink, probeLink } = require(
-      `${__hooks}/api.utils`,
-    );
+    const {
+      activateLink,
+      deactivateLink,
+      probeLink,
+      getSystemMetadata,
+    } = require(`${__hooks}/api.utils`);
 
     const id = c.request.pathValue('id');
     const newStation = $app.findRecordById('stations', id);
@@ -73,6 +76,10 @@ routerAdd('POST', '/api/stations/{id}/activate', async (c) => {
         'content',
         `Failed to activate station "${newStation.get('name')}" - no links reachable`,
       );
+      notification.set(
+        'metadata',
+        JSON.stringify(getSystemMetadata({ record: newStation })),
+      );
       $app.save(notification);
 
       return c.json(400, {
@@ -125,6 +132,12 @@ routerAdd('POST', '/api/stations/{id}/activate', async (c) => {
           'content',
           `Failed to deactivate previous station "${prevStation.get('name')}" after activating "${newStation.get('name')}" - rollback applied`,
         );
+        notification.set(
+          'metadata',
+          JSON.stringify(
+            getSystemMetadata({ record: newStation, link: activatedLink }),
+          ),
+        );
         $app.save(notification);
 
         return c.json(409, {
@@ -152,7 +165,13 @@ routerAdd('POST', '/api/stations/{id}/activate', async (c) => {
     notification.set('stationName', newStation.get('name'));
     notification.set(
       'content',
-      `Station "${newStation.get('name')}" activated successfully${prevStation ? `, previous station was "${prevStation.get('name')}"` : ''}`,
+      `Station "${newStation.get('name')}" (${activatedLink.host}:${activatedLink.port}) activated successfully${prevStation ? `. Station "${prevStation.get('name')}" deactivated successfully` : ''}`,
+    );
+    notification.set(
+      'metadata',
+      JSON.stringify(
+        getSystemMetadata({ record: newStation, link: activatedLink }),
+      ),
     );
     $app.save(notification);
 
@@ -170,7 +189,15 @@ routerAdd('POST', '/api/stations/{id}/activate', async (c) => {
     notification.set('stationName', newStation.get('name'));
     notification.set(
       'content',
-      `Error during station activation: ${err.message || String(err)}`,
+      `Error during station ${newStation.get('name')} activation: ${err.message || String(err)}`,
+    );
+    notification.set(
+      'metadata',
+      JSON.stringify(
+        getSystemMetadata(
+          typeof newStation !== 'undefined' ? { record: newStation } : null,
+        ),
+      ),
     );
     $app.save(notification);
 
@@ -186,9 +213,12 @@ routerAdd('POST', '/api/stations/{id}/activate-link', async (c) => {
   let notification = new Record(notifications);
 
   try {
-    const { activateLink, deactivateLink, probeLink } = require(
-      `${__hooks}/api.utils`,
-    );
+    const {
+      activateLink,
+      deactivateLink,
+      probeLink,
+      getSystemMetadata,
+    } = require(`${__hooks}/api.utils`);
 
     const id = c.request.pathValue('id');
     const body = c.requestInfo().body;
@@ -273,6 +303,12 @@ routerAdd('POST', '/api/stations/{id}/activate-link', async (c) => {
         'content',
         `Failed to activate link ${host}:${port} in station "${newStation.get('name')}"`,
       );
+      notification.set(
+        'metadata',
+        JSON.stringify(
+          getSystemMetadata({ record: newStation, link: specificLink }),
+        ),
+      );
       $app.save(notification);
 
       return c.json(400, {
@@ -305,7 +341,13 @@ routerAdd('POST', '/api/stations/{id}/activate-link', async (c) => {
       notification.set('stationName', newStation.get('name'));
       notification.set(
         'content',
-        `Failed to deactivate previous active link(s) after activating link in "${newStation.get('name')}" - rollback applied`,
+        `Failed to deactivate previous active link(s) (${prevActiveLinks.reduce((acc, l) => acc + `${l.host}:${l.port} `, '')}) after activating link ${host}:${port} in "${newStation.get('name')}" - rollback applied`,
+      );
+      notification.set(
+        'metadata',
+        JSON.stringify(
+          getSystemMetadata({ record: newStation, link: activatedLink }),
+        ),
       );
       $app.save(notification);
 
@@ -339,7 +381,13 @@ routerAdd('POST', '/api/stations/{id}/activate-link', async (c) => {
     notification.set('stationName', newStation.get('name'));
     notification.set(
       'content',
-      `Link ${host}:${port} in station "${newStation.get('name')}" activated successfully${prevStation ? `, previous station was "${prevStation.get('name')}"` : ''}`,
+      `Link ${host}:${port} in station "${newStation.get('name')}" activated successfully${prevStation ? `. Station "${prevStation.get('name')}" deactivated successfully` : ''}`,
+    );
+    notification.set(
+      'metadata',
+      JSON.stringify(
+        getSystemMetadata({ record: newStation, link: activatedLink }),
+      ),
     );
     $app.save(notification);
 
@@ -357,7 +405,17 @@ routerAdd('POST', '/api/stations/{id}/activate-link', async (c) => {
     notification.set('stationName', newStation.get('name') || 'Unknown');
     notification.set(
       'content',
-      `Error during specific link activation: ${err.message || String(err)}`,
+      `Error during specific link ${host}:${port} in station "${newStation.get('name')}" activation: ${err.message || String(err)}`,
+    );
+    notification.set(
+      'metadata',
+      JSON.stringify(
+        getSystemMetadata(
+          typeof newStation !== 'undefined'
+            ? { record: newStation, link: specificLink }
+            : null,
+        ),
+      ),
     );
     $app.save(notification);
 
@@ -369,11 +427,16 @@ routerAdd('POST', '/api/stations/{id}/activate-link', async (c) => {
 
 // Deactivation endpoint: deactivates ALL active links of target station
 routerAdd('POST', '/api/stations/{id}/deactivate', async (c) => {
+  const { deactivateLink, probeLink, getSystemMetadata } = require(
+    `${__hooks}/api.utils`,
+  );
   let notifications = $app.findCollectionByNameOrId('notifications');
   let notification = new Record(notifications);
 
   try {
-    const { deactivateLink, probeLink } = require(`${__hooks}/api.utils`);
+    const { deactivateLink, probeLink, getSystemMetadata } = require(
+      `${__hooks}/api.utils`,
+    );
 
     const id = c.request.pathValue('id');
     const station = $app.findRecordById('stations', id);
@@ -412,7 +475,12 @@ routerAdd('POST', '/api/stations/{id}/deactivate', async (c) => {
         'content',
         `Failed to fully deactivate station "${station.get('name')}"`,
       );
-
+      notification.set(
+        'metadata',
+        JSON.stringify(
+          getSystemMetadata({ record: station, link: activeLinks[0] }),
+        ),
+      );
       $app.save(notification);
 
       return c.json(409, {
@@ -437,9 +505,14 @@ routerAdd('POST', '/api/stations/{id}/deactivate', async (c) => {
     notification.set('stationName', station.get('name'));
     notification.set(
       'content',
-      `Station "${station.get('name')}" deactivated successfully`,
+      `Station "${station.get('name')}" (${activeLinks.reduce((acc, l) => acc + `${l.host}:${l.port} `, '')}) deactivated successfully`,
     );
-
+    notification.set(
+      'metadata',
+      JSON.stringify(
+        getSystemMetadata({ record: station, link: activeLinks[0] }),
+      ),
+    );
     $app.save(notification);
 
     return c.json(200, {
@@ -454,9 +527,16 @@ routerAdd('POST', '/api/stations/{id}/deactivate', async (c) => {
     notification.set('stationName', station.get('name'));
     notification.set(
       'content',
-      `Error during station deactivation: ${err.message || String(err)}`,
+      `Error during station ${station.get('name')} (${activeLinks.reduce((acc, l) => acc + `${l.host}:${l.port} `, '')}) deactivation: ${err.message || String(err)}`,
     );
-
+    notification.set(
+      'metadata',
+      JSON.stringify(
+        getSystemMetadata(
+          typeof station !== 'undefined' ? { record: station } : null,
+        ),
+      ),
+    );
     $app.save(notification);
 
     return c.json(500, {

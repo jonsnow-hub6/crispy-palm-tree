@@ -199,6 +199,7 @@ export function StationsPage() {
                       setFormData({ ...formData, name: e.target.value })
                     }
                     required
+                    disabled={!!editingStation}
                   />
                 </div>
                 <div className="space-y-2">

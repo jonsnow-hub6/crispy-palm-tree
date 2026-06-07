@@ -35,17 +35,44 @@ export default function LeoLogger({ decoderId }: Props) {
   const [isPaused, setIsPaused] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [expectedMagic, setExpectedMagic] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('leoLoggerExpectedMagic') || '';
-    }
-    return '';
-  });
+  const [expectedMagic, setExpectedMagic] = useState('');
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('leoLoggerExpectedMagic', expectedMagic);
-    }
+    let isMounted = true;
+    pb.collection('settings')
+      .getFirstListItem('key="magic"')
+      .then((record) => {
+        if (isMounted && record) {
+          setExpectedMagic(record.value as string);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      try {
+        const record = await pb
+          .collection('settings')
+          .getFirstListItem('key="magic"');
+        await pb
+          .collection('settings')
+          .update(record.id, { value: expectedMagic });
+      } catch (err) {
+        try {
+          await pb
+            .collection('settings')
+            .create({ key: 'magic', value: expectedMagic });
+        } catch (e) {
+          // Ignore
+        }
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [expectedMagic]);
 
   // We need to keep a ref to isPaused so the callback doesn't need to rebuild on toggle
@@ -122,6 +149,8 @@ export default function LeoLogger({ decoderId }: Props) {
     };
   }, [decoderId]);
 
+  const presetStatus = usePresetStatus(records);
+
   const appendRecords = useCallback(
     (batch: LeoRecord[]) => {
       // If paused, we simply drop new records to save memory and avoid moving list
@@ -164,8 +193,6 @@ export default function LeoLogger({ decoderId }: Props) {
         r.reserved.toLowerCase().includes(lowerQ),
     );
   }, [records, searchQuery]);
-
-  const presetStatus = usePresetStatus(records);
 
   const virtualizer = useVirtualizer({
     count: displayedRecords.length,

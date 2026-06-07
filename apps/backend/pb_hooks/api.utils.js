@@ -37,7 +37,8 @@ function httpGetActive(link) {
       }
 
       // Normalize boolean-like responses: true/'true'/1/'1' => true
-      const value = body === true || body === 'true' || body === 1 || body === '1';
+      const value =
+        body === true || body === 'true' || body === 1 || body === '1';
 
       return { ok: true, value };
     }
@@ -162,6 +163,67 @@ function probeLink(link) {
   });
 }
 
+// relevantStation optional argument:
+//   { record, link }  – record is a PocketBase Record; link is { host, port } (optional)
+// OR
+//   { name, id, link } – plain strings when no record is available
+function getSystemMetadata(relevantStation) {
+  let currentPreset = '';
+  try {
+    const activePresets = $app.findRecordsByFilter('presets', 'active = true');
+    if (activePresets.length > 0) {
+      currentPreset = activePresets[0].get('name');
+    }
+  } catch (e) {
+    console.error('Error fetching active preset:', e);
+  }
+
+  let activeLink = '';
+  let station = '';
+  let stationId = '';
+
+  try {
+    const stations = $app.findRecordsByFilter('stations', '');
+    for (const st of stations) {
+      const links = JSON.parse(st.get('stationLinks') || '[]');
+      const active = links.find((l) => l.active === true);
+      if (active) {
+        activeLink = `${active.host}:${active.port}`;
+        stationId = st.id;
+        station = st.get('name');
+        break;
+      }
+    }
+  } catch (e) {
+    console.error('Error finding active station:', e);
+  }
+
+  const activeStationMeta = station
+    ? {
+        name: station,
+        id: stationId,
+        link: activeLink,
+      }
+    : null;
+
+  // Build relevantStation metadata
+  let relevantStationMeta = null;
+  if (relevantStation) {
+    const rec = relevantStation.record || null;
+    const lnk = relevantStation.link || null;
+    relevantStationMeta = {
+      name: rec ? rec.get('name') : relevantStation.name || '',
+      id: rec ? rec.id : relevantStation.id || '',
+      link: lnk ? `${lnk.host}:${lnk.port}` : relevantStation.linkStr || '',
+    };
+  }
+
+  return {
+    currentPreset,
+    activeStation: activeStationMeta,
+    relevantStation: relevantStationMeta,
+  };
+}
 
 module.exports = {
   httpPostSetActive,
@@ -172,4 +234,5 @@ module.exports = {
   probeLink,
   httpPostSetPreset,
   httpGetPreset,
+  getSystemMetadata,
 };

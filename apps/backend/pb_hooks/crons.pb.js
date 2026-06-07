@@ -1,6 +1,7 @@
 /// <reference path="../pb_data/types.d.ts" />
 
 routerAdd('POST', '/api/cron/probe-all', async (c) => {
+  const { getSystemMetadata } = require(`${__hooks}/api.utils`);
   const notifications = $app.findCollectionByNameOrId('notifications');
 
   // Fetch recent notifications to use as state context
@@ -20,7 +21,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
     active_unreachable: {
       isMatch: (c, args) =>
         (c.includes('has one active link') ||
-          c.includes('active link is now reachable')) &&
+          (c.includes('active link') && c.includes('is now reachable'))) &&
         c.includes(args.stationName),
       isBad: (c) => c.includes('unreachable'),
     },
@@ -49,8 +50,9 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
     },
     counter_decreased: {
       isMatch: (c) =>
-        c.includes('Counter decreased') || c.includes('Counter increased'),
-      isBad: (c) => c.includes('decreased'),
+        c.includes('Counter did not increase') ||
+        c.includes('Counter increased'),
+      isBad: (c) => c.includes('did not increase'),
     },
     counter_mismatch: {
       isMatch: (c) => c.includes('Global counter'),
@@ -72,6 +74,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
     pairKey = null,
     pairArgs = {},
     isBadState = true,
+    relevantStation = null,
   ) => {
     if (pairKey && PAIRS[pairKey]) {
       const pair = PAIRS[pairKey];
@@ -91,6 +94,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
       record.set('type', type);
       record.set('content', content);
       if (stationName) record.set('stationName', stationName);
+      record.set('metadata', JSON.stringify(getSystemMetadata(relevantStation)));
       $app.save(record);
       recentNotifications.unshift(record);
       return;
@@ -112,6 +116,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
       record.set('type', type);
       record.set('content', content);
       if (stationName) record.set('stationName', stationName);
+      record.set('metadata', JSON.stringify(getSystemMetadata(relevantStation)));
       $app.save(record);
       recentNotifications.unshift(record);
     }
@@ -121,6 +126,9 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
     const { httpGetCounter, probeLink, httpGetPreset } = require(
       `${__hooks}/api.utils`,
     );
+
+    const currentPreset = $app.findRecordsByFilter('presets', 'active = true');
+
     const stations = $app.findRecordsByFilter('stations', '');
     let allCounters = [];
     let counterDecreased = false;
@@ -191,7 +199,24 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
               'preset',
               { hostPort: `${existing.host}:${existing.port}` },
               false,
+              { record: st, link: existing },
             );
+            if (
+              presetRes.value.presetName !== existing.currentPreset &&
+              currentPreset.length > 0 &&
+              currentPreset[0].get('name') !== presetRes.value.presetName
+            ) {
+              const recordPreset = new Record(notifications);
+              recordPreset.set('level', 'warning');
+              recordPreset.set('type', 'preset');
+              recordPreset.set(
+                'content',
+                `Preset changed from "${existing.currentPreset}" to "${presetRes.value.presetName}" on station "${st.get('name')}" (${existing.host}:${existing.port})`,
+              );
+              recordPreset.set('stationName', st.get('name'));
+              recordPreset.set('metadata', JSON.stringify(getSystemMetadata({ record: st, link: existing })));
+              $app.save(recordPreset);
+            }
           } else {
             createNotification(
               'error',
@@ -201,6 +226,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
               'preset',
               { hostPort: `${existing.host}:${existing.port}` },
               true,
+              { record: st, link: existing },
             );
             updatedLinks[i].currentPreset = 'unknown';
           }
@@ -213,6 +239,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
             'preset',
             { hostPort: `${existing.host}:${existing.port}` },
             true,
+            { record: st, link: existing },
           );
           updatedLinks[i].currentPreset = 'unknown';
         }
@@ -225,21 +252,23 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
         createNotification(
           'critical',
           'connection',
-          `Station ${st.get('name')} has one active link but it's unreachable`,
+          `Station ${st.get('name')} has one active link (${activeLinks[0].host}:${activeLinks[0].port}) but it's unreachable`,
           st.get('name'),
           'active_unreachable',
           { stationName: st.get('name') },
           true,
+          { record: st, link: activeLinks[0] },
         );
       } else if (activeLinks.length === 1 && activeLinks[0].reachable) {
         createNotification(
           'info',
           'connection',
-          `Station ${st.get('name')} active link is now reachable`,
+          `Station ${st.get('name')} active link (${activeLinks[0].host}:${activeLinks[0].port}) is now reachable`,
           st.get('name'),
           'active_unreachable',
           { stationName: st.get('name') },
           false,
+          { record: st, link: activeLinks[0] },
         );
       }
 
@@ -247,11 +276,12 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
         createNotification(
           'critical',
           'connection',
-          `Station ${st.get('name')} has multiple active links (${activeLinks.length})`,
+          `Station ${st.get('name')} has multiple active links (${activeLinks.map((l) => `${l.host}:${l.port}`).join(', ')})`,
           st.get('name'),
           'multiple_active',
           {},
           true,
+          { record: st },
         );
       }
 
@@ -264,6 +294,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
           'multiple_active',
           {},
           true,
+          { record: st },
         );
       }
 
@@ -282,6 +313,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
             'link_inactive',
             { hostPort: `${old.host}:${old.port}` },
             true,
+            { record: st, link: old },
           );
         } else if (old?.active === false && updated?.active === true) {
           createNotification(
@@ -292,6 +324,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
             'link_inactive',
             { hostPort: `${updated.host}:${updated.port}` },
             false,
+            { record: st, link: updated },
           );
         }
 
@@ -305,6 +338,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
               'active_station_no_links',
               { stationName: st.get('name') },
               true,
+              { record: st },
             );
           } else {
             createNotification(
@@ -315,6 +349,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
               'active_station_no_links',
               { stationName: st.get('name') },
               false,
+              { record: st },
             );
           }
         }
@@ -323,7 +358,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
           typeof old?.counter === 'number' &&
           typeof updated?.counter === 'number'
         ) {
-          if (updated.counter < old.counter) counterDecreased = true;
+          if (updated.counter <= old.counter) counterDecreased = true;
           if (updated.counter > old.counter) counterIncreased = true;
           allCounters.push(updated.counter);
         }
@@ -339,6 +374,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
             'active_station_unreachable',
             { stationName: activeStation.get('name') },
             true,
+            { record: activeStation },
           );
         } else {
           createNotification(
@@ -349,6 +385,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
             'active_station_unreachable',
             { stationName: activeStation.get('name') },
             false,
+            { record: activeStation },
           );
         }
       }
@@ -373,7 +410,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
       createNotification(
         'error',
         'counter',
-        'Counter decreased on at least one link',
+        'Counter did not increase on at least one link',
         '',
         'counter_decreased',
         {},
