@@ -371,7 +371,7 @@ export function StationsPage() {
                               <button
                                 role="menuitem"
                                 aria-disabled={isActive || !anyReachable}
-                                className={`flex items-center gap-2 w-full px-3 py-2 text-sm ${
+                                className={`flex items-center gap-2 w-full px-3 py-2 text-sm text-green-700 ${
                                   isActive || !anyReachable
                                     ? 'opacity-50 pointer-events-none'
                                     : 'hover:bg-accent/60'

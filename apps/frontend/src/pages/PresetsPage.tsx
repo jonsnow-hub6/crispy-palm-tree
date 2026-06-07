@@ -30,7 +30,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Edit, Trash2, Upload, MoreVertical } from 'lucide-react';
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Upload,
+  MoreVertical,
+  Download,
+} from 'lucide-react';
 
 export function PresetsPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -84,6 +91,23 @@ export function PresetsPage() {
     if (window.confirm('Are you sure you want to delete this preset?')) {
       await dispatch(deletePreset(id));
     }
+  };
+
+  const handleDownload = (preset: Preset) => {
+    const actions = preset.expand?.actions || [];
+    const json = {
+      presetName: preset.name,
+      commands: actions.map((a) => ({ id: a.project, payload: a.payload })),
+    };
+    const blob = new Blob([JSON.stringify(json, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${preset.name.replace(/\s+/g, '_')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -432,6 +456,18 @@ export function PresetsPage() {
                               >
                                 <Edit className="h-4 w-4" />
                                 Edit
+                              </button>
+
+                              <button
+                                role="menuitem"
+                                className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60"
+                                onClick={() => {
+                                  setMenuOpenFor(null);
+                                  handleDownload(preset);
+                                }}
+                              >
+                                <Download className="h-4 w-4" />
+                                Download JSON
                               </button>
 
                               <div className="border-t my-1" />
