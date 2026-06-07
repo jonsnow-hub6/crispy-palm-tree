@@ -405,8 +405,9 @@ export function StationsPage() {
 
                               {/* Delete */}
                               <button
+                                disabled={isActive}
                                 role="menuitem"
-                                className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-destructive"
+                                className={`flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-destructive ${isActive ? ' opacity-50 pointer-events-none' : ''}`}
                                 onClick={() => {
                                   setMenuOpenFor(null);
                                   handleDelete(station.id);
