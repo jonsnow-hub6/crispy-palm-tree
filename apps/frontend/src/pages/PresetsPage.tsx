@@ -437,15 +437,16 @@ export function PresetsPage() {
                               <div className="border-t my-1" />
 
                               <button
+                                disabled={preset.active}
                                 role="menuitem"
-                                className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-destructive"
+                                className={`flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-destructive ${preset.active ? 'pointer-events-none' : ''}`}
                                 onClick={() => {
                                   setMenuOpenFor(null);
                                   handleDelete(preset.id);
                                 }}
                               >
                                 <Trash2 className="h-4 w-4" />
-                                Delete
+                                <span>Delete</span>
                               </button>
                             </div>
                           </div>
