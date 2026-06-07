@@ -10,11 +10,9 @@ onRecordAfterCreateSuccess(async (e) => {
       method: 'POST',
       body: JSON.stringify({
         level: e.record.get('level'),
-        message: JSON.stringify({
-          type: e.record.get('type'),
-          stationName: e.record.get('stationName'),
-          message: e.record.get('content'),
-        }),
+        type: e.record.get('type'),
+        message: e.record.get('content'),
+        metadata: e.record.get('metadata'),
         timestamp: e.record.get('created'),
       }),
       headers: { 'Content-Type': 'application/json' },

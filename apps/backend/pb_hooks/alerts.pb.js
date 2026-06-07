@@ -4,86 +4,10 @@ onRecordAfterCreateSuccess((e) => {
   const record = e.record;
   const currentProjectId = record.get('projectId') || '';
 
-  // Helper to construct exact DB query for pair history
-  const getHistoryQuery = (pairKey) => {
-    if (pairKey === 'magic') return `type = 'magic'`;
-    if (pairKey === 'counter') return `type = 'counter'`;
-    if (pairKey === 'unexpected_log')
-      return `type = 'preset' && (message ~ 'Unexpected log' || message ~ 'matches preset' || message ~ 'matches active preset')`;
-    if (pairKey === 'missing_presets')
-      return `type = 'preset' && (message ~ 'presets are in the logs' || message ~ 'actions from active preset')`;
-    return '';
-  };
-
-  const PAIRS = {
-    magic: {
-      isBad: (m) => String(m || '').includes('Magic mismatch'),
-    },
-    counter: {
-      isBad: (m) => String(m || '').includes('not increasing'),
-    },
-    unexpected_log: {
-      isBad: (m) => String(m || '').includes('Unexpected log'),
-    },
-    missing_presets: {
-      isBad: (m) =>
-        String(m || '').includes('Not all presets are in the logs') ||
-        String(m || '').includes('Not all actions from active preset'),
-    },
-  };
-
-  // Helper to dispatch alert safely and deduplicate by state
-  const dispatchAlert = (
-    type,
-    level,
-    message,
-    pairKey,
-    pairArgs,
-    isBadState,
-  ) => {
-    try {
-      if (pairKey && PAIRS[pairKey]) {
-        const pair = PAIRS[pairKey];
-        const filterStr = getHistoryQuery(pairKey);
-        let goSlice = [];
-        if (filterStr) {
-          goSlice = $app.findRecordsByFilter(
-            'alerts',
-            filterStr,
-            '-created',
-            1,
-            0,
-          );
-        }
-
-        if (goSlice && goSlice.length > 0) {
-          const lastMessage = goSlice[0].get('message');
-          const wasBad = pair.isBad(lastMessage);
-          // Ignore identical state transitions
-          if (isBadState && wasBad) return;
-          if (!isBadState && !wasBad) return;
-        } else {
-          // Start silently for Good state if no history exists
-          if (!isBadState) return;
-        }
-      }
-
-      const collection = $app.findCollectionByNameOrId('alerts');
-      const alert = new Record(collection);
-      alert.set('type', type);
-      alert.set('level', level);
-      alert.set('message', message);
-      $app.save(alert);
-    } catch (err) {
-      console.error('Failed to save alert:', err.message || err);
-    }
-  };
-
-  // Helper to stringify record for logs
+  // Full log snapshot stored in the alert metadata
   const logData = {
-    id: record.get('id'),
+    id: record.id,
     created: record.get('created'),
-    updated: record.get('updated'),
     counter: record.get('counter'),
     magic: record.get('magic'),
     reserved: record.get('reserved'),
@@ -95,11 +19,11 @@ onRecordAfterCreateSuccess((e) => {
     threshold: record.get('threshold'),
     payload: record.get('payload'),
   };
-  const recordPayloadStr = JSON.stringify(logData);
 
-  // ----------------------------------------------------
-  // 1. Magic Mismatch
-  // ----------------------------------------------------
+  // ------------------------------------------------
+  // 1. Magic check
+  // ------------------------------------------------
+  let isMagicCorrect = null;
   try {
     const settings = $app.findRecordsByFilter(
       'settings',
@@ -112,38 +36,21 @@ onRecordAfterCreateSuccess((e) => {
       const expectedStr = String(settings[0].get('value') || '').trim();
       const magicStr = String(record.get('magic') || '').trim();
       if (expectedStr !== '') {
-        if (magicStr !== expectedStr) {
-          dispatchAlert(
-            'magic',
-            'error',
-            `Magic mismatch for project ${currentProjectId}. Log: ${recordPayloadStr}`,
-            'magic',
-            null,
-            true,
-          );
-        } else {
-          dispatchAlert(
-            'magic',
-            'info',
-            `Magic matched for project ${currentProjectId}. Log: ${recordPayloadStr}`,
-            'magic',
-            null,
-            false,
-          );
-        }
+        isMagicCorrect = magicStr === expectedStr;
       }
     }
   } catch (err) {
     $app.logger().error('alerts.pb.js Magic Check failed', err.message || err);
   }
 
-  // ----------------------------------------------------
-  // 2. Counter not increasing
-  // ----------------------------------------------------
+  // ------------------------------------------------
+  // 2. Counter check
+  // ------------------------------------------------
+  let isCounterCorrect = null;
   try {
     const prevLogs = $app.findRecordsByFilter(
       'leo',
-      `projectId = '${currentProjectId}' && id != '${record.get('id')}'`,
+      `projectId = '${currentProjectId}' && id != '${record.id}'`,
       '-created',
       1,
       0,
@@ -152,36 +59,10 @@ onRecordAfterCreateSuccess((e) => {
       const prevCounter = Number(prevLogs[0].get('counter') || 0);
       const currentCounter = Number(record.get('counter') || 0);
       if (currentCounter <= prevCounter) {
-        if (!(currentCounter < 10 && prevCounter > 200)) {
-          // normal failure
-          dispatchAlert(
-            'counter',
-            'error',
-            `Counter not increasing for project ${currentProjectId}. Log: ${recordPayloadStr}`,
-            'counter',
-            null,
-            true,
-          );
-        } else {
-          // safe wrapper
-          dispatchAlert(
-            'counter',
-            'info',
-            `Counter increasing for project ${currentProjectId}. Log: ${recordPayloadStr}`,
-            'counter',
-            null,
-            false,
-          );
-        }
+        // Safe wrap-around: counter reset from >200 back to <10
+        isCounterCorrect = currentCounter < 10 && prevCounter > 200;
       } else {
-        dispatchAlert(
-          'counter',
-          'info',
-          `Counter increasing for project ${currentProjectId}. Log: ${recordPayloadStr}`,
-          'counter',
-          null,
-          false,
-        );
+        isCounterCorrect = true;
       }
     }
   } catch (err) {
@@ -190,9 +71,12 @@ onRecordAfterCreateSuccess((e) => {
       .error('alerts.pb.js Counter Check failed', err.message || err);
   }
 
-  // ----------------------------------------------------
-  // 3. Log not in preset & 4. Missing preset in logs
-  // ----------------------------------------------------
+  // ------------------------------------------------
+  // 3. Is this log in the active preset?
+  // 4. Are all preset actions present in recent logs?
+  // ------------------------------------------------
+  let isLogInPreset = null;
+  let areAllPresetActionsInLogs = null;
   try {
     const activePresets = $app.findRecordsByFilter(
       'presets',
@@ -207,7 +91,8 @@ onRecordAfterCreateSuccess((e) => {
       const actions = activePreset.expandedAll('actions');
 
       if (actions && actions.length > 0) {
-        let isPresetLog = false;
+        // Check 3: does this record's payload match any preset action?
+        isLogInPreset = false;
         for (let i = 0; i < actions.length; i++) {
           const a = actions[i];
           if (
@@ -216,31 +101,12 @@ onRecordAfterCreateSuccess((e) => {
             String(a.get('payload')).trim() ===
               String(record.get('payload')).trim()
           ) {
-            isPresetLog = true;
+            isLogInPreset = true;
             break;
           }
         }
 
-        if (!isPresetLog) {
-          dispatchAlert(
-            'preset',
-            'error',
-            `Unexpected log for project ${currentProjectId}: payload ${record.get('payload')} is not in active preset "${activePreset.get('name')}". Log: ${recordPayloadStr}`,
-            'unexpected_log',
-            null,
-            true,
-          );
-        } else {
-          dispatchAlert(
-            'preset',
-            'info',
-            `Log payload ${record.get('payload')} matches active preset "${activePreset.get('name')}" for project ${currentProjectId}.`,
-            'unexpected_log',
-            null,
-            false,
-          );
-        }
-
+        // Check 4: do all preset actions appear in the last 150 leo records?
         const recentLeo = $app.findRecordsByFilter(
           'leo',
           '',
@@ -248,8 +114,7 @@ onRecordAfterCreateSuccess((e) => {
           150,
           0,
         );
-        let missingActions = [];
-        let matchedCount = 0;
+        const missingActions = [];
         for (let i = 0; i < actions.length; i++) {
           const a = actions[i];
           let found = false;
@@ -264,38 +129,54 @@ onRecordAfterCreateSuccess((e) => {
               break;
             }
           }
-          if (found) {
-            matchedCount++;
-          } else {
-            missingActions.push(
-              `{ project: ${a.get('project')}, payload: ${a.get('payload')} }`,
-            );
+          if (!found) {
+            missingActions.push({
+              project: a.get('project'),
+              payload: a.get('payload'),
+            });
           }
         }
-
-        if (missingActions.length > 0) {
-          dispatchAlert(
-            'preset',
-            'warning',
-            `Not all actions from active preset "${activePreset.get('name')}" are in the logs. Missing: ${missingActions.join(', ')}`,
-            'missing_presets',
-            {},
-            true,
-          );
-        } else {
-          dispatchAlert(
-            'preset',
-            'info',
-            `All actions from active preset "${activePreset.get('name')}" are currently in the logs.`,
-            'missing_presets',
-            {},
-            false,
-          );
-        }
+        areAllPresetActionsInLogs = missingActions.length === 0;
       }
     }
   } catch (err) {
     $app.logger().error('alerts.pb.js Preset Check failed', err.message || err);
+  }
+
+  // ------------------------------------------------
+  // Create ONE alert record with all results
+  // ------------------------------------------------
+  try {
+    const issues = [];
+    if (isMagicCorrect === false) issues.push('magic mismatch');
+    if (isCounterCorrect === false) issues.push('counter not increasing');
+    if (isLogInPreset === false) issues.push('log not in preset');
+    if (areAllPresetActionsInLogs === false)
+      issues.push('missing preset actions in logs');
+
+    const level = issues.length > 0 ? 'error' : 'info';
+    const message =
+      issues.length > 0
+        ? `Issues for project ${currentProjectId}: ${issues.join(', ')}`
+        : `All checks passed for project ${currentProjectId}`;
+
+    const collection = $app.findCollectionByNameOrId('alerts');
+    const alert = new Record(collection);
+    alert.set('level', level);
+    alert.set('message', message);
+    alert.set(
+      'metadata',
+      JSON.stringify({
+        isMagicCorrect,
+        isCounterCorrect,
+        isLogInPreset,
+        areAllPresetActionsInLogs,
+        log: logData,
+      }),
+    );
+    $app.save(alert);
+  } catch (err) {
+    console.error('Failed to save alert:', err.message || err);
   }
 
   e.next();
@@ -312,10 +193,8 @@ onRecordAfterCreateSuccess((e) => {
         method: 'POST',
         body: JSON.stringify({
           level: e.record.get('level'),
-          message: JSON.stringify({
-            type: e.record.get('type'),
-            message: e.record.get('message'),
-          }),
+          message: e.record.get('message'),
+          metadata: e.record.get('metadata'),
           timestamp: e.record.get('created'),
         }),
         headers: { 'Content-Type': 'application/json' },

@@ -1,11 +1,13 @@
 /// <reference path="../pb_data/types.d.ts" />
 
 routerAdd('POST', '/api/presets/{id}/set', async (c) => {
+  const { httpPostSetPreset, getSystemMetadata } = require(
+    `${__hooks}/api.utils`,
+  );
   let notifications = $app.findCollectionByNameOrId('notifications');
   let notification = new Record(notifications);
 
   try {
-    const { httpPostSetPreset } = require(`${__hooks}/api.utils`);
     const id = c.request.pathValue('id');
 
     const preset = $app.findRecordById('presets', id);
@@ -77,6 +79,16 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
             );
             errorNotification.set('stationName', stationName);
             errorNotification.set('type', 'preset');
+            errorNotification.set(
+              'metadata',
+              JSON.stringify(
+                getSystemMetadata({
+                  name: stationName,
+                  id: stationId,
+                  link: link,
+                }),
+              ),
+            );
             $app.save(errorNotification);
           }
           return {
@@ -95,6 +107,16 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
           );
           errorNotification.set('stationName', stationName);
           errorNotification.set('type', 'preset');
+          errorNotification.set(
+            'metadata',
+            JSON.stringify(
+              getSystemMetadata({
+                name: stationName,
+                id: stationId,
+                link: link,
+              }),
+            ),
+          );
           $app.save(errorNotification);
 
           return {
@@ -115,6 +137,7 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
       'content',
       `Preset "${preset.get('name')}" activated and sent to ${results.length} station links`,
     );
+    notification.set('metadata', JSON.stringify(getSystemMetadata()));
     $app.save(notification);
 
     return c.json(200, {
@@ -128,6 +151,7 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
       'content',
       `Error during preset "${preset.get('name')}" activation - ${String(err)}`,
     );
+    notification.set('metadata', JSON.stringify(getSystemMetadata()));
     $app.save(notification);
 
     return c.json(500, { error: String(err) });
@@ -137,13 +161,14 @@ routerAdd('POST', '/api/presets/{id}/set', async (c) => {
 routerAdd('POST', '/api/presets/{id}/set-link', async (c) => {
   const notifications = $app.findCollectionByNameOrId('notifications');
   let notification = new Record(notifications);
-  const stations = $app.findRecordsByFilter('stations', '');
 
   try {
-    const { httpPostSetPreset } = require(`${__hooks}/api.utils`);
-
+    const { httpPostSetPreset, getSystemMetadata } = require(
+      `${__hooks}/api.utils`,
+    );
     const id = c.request.pathValue('id');
     const body = c.requestInfo().body;
+    let stations = $app.findRecordsByFilter('stations', '');
 
     const { host, port } = body || {};
     let station = stations.find((s) =>
@@ -166,7 +191,6 @@ routerAdd('POST', '/api/presets/{id}/set-link', async (c) => {
     if (!preset) {
       return c.json(404, { error: 'Preset not found' });
     }
-
     // Build payload
     const actionIds = preset.get('actions') || [];
     const commands = [];
@@ -195,7 +219,7 @@ routerAdd('POST', '/api/presets/{id}/set-link', async (c) => {
     // =============================
     // Update stationLinks in DB
     // =============================
-    const stations = $app.findRecordsByFilter('stations', '');
+    stations = $app.findRecordsByFilter('stations', '');
 
     for (const station of stations) {
       let links = JSON.parse(station.get('stationLinks') || '[]');
@@ -243,6 +267,12 @@ routerAdd('POST', '/api/presets/{id}/set-link', async (c) => {
       notification.set('stationName', station.get('name'));
     }
 
+    notification.set(
+      'metadata',
+      JSON.stringify(
+        getSystemMetadata({ record: station, link: { host, port } }),
+      ),
+    );
     $app.save(notification);
 
     return c.json(200, {
@@ -256,10 +286,24 @@ routerAdd('POST', '/api/presets/{id}/set-link', async (c) => {
     notification.set('type', 'preset');
     notification.set(
       'content',
-      `Error sending preset "${preset.get('name')}" to station "${station.get('name')}" at ${host}:${port} - ${String(err)}`,
+      `Error sending preset "${preset.get('name')}" to station "${typeof station !== 'undefined' && station ? station.get('name') : 'Unknown'}" at ${typeof host !== 'undefined' ? host : 'unknown'}:${typeof port !== 'undefined' ? port : 'unknown'} - ${String(err)}`,
     );
-    notification.set('stationName', station.get('name'));
-
+    notification.set(
+      'stationName',
+      typeof station !== 'undefined' && station
+        ? station.get('name')
+        : 'Unknown',
+    );
+    notification.set(
+      'metadata',
+      JSON.stringify(
+        getSystemMetadata(
+          typeof station !== 'undefined' && station
+            ? { record: station, link: { host, port } }
+            : null,
+        ),
+      ),
+    );
     $app.save(notification);
 
     console.error(err?.stack || err);

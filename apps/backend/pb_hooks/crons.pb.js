@@ -1,6 +1,7 @@
 /// <reference path="../pb_data/types.d.ts" />
 
 routerAdd('POST', '/api/cron/probe-all', async (c) => {
+  const { getSystemMetadata } = require(`${__hooks}/api.utils`);
   const notifications = $app.findCollectionByNameOrId('notifications');
 
   // Fetch recent notifications to use as state context
@@ -73,6 +74,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
     pairKey = null,
     pairArgs = {},
     isBadState = true,
+    relevantStation = null,
   ) => {
     if (pairKey && PAIRS[pairKey]) {
       const pair = PAIRS[pairKey];
@@ -92,6 +94,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
       record.set('type', type);
       record.set('content', content);
       if (stationName) record.set('stationName', stationName);
+      record.set('metadata', JSON.stringify(getSystemMetadata(relevantStation)));
       $app.save(record);
       recentNotifications.unshift(record);
       return;
@@ -113,6 +116,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
       record.set('type', type);
       record.set('content', content);
       if (stationName) record.set('stationName', stationName);
+      record.set('metadata', JSON.stringify(getSystemMetadata(relevantStation)));
       $app.save(record);
       recentNotifications.unshift(record);
     }
@@ -195,6 +199,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
               'preset',
               { hostPort: `${existing.host}:${existing.port}` },
               false,
+              { record: st, link: existing },
             );
             if (
               presetRes.value.presetName !== existing.currentPreset &&
@@ -209,6 +214,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
                 `Preset changed from "${existing.currentPreset}" to "${presetRes.value.presetName}" on station "${st.get('name')}" (${existing.host}:${existing.port})`,
               );
               recordPreset.set('stationName', st.get('name'));
+              recordPreset.set('metadata', JSON.stringify(getSystemMetadata({ record: st, link: existing })));
               $app.save(recordPreset);
             }
           } else {
@@ -220,6 +226,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
               'preset',
               { hostPort: `${existing.host}:${existing.port}` },
               true,
+              { record: st, link: existing },
             );
             updatedLinks[i].currentPreset = 'unknown';
           }
@@ -232,6 +239,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
             'preset',
             { hostPort: `${existing.host}:${existing.port}` },
             true,
+            { record: st, link: existing },
           );
           updatedLinks[i].currentPreset = 'unknown';
         }
@@ -249,6 +257,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
           'active_unreachable',
           { stationName: st.get('name') },
           true,
+          { record: st, link: activeLinks[0] },
         );
       } else if (activeLinks.length === 1 && activeLinks[0].reachable) {
         createNotification(
@@ -259,6 +268,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
           'active_unreachable',
           { stationName: st.get('name') },
           false,
+          { record: st, link: activeLinks[0] },
         );
       }
 
@@ -271,6 +281,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
           'multiple_active',
           {},
           true,
+          { record: st },
         );
       }
 
@@ -283,6 +294,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
           'multiple_active',
           {},
           true,
+          { record: st },
         );
       }
 
@@ -301,6 +313,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
             'link_inactive',
             { hostPort: `${old.host}:${old.port}` },
             true,
+            { record: st, link: old },
           );
         } else if (old?.active === false && updated?.active === true) {
           createNotification(
@@ -311,6 +324,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
             'link_inactive',
             { hostPort: `${updated.host}:${updated.port}` },
             false,
+            { record: st, link: updated },
           );
         }
 
@@ -324,6 +338,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
               'active_station_no_links',
               { stationName: st.get('name') },
               true,
+              { record: st },
             );
           } else {
             createNotification(
@@ -334,6 +349,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
               'active_station_no_links',
               { stationName: st.get('name') },
               false,
+              { record: st },
             );
           }
         }
@@ -358,6 +374,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
             'active_station_unreachable',
             { stationName: activeStation.get('name') },
             true,
+            { record: activeStation },
           );
         } else {
           createNotification(
@@ -368,6 +385,7 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
             'active_station_unreachable',
             { stationName: activeStation.get('name') },
             false,
+            { record: activeStation },
           );
         }
       }
