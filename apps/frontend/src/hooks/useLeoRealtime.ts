@@ -69,6 +69,7 @@ async function ensureSubscription() {
           timeOfArrival: String(r.timeOfArrival ?? ''),
           decoderId: String(r.decoderId ?? ''),
           created: r.created,
+          isCounterCorrect: r.isCounterCorrect !== undefined ? r.isCounterCorrect : null,
         };
 
         subscriptionState.buffer.push(rec);

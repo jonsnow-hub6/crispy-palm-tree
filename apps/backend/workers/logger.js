@@ -1,5 +1,7 @@
 // insertLeoData.js
+
 const PocketBase = require('pocketbase/cjs');
+
 console.log('Logger script starting...');
 
 const PB_URL = process.env.PB_URL || 'http://127.0.0.1:8090';
@@ -28,41 +30,57 @@ async function loginAdmin() {
 }
 
 // ----------------------------
-// Insert batch
+// Send one record
 // ----------------------------
-async function insertLeoData() {
+async function sendRecord(record) {
   try {
+    await pb.collection('leo').create(record);
+
+    console.log(
+      `Successfully inserted record with payload: ${record.payload} (projectId: ${record.projectId})`,
+    );
+  } catch (err) {
+    console.error(`Failed to insert record with payload: ${record.payload}`);
+    console.error(err);
+  }
+}
+
+// ----------------------------
+// Main loop
+// ----------------------------
+async function runForever() {
+  while (true) {
     const records = [
       {
-        projectId: `1234`,
+        projectId: '1234',
         counter: counter++,
         magic: Math.floor(Math.random() * 99999999),
-        payload: `0x00000000000001`,
+        payload: '0x00000000000001',
         timeOfArrival: new Date().toISOString(),
-        reserved: `0x00000000000001`,
+        reserved: '0x00000000000001',
         messageType: Math.floor(Math.random() * 10),
         management: Math.floor(Math.random() * 10),
         threshold: Math.floor(Math.random() * 10),
         decoderId: `decoder${Math.floor(Math.random() * 2) + 1}`,
       },
       {
-        projectId: `1234`,
+        projectId: '1234',
         counter: counter++,
         magic: 12345678,
-        payload: `0x00000000000002`,
+        payload: '0x00000000000002',
         timeOfArrival: new Date().toISOString(),
-        reserved: `0x00000000000002`,
+        reserved: '0x00000000000002',
         messageType: Math.floor(Math.random() * 10),
         management: Math.floor(Math.random() * 10),
         threshold: Math.floor(Math.random() * 10),
         decoderId: `decoder${Math.floor(Math.random() * 2) + 1}`,
       },
       {
-        projectId: `1234`,
+        projectId: '1234',
         counter: counter++,
         magic: 12345678,
-        payload: `0x00000000000001`,
-        reserved: `0x00000000000001`,
+        payload: '0x00000000000001',
+        reserved: '0x00000000000001',
         messageType: Math.floor(Math.random() * 10),
         management: Math.floor(Math.random() * 10),
         threshold: Math.floor(Math.random() * 10),
@@ -70,11 +88,11 @@ async function insertLeoData() {
         decoderId: `decoder${Math.floor(Math.random() * 2) + 1}`,
       },
       {
-        projectId: `1245`,
+        projectId: '1245',
         counter: counter++,
         magic: 12345678,
-        payload: `0x2345400000`,
-        reserved: `0x23454000000`,
+        payload: '0x2345400000',
+        reserved: '0x23454000000',
         messageType: Math.floor(Math.random() * 10),
         management: Math.floor(Math.random() * 10),
         threshold: Math.floor(Math.random() * 10),
@@ -83,24 +101,12 @@ async function insertLeoData() {
       },
     ];
 
-    for (const r of records) {
-      try {
-        await pb.collection('leo').create(r);
-        console.log(
-          `Successfully inserted record with payload: ${r.payload} (projectId: ${r.projectId})`,
-        );
-      } catch (err) {
-        console.error(
-          `Failed to insert record with payload: ${r.payload}:`,
-          err.message,
-          err.response ? JSON.stringify(err.response.data) : 'No response data',
-        );
-      }
-    }
+    for (const record of records) {
+      await sendRecord(record);
 
-    console.log(`Batch processed. Counter now at ${counter}`);
-  } catch (err) {
-    console.error('Unexpected error in insertLeoData:', err);
+      // wait 1 second before sending next record
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
   }
 }
 
@@ -110,9 +116,7 @@ async function insertLeoData() {
 async function main() {
   // await loginAdmin();
 
-  await insertLeoData();
-
-  setInterval(insertLeoData, 1000);
+  await runForever();
 }
 
-main();
+main().catch(console.error);
