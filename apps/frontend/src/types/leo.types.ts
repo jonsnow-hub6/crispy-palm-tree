@@ -11,6 +11,7 @@ export interface LeoRecord {
   timeOfArrival: string;
   decoderId: string;
   created?: string;
+  isCounterCorrect?: boolean | null;
 }
 
 export type LeoEventRaw = Partial<LeoRecord> & { id?: string };

@@ -21,6 +21,9 @@ import type { LeoRecord } from '@/types/leo.types';
 import useLeoRealtime from '@/hooks/useLeoRealtime';
 import { usePresetStatus } from '@/hooks/usePresetStatus';
 import { pb } from '@/lib/pocketbase';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store';
+import { fetchStations } from '@/store/slices/stationsSlice';
 
 const SOFT_CAP = 200; // only keep the latest 200 logs in this view
 
@@ -29,8 +32,89 @@ type Props = {
 };
 
 export default function LeoLogger({ decoderId }: Props) {
+  const dispatch = useDispatch<AppDispatch>();
+  const { stations } = useSelector((state: RootState) => state.stations);
+
   const [records, setRecords] = useState<LeoRecord[]>([]);
   const parentRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    dispatch(fetchStations());
+  }, [dispatch]);
+
+  const expectedCounter = useMemo(() => {
+    let activeLinkCounter: number | null = null;
+    let fallbackCounter: number | null = null;
+
+    for (const st of stations) {
+      const links = st.stationLinks || [];
+      for (const l of links) {
+        if (typeof l.counter === 'number') {
+          if (l.active === true) {
+            activeLinkCounter = l.counter;
+            break;
+          }
+          if (fallbackCounter === null) {
+            fallbackCounter = l.counter;
+          }
+        }
+      }
+      if (activeLinkCounter !== null) break;
+    }
+    return activeLinkCounter !== null ? activeLinkCounter : fallbackCounter;
+  }, [stations]);
+
+  const [counterDelta, setCounterDelta] = useState('0');
+
+  useEffect(() => {
+    let isMounted = true;
+    pb.collection('settings')
+      .getFirstListItem('key="delta"')
+      .then((record) => {
+        if (isMounted && record) {
+          setCounterDelta(record.value as string);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      try {
+        const record = await pb
+          .collection('settings')
+          .getFirstListItem('key="delta"');
+        await pb
+          .collection('settings')
+          .update(record.id, { value: counterDelta });
+      } catch (err) {
+        try {
+          await pb
+            .collection('settings')
+            .create({ key: 'delta', value: counterDelta });
+        } catch (e) {
+          // Ignore
+        }
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [counterDelta]);
+
+  const deltaNum = useMemo(() => {
+    const parsed = parseInt(counterDelta, 10);
+    return isNaN(parsed) ? 0 : parsed;
+  }, [counterDelta]);
+
+  const hasLatestCounterMismatch = useMemo(() => {
+    if (records.length === 0) return false;
+    const latest = records[records.length - 1];
+    // Use the stored flag set at arrival time — not a live re-evaluation
+    return latest.isCounterCorrect === false;
+  }, [records]);
 
   const [isPaused, setIsPaused] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
@@ -115,6 +199,8 @@ export default function LeoLogger({ decoderId }: Props) {
             timeOfArrival: String(r.timeOfArrival ?? ''),
             decoderId: String(r.decoderId ?? ''),
             created: r.created,
+            isCounterCorrect:
+              r.isCounterCorrect !== undefined ? r.isCounterCorrect : null,
           };
         });
 
@@ -218,70 +304,80 @@ export default function LeoLogger({ decoderId }: Props) {
 
   return (
     <Card className="h-full flex flex-col bg-card/50 backdrop-blur-sm border shadow-sm">
-      <CardHeader className="p-4 border-b bg-card rounded-t-xl shrink-0">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 bg-primary/10 text-primary rounded-md">
-              <TerminalSquare className="w-5 h-5" />
-            </div>
-            <div>
-              <CardTitle className="text-lg flex items-center gap-2">
-                Live Decoder Logs
-                {isPaused && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-destructive/10 text-destructive font-semibold">
-                    PAUSED
-                  </span>
-                )}
-              </CardTitle>
-              <div className="text-xs text-muted-foreground mt-0.5">
-                {records.length} records{' '}
-                {searchQuery ? `(${displayedRecords.length} matched)` : ''}
-              </div>
-            </div>
+      <CardHeader className="px-4 py-2.5 border-b bg-card rounded-t-xl shrink-0">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2 min-w-0">
+            <TerminalSquare className="w-4 h-4 text-primary shrink-0" />
+            <span className="font-semibold text-sm whitespace-nowrap">
+              Logs
+            </span>
+            {isPaused && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-destructive/10 text-destructive font-semibold whitespace-nowrap">
+                PAUSED
+              </span>
+            )}
+            {hasLatestCounterMismatch && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-500 font-semibold animate-pulse border border-red-500/20 whitespace-nowrap">
+                COUNTER ⚠
+              </span>
+            )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <div className="relative">
-              <Wand2 className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Wand2 className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <Input
-                placeholder="Expected Magic..."
+                placeholder="Magic"
                 value={expectedMagic}
                 onChange={(e) => setExpectedMagic(e.target.value)}
-                className="w-[140px] sm:w-[160px] h-9 pl-9 text-sm bg-background border-dashed focus-visible:border-solid"
+                className="w-[110px] h-8 pl-7 text-xs bg-background border-dashed focus-visible:border-solid"
                 title="Highlight logs that do not match this magic number"
               />
             </div>
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-muted-foreground select-none">
+                Δ
+              </span>
               <Input
-                placeholder="Filter logs..."
+                type="number"
+                placeholder="0"
+                value={counterDelta}
+                onChange={(e) => setCounterDelta(e.target.value)}
+                className="w-[70px] h-8 pl-5 text-xs bg-background border-dashed focus-visible:border-solid"
+                title="Allowed delta for the counter between the links and the logs"
+              />
+            </div>
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Filter..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-[160px] sm:w-[220px] h-9 pl-9 text-sm bg-background"
+                className="w-[100px] h-8 pl-7 text-xs bg-background"
               />
             </div>
             <Button
               variant={isPaused ? 'default' : 'secondary'}
               size="sm"
-              className="h-9 px-3 gap-2"
+              className="h-8 w-8 p-0"
               onClick={() => {
                 setIsPaused(!isPaused);
-                if (isPaused) setAutoScroll(true); // turning play back on -> auto scroll
+                if (isPaused) setAutoScroll(true);
               }}
             >
               {isPaused ? (
-                <Play className="w-4 h-4" />
+                <Play className="w-3.5 h-3.5" />
               ) : (
-                <Pause className="w-4 h-4" />
+                <Pause className="w-3.5 h-3.5" />
               )}
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="h-9 px-3 gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive border-border"
+              className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive border-border"
               onClick={() => setRecords([])}
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5" />
             </Button>
           </div>
         </div>
@@ -388,8 +484,24 @@ export default function LeoLogger({ decoderId }: Props) {
                     >
                       {item.projectId}
                     </div>
-                    <div className="text-muted-foreground text-right">
+                    <div
+                      className={`text-right ${item.isCounterCorrect === false ? 'text-red-500 dark:text-red-400 font-bold animate-pulse' : 'text-muted-foreground'}`}
+                      title={
+                        item.isCounterCorrect === false
+                          ? `Counter mismatch detected at arrival time (counter: #${item.counter})`
+                          : undefined
+                      }
+                    >
                       #{item.counter}
+                      {item.isCounterCorrect === false && (
+                        <span
+                          className="ml-1 text-[10px] text-red-500"
+                          role="img"
+                          aria-label="warning"
+                        >
+                          ⚠️
+                        </span>
+                      )}
                     </div>
                     <div
                       className={`text-right ${magicMismatch ? '!text-red-600 dark:!text-red-500 font-bold underline' : 'text-muted-foreground'}`}

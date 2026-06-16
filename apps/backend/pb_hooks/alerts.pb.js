@@ -47,7 +47,12 @@ onRecordAfterCreateSuccess((e) => {
   // 2. Counter check
   // ------------------------------------------------
   let isCounterCorrect = null;
+  let counterIssue = '';
   try {
+    const currentCounter = Number(record.get('counter') || 0);
+
+    // 2a. Check if counter increases compared to previous log
+    let increases = null;
     const prevLogs = $app.findRecordsByFilter(
       'leo',
       `projectId = '${currentProjectId}' && id != '${record.id}'`,
@@ -57,13 +62,70 @@ onRecordAfterCreateSuccess((e) => {
     );
     if (prevLogs && prevLogs.length > 0) {
       const prevCounter = Number(prevLogs[0].get('counter') || 0);
-      const currentCounter = Number(record.get('counter') || 0);
       if (currentCounter <= prevCounter) {
         // Safe wrap-around: counter reset from >200 back to <10
-        isCounterCorrect = currentCounter < 10 && prevCounter > 200;
+        increases = currentCounter < 10 && prevCounter > 200;
       } else {
-        isCounterCorrect = true;
+        increases = true;
       }
+    }
+
+    // Get delta from settings
+    let delta = 0;
+    try {
+      const deltaSettings = $app.findRecordsByFilter(
+        'settings',
+        "key = 'delta'",
+        '',
+        1,
+        0,
+      );
+      if (deltaSettings && deltaSettings.length > 0) {
+        delta = Number(deltaSettings[0].get('value') || 0);
+        if (isNaN(delta)) delta = 0;
+      }
+    } catch (err) {
+      $app.logger().error('alerts.pb.js Delta fetch failed', err.message || err);
+    }
+
+    // 2b. Check if counter matches the counter of the links
+    let matchesLinks = null;
+    const stations = $app.findRecordsByFilter('stations', '');
+    let activeLinkCounter = null;
+    let fallbackCounter = null;
+    for (const st of stations) {
+      let links = [];
+      try {
+        links = JSON.parse(st.get('stationLinks') || '[]');
+      } catch (e) {
+        links = [];
+      }
+      for (const l of links) {
+        if (typeof l.counter === 'number') {
+          if (l.active === true || l.active === 'true' || l.active === 1 || l.active === '1') {
+            activeLinkCounter = l.counter;
+            break;
+          }
+          if (fallbackCounter === null) {
+            fallbackCounter = l.counter;
+          }
+        }
+      }
+      if (activeLinkCounter !== null) break;
+    }
+    const expectedCounter = activeLinkCounter !== null ? activeLinkCounter : fallbackCounter;
+    if (expectedCounter !== null) {
+      matchesLinks = Math.abs(currentCounter - expectedCounter) <= delta;
+    }
+
+    if (increases === false) {
+      isCounterCorrect = false;
+      counterIssue = 'counter not increasing';
+    } else if (matchesLinks === false) {
+      isCounterCorrect = false;
+      counterIssue = `counter mismatch with station links (expected ${expectedCounter} ± ${delta}, got ${currentCounter})`;
+    } else if (increases === true || matchesLinks === true) {
+      isCounterCorrect = true;
     }
   } catch (err) {
     $app
@@ -149,7 +211,7 @@ onRecordAfterCreateSuccess((e) => {
   try {
     const issues = [];
     if (isMagicCorrect === false) issues.push('magic mismatch');
-    if (isCounterCorrect === false) issues.push('counter not increasing');
+    if (isCounterCorrect === false) issues.push(counterIssue || 'counter not increasing');
     if (isLogInPreset === false) issues.push('log not in preset');
     if (areAllPresetActionsInLogs === false)
       issues.push('missing preset actions in logs');
@@ -177,6 +239,23 @@ onRecordAfterCreateSuccess((e) => {
     $app.save(alert);
   } catch (err) {
     console.error('Failed to save alert:', err.message || err);
+  }
+
+  // ------------------------------------------------
+  // Stamp isCounterCorrect onto the leo record itself
+  // so the frontend can read the value as-it-was at
+  // arrival time, without re-evaluating against the
+  // current (moved) station counter.
+  // ------------------------------------------------
+  try {
+    if (isCounterCorrect !== null) {
+      record.set('isCounterCorrect', isCounterCorrect);
+      $app.save(record);
+    }
+  } catch (err) {
+    $app
+      .logger()
+      .error('alerts.pb.js Stamp isCounterCorrect failed', err.message || err);
   }
 
   e.next();
