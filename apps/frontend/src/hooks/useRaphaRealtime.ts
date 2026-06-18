@@ -7,7 +7,7 @@ import type {
   RaphaPllLockState,
 } from '@/types/rapha';
 import { store } from '@/store';
-import { addPllPoints, addDllResults, trimToLast60s } from '@/store/slices/raphaSlice';
+import { addPllPoints, addDllResults, addCarrierPhasePoints, trimToLast60s } from '@/store/slices/raphaSlice';
 
 type Point = { ts: number; value: number; decoderId?: string };
 
@@ -17,6 +17,7 @@ const subscriptionState = {
   lastDllM2: {} as Record<string, number | null>,
   pllBuffer: [] as Point[],
   dllBuffer: [] as Point[],
+  carrierPhaseBuffer: [] as Point[],
   flushTimer: null as NodeJS.Timeout | null,
   cleanupTimer: null as NodeJS.Timeout | null,
 };
@@ -39,6 +40,11 @@ function scheduleFlush() {
     if (subscriptionState.dllBuffer.length) {
       store.dispatch(addDllResults(subscriptionState.dllBuffer));
       subscriptionState.dllBuffer.length = 0;
+    }
+
+    if (subscriptionState.carrierPhaseBuffer.length) {
+      store.dispatch(addCarrierPhasePoints(subscriptionState.carrierPhaseBuffer));
+      subscriptionState.carrierPhaseBuffer.length = 0;
     }
   }, FLUSH_INTERVAL);
 }
@@ -71,6 +77,30 @@ async function loadInitialData() {
 
     if (pllPoints.length) {
       store.dispatch(addPllPoints(pllPoints as Point[]));
+    }
+
+    // Carrier Phase data (0/1)
+    const carrier = await pb.collection('rapha').getFullList({
+      filter: `name="carrierPhase" && created >= "${since}"`,
+      sort: 'created',
+    });
+
+    const carrierPoints = carrier
+      .map((r: any) => {
+        const v = r.parameters?.carrierPhase;
+        if (v === 0 || v === 1) {
+          return {
+            ts: new Date(r.created).getTime(),
+            value: v,
+            decoderId: (r as any).decoderId ?? undefined,
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    if (carrierPoints.length) {
+      store.dispatch(addCarrierPhasePoints(carrierPoints as Point[]));
     }
 
     // DLL data
@@ -160,6 +190,23 @@ async function ensureSubscription() {
             return;
           }
 
+          if (rec.name === 'carrierPhase') {
+            const v = (rec as any).parameters?.carrierPhase;
+            const dec = (rec as any).decoderId ?? undefined;
+
+            if (v === 0 || v === 1) {
+              subscriptionState.carrierPhaseBuffer.push({ ts, value: v, decoderId: dec });
+
+              if (subscriptionState.carrierPhaseBuffer.length > MAX_BATCH) {
+                subscriptionState.carrierPhaseBuffer.splice(0, subscriptionState.carrierPhaseBuffer.length - MAX_BATCH);
+              }
+
+              scheduleFlush();
+            }
+
+            return;
+          }
+
           if (rec.name === 'dllM4') {
             const v = (rec as RaphaDllM4).parameters?.dllM4;
             const dec = (rec as any).decoderId ?? 'unknown';
@@ -206,8 +253,9 @@ export function useRaphaRealtime() {
   useEffect(() => {
     async function start() {
       if (
-        store.getState().rapha.pllPoints.length === 0 &&
-        store.getState().rapha.dllResults.length === 0
+            store.getState().rapha.pllPoints.length === 0 &&
+            store.getState().rapha.dllResults.length === 0 &&
+            store.getState().rapha.carrierPhasePoints.length === 0
       ) {
         await loadInitialData(); // 👈 load last minute
       }

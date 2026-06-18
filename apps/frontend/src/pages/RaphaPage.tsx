@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import RaphaPllGraph from '@/components/RaphaPllGraph';
 import RaphaDllGraph from '@/components/RaphaDllGraph';
+import RaphaCarrierPhaseGraph from '@/components/RaphaCarrierPhaseGraph';
 import LeoLogger from '@/components/LeoLogger';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -117,6 +118,18 @@ export default function RaphaPage() {
             </CardHeader>
             <CardContent>
               <RaphaPllGraph decoderId={selectedDecoder ?? undefined} />
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-medium flex items-center justify-between">
+                <span>Carrier Phase</span>
+                <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded">last 60s</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RaphaCarrierPhaseGraph decoderId={selectedDecoder ?? undefined} />
             </CardContent>
           </Card>
 

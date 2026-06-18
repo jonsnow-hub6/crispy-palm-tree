@@ -37,6 +37,14 @@ async function insertRaphaData() {
       decoderId: 'decoder2',
     });
 
+    await pb.collection('rapha').create({
+      name: 'carrierPhase',
+      parameters: {
+        carrierPhase: Math.random() > 0.5 ? 1 : 0,
+      },
+      decoderId: 'decoder2',
+    });
+
     console.log('Inserted pllLockState');
 
     // dllM2 (signed 32-bit safe range)
