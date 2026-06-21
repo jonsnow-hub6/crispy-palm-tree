@@ -85,7 +85,9 @@ onRecordAfterCreateSuccess((e) => {
         if (isNaN(delta)) delta = 0;
       }
     } catch (err) {
-      $app.logger().error('alerts.pb.js Delta fetch failed', err.message || err);
+      $app
+        .logger()
+        .error('alerts.pb.js Delta fetch failed', err.message || err);
     }
 
     // 2b. Check if counter matches the counter of the links
@@ -102,7 +104,12 @@ onRecordAfterCreateSuccess((e) => {
       }
       for (const l of links) {
         if (typeof l.counter === 'number') {
-          if (l.active === true || l.active === 'true' || l.active === 1 || l.active === '1') {
+          if (
+            l.active === true ||
+            l.active === 'true' ||
+            l.active === 1 ||
+            l.active === '1'
+          ) {
             activeLinkCounter = l.counter;
             break;
           }
@@ -113,7 +120,8 @@ onRecordAfterCreateSuccess((e) => {
       }
       if (activeLinkCounter !== null) break;
     }
-    const expectedCounter = activeLinkCounter !== null ? activeLinkCounter : fallbackCounter;
+    const expectedCounter =
+      activeLinkCounter !== null ? activeLinkCounter : fallbackCounter;
     if (expectedCounter !== null) {
       matchesLinks = Math.abs(currentCounter - expectedCounter) <= delta;
     }
@@ -211,7 +219,8 @@ onRecordAfterCreateSuccess((e) => {
   try {
     const issues = [];
     if (isMagicCorrect === false) issues.push('magic mismatch');
-    if (isCounterCorrect === false) issues.push(counterIssue || 'counter not increasing');
+    if (isCounterCorrect === false)
+      issues.push(counterIssue || 'counter not increasing');
     if (isLogInPreset === false) issues.push('log not in preset');
     if (areAllPresetActionsInLogs === false)
       issues.push('missing preset actions in logs');
@@ -279,33 +288,6 @@ onRecordAfterCreateSuccess((e) => {
         headers: { 'Content-Type': 'application/json' },
       });
     }
-
-    $app.runInTransaction((txApp) => {
-      // Use count query instead of pulling all records
-      const result = txApp.findRecordsByFilter('alerts', '', '', 1, 0);
-      // We don't have a direct count() in txApp easily,
-      // but we can just check if total matches.
-      // Actually, PocketBase Dao has total count usually.
-      // For now, let's just use a more efficient way or assume it's okay for small batches.
-      // But findAllRecords is definitely bad.
-      // Let's use a raw query or just skip if we can't count efficiently.
-
-      // Let's just check if we have more than MAX by looking at an offset
-      const checkRange = txApp.findRecordsByFilter('alerts', '', '', 1, MAX);
-      if (checkRange.length === 0) return;
-
-      const oldest = txApp.findRecordsByFilter(
-        'alerts',
-        '',
-        'created', // oldest first
-        DELETE_BATCH,
-        0,
-      );
-
-      for (const r of oldest) {
-        txApp.delete(r);
-      }
-    });
   } catch (err) {
     console.error('Alert cleanup failed:', err.message || err);
   }
