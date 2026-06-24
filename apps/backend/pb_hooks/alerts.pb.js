@@ -142,11 +142,54 @@ onRecordAfterCreateSuccess((e) => {
   }
 
   // ------------------------------------------------
-  // 3. Is this log in the active preset?
-  // 4. Are all preset actions present in recent logs?
+  // 3. Preset sequence validation
   // ------------------------------------------------
-  let isLogInPreset = null;
-  let areAllPresetActionsInLogs = null;
+  let presetStatus = null;
+  let presetIndexVal = null;
+  let presetIdVal = null;
+
+  function getSetting(key, defaultValue) {
+    try {
+      const records = $app.findRecordsByFilter(
+        'settings',
+        "key = '" + key + "'",
+        '',
+        1,
+        0,
+      );
+      if (records && records.length > 0) {
+        return records[0].get('value');
+      }
+    } catch (err) {
+      // ignore
+    }
+    return defaultValue;
+  }
+
+  function setSetting(key, value) {
+    try {
+      const records = $app.findRecordsByFilter(
+        'settings',
+        "key = '" + key + "'",
+        '',
+        1,
+        0,
+      );
+      if (records && records.length > 0) {
+        records[0].set('value', String(value));
+        $app.save(records[0]);
+      } else {
+        const collection = $app.findCollectionByNameOrId('settings');
+        const r = new Record(collection);
+        r.set('key', key);
+        r.set('value', String(value));
+        $app.save(r);
+      }
+    } catch (err) {
+      $app.logger().error('Failed to save setting: ' + key, err.message || err);
+    }
+  }
+
   try {
     const activePresets = $app.findRecordsByFilter(
       'presets',
@@ -155,58 +198,120 @@ onRecordAfterCreateSuccess((e) => {
       1,
       0,
     );
+
     if (activePresets && activePresets.length > 0) {
       const activePreset = activePresets[0];
       $app.expandRecord(activePreset, ['actions'], null);
-      const actions = activePreset.expandedAll('actions');
+      const activeActions = activePreset.expandedAll('actions') || [];
 
-      if (actions && actions.length > 0) {
-        // Check 3: does this record's payload match any preset action?
-        isLogInPreset = false;
-        for (let i = 0; i < actions.length; i++) {
-          const a = actions[i];
-          if (
-            String(a.get('project')).trim() ===
-              String(currentProjectId).trim() &&
-            String(a.get('payload')).trim() ===
-              String(record.get('payload')).trim()
-          ) {
-            isLogInPreset = true;
-            break;
-          }
-        }
+      if (activeActions.length > 0) {
+        let storedCounter = parseInt(getSetting('preset_counter', '0'), 10);
+        if (isNaN(storedCounter)) storedCounter = 0;
+        let storedPresetId = String(getSetting('preset_id', ''));
 
-        // Check 4: do all preset actions appear in the last 150 leo records?
-        const recentLeo = $app.findRecordsByFilter(
-          'leo',
-          '',
-          '-created',
-          150,
-          0,
-        );
-        const missingActions = [];
-        for (let i = 0; i < actions.length; i++) {
-          const a = actions[i];
-          let found = false;
-          for (let j = 0; j < recentLeo.length; j++) {
-            if (
-              String(a.get('project')).trim() ===
-                String(recentLeo[j].get('projectId')).trim() &&
-              String(a.get('payload')).trim() ===
-                String(recentLeo[j].get('payload')).trim()
-            ) {
-              found = true;
-              break;
+        let pCurr = null;
+        let pCurrActions = [];
+
+        // Handle preset transition at boundary
+        if (storedCounter === 0 && storedPresetId !== activePreset.id) {
+          storedPresetId = activePreset.id;
+          setSetting('preset_id', storedPresetId);
+          pCurr = activePreset;
+          pCurrActions = activeActions;
+        } else {
+          // Load pCurr by id
+          try {
+            if (storedPresetId && storedPresetId !== activePreset.id) {
+              pCurr = $app.findRecordById('presets', storedPresetId);
+              if (pCurr) {
+                $app.expandRecord(pCurr, ['actions'], null);
+                pCurrActions = pCurr.expandedAll('actions') || [];
+              }
             }
+          } catch (e) {
+            // Preset might be deleted
           }
-          if (!found) {
-            missingActions.push({
-              project: a.get('project'),
-              payload: a.get('payload'),
-            });
+
+          if (!pCurr || pCurrActions.length === 0) {
+            pCurr = activePreset;
+            pCurrActions = activeActions;
+            storedPresetId = activePreset.id;
+            setSetting('preset_id', storedPresetId);
           }
         }
-        areAllPresetActionsInLogs = missingActions.length === 0;
+
+        const N = pCurrActions.length;
+        const expectedAction = pCurrActions[storedCounter];
+
+        const recordProject = String(record.get('projectId')).trim();
+        const recordPayload = String(record.get('payload')).trim();
+
+        const isMatch =
+          expectedAction &&
+          String(expectedAction.get('project')).trim() === recordProject &&
+          String(expectedAction.get('payload')).trim() === recordPayload;
+
+        if (isMatch) {
+          presetStatus = 'valid';
+          presetIndexVal = storedCounter;
+          presetIdVal = storedPresetId;
+
+          if (storedCounter === N - 1) {
+            setSetting('preset_counter', 0);
+          } else {
+            setSetting('preset_counter', storedCounter + 1);
+          }
+        } else {
+          // Case B: Mismatch
+          // 1. Check for aborted transition to new preset
+          const isTransitionMatch =
+            storedPresetId !== activePreset.id &&
+            activeActions[0] &&
+            String(activeActions[0].get('project')).trim() === recordProject &&
+            String(activeActions[0].get('payload')).trim() === recordPayload;
+
+          const isFirstActionOfCurrentPreset =
+            pCurrActions[0] &&
+            String(pCurrActions[0].get('project')).trim() === recordProject &&
+            String(pCurrActions[0].get('payload')).trim() === recordPayload;
+
+          if (isTransitionMatch) {
+            presetStatus = 'incomplete_old_preset';
+            presetIndexVal = 0;
+            presetIdVal = activePreset.id;
+
+            setSetting('preset_id', activePreset.id);
+            setSetting('preset_counter', 1);
+          } else if (isFirstActionOfCurrentPreset) {
+            presetStatus = 'unexpected_action';
+            presetIndexVal = 0;
+            presetIdVal = storedPresetId;
+
+            setSetting('preset_counter', 1);
+          } else {
+            // 2. Otherwise: Reset counter to 0
+            setSetting('preset_counter', 0);
+
+            // Check if matches any action in the current preset
+            let foundInCurr = false;
+            for (let i = 0; i < N; i++) {
+              if (
+                String(pCurrActions[i].get('project')).trim() ===
+                  recordProject &&
+                String(pCurrActions[i].get('payload')).trim() === recordPayload
+              ) {
+                foundInCurr = true;
+                break;
+              }
+            }
+
+            presetStatus = foundInCurr
+              ? 'incorrect_order'
+              : 'unexpected_action';
+            presetIndexVal = storedCounter;
+            presetIdVal = storedPresetId;
+          }
+        }
       }
     }
   } catch (err) {
@@ -221,9 +326,9 @@ onRecordAfterCreateSuccess((e) => {
     if (isMagicCorrect === false) issues.push('magic mismatch');
     if (isCounterCorrect === false)
       issues.push(counterIssue || 'counter not increasing');
-    if (isLogInPreset === false) issues.push('log not in preset');
-    if (areAllPresetActionsInLogs === false)
-      issues.push('missing preset actions in logs');
+    if (presetStatus && presetStatus !== 'valid') {
+      issues.push('preset validation failed: ' + presetStatus);
+    }
 
     const level = issues.length > 0 ? 'error' : 'info';
     const message =
@@ -240,8 +345,9 @@ onRecordAfterCreateSuccess((e) => {
       JSON.stringify({
         isMagicCorrect,
         isCounterCorrect,
-        isLogInPreset,
-        areAllPresetActionsInLogs,
+        presetStatus,
+        presetId: presetIdVal,
+        presetIndex: presetIndexVal,
         log: logData,
       }),
     );
@@ -251,20 +357,26 @@ onRecordAfterCreateSuccess((e) => {
   }
 
   // ------------------------------------------------
-  // Stamp isCounterCorrect onto the leo record itself
-  // so the frontend can read the value as-it-was at
-  // arrival time, without re-evaluating against the
-  // current (moved) station counter.
+  // Stamp validation results onto the leo record itself
+  // so the frontend can read them at arrival time.
   // ------------------------------------------------
   try {
+    let changed = false;
     if (isCounterCorrect !== null) {
       record.set('isCounterCorrect', isCounterCorrect);
+      changed = true;
+    }
+    if (presetStatus !== null) {
+      record.set('presetId', presetIdVal);
+      record.set('presetIndex', presetIndexVal);
+      record.set('presetStatus', presetStatus);
+      changed = true;
+    }
+    if (changed) {
       $app.save(record);
     }
   } catch (err) {
-    $app
-      .logger()
-      .error('alerts.pb.js Stamp isCounterCorrect failed', err.message || err);
+    $app.logger().error('alerts.pb.js Stamp fields failed', err.message || err);
   }
 
   e.next();
