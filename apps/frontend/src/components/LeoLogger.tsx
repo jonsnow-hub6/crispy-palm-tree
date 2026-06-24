@@ -201,6 +201,9 @@ export default function LeoLogger({ decoderId }: Props) {
             created: r.created,
             isCounterCorrect:
               r.isCounterCorrect !== undefined ? r.isCounterCorrect : null,
+            presetId: r.presetId || null,
+            presetIndex: r.presetIndex !== undefined ? r.presetIndex : null,
+            presetStatus: r.presetStatus || null,
           };
         });
 
@@ -384,23 +387,23 @@ export default function LeoLogger({ decoderId }: Props) {
       </CardHeader>
 
       <CardContent className="p-0 flex flex-col flex-1 overflow-hidden">
-        <div className="grid grid-cols-[60px_80px_90px_80px_50px_40px_40px_1fr] gap-3 px-4 py-2 border-b border-border text-xs font-semibold text-muted-foreground bg-muted/40 z-10 shrink-0">
+        <div className="grid grid-cols-[40px_60px_90px_140px_40px_40px_40px_1fr] gap-3 px-4 py-2 border-b border-border text-xs font-semibold text-muted-foreground bg-muted/40 z-10 shrink-0">
           <div className="truncate text-left" title="Project ID">
-            Project ID
+            Proj ID
           </div>
-          <div className="truncate text-right">Counter</div>
-          <div className="truncate text-right">Magic</div>
-          <div className="truncate text-right">Reserved</div>
-          <div className="truncate text-center" title="Message Type">
+          <div className="truncate text-left">Counter</div>
+          <div className="truncate text-left">Magic</div>
+          <div className="truncate text-left">Reserved</div>
+          <div className="truncate text-left" title="Message Type">
             Msg
           </div>
-          <div className="truncate text-center" title="Management">
+          <div className="truncate text-left" title="Management">
             Mgmt
           </div>
-          <div className="truncate text-center" title="Threshold">
+          <div className="truncate text-left" title="Threshold">
             Thr
           </div>
-          <div className="text-right">Time</div>
+          <div className="text-left">Time</div>
         </div>
 
         {/* Scrollable Virtualized List */}
@@ -426,44 +429,28 @@ export default function LeoLogger({ decoderId }: Props) {
                 const item = displayedRecords[virtualRow.index];
                 if (!item) return null;
 
-                // Check if this log matches the active preset
-                const isPresetLog =
-                  presetStatus.isActive &&
-                  presetStatus.actions.some(
-                    (a) =>
-                      a.project === item.projectId &&
-                      a.payload === item.payload,
-                  );
-
                 let bg =
                   virtualRow.index % 2 === 0
                     ? 'hover:bg-muted/50'
                     : 'bg-muted/20 hover:bg-muted/50';
 
-                // Colorize row if a preset is active
-                if (presetStatus.isActive) {
-                  if (isPresetLog) {
+                // Colorize row based on stored preset sequence validation status
+                if (item.presetStatus) {
+                  if (item.presetStatus === 'valid') {
                     bg =
                       'bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20';
+                  } else if (item.presetStatus === 'incomplete_old_preset') {
+                    bg =
+                      'bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 border-l-4 border-l-amber-500';
                   } else {
                     bg =
-                      'bg-red-500/10 text-red-700 dark:text-red-400 hover:bg-red-500/20';
+                      'bg-red-500/10 text-red-700 dark:text-red-400 hover:bg-red-500/20 border-l-4 border-l-red-500';
                   }
                 }
 
                 const magicMismatch =
                   expectedMagic.trim() !== '' &&
                   item.magic.toString() !== expectedMagic.trim();
-
-                if (magicMismatch) {
-                  if (presetStatus.isActive) {
-                    bg +=
-                      ' border-l-4 border-l-red-600 dark:border-l-red-500 font-bold bg-opacity-80';
-                  } else {
-                    bg =
-                      'bg-red-500/20 dark:bg-red-900/30 border-l-4 border-l-red-600 dark:border-l-red-500 hover:bg-red-500/30 dark:hover:bg-red-900/40 [&>div]:!text-red-700 dark:[&>div]:!text-red-300 font-bold';
-                  }
-                }
 
                 return (
                   <div
@@ -476,16 +463,26 @@ export default function LeoLogger({ decoderId }: Props) {
                       height: virtualRow.size,
                       transform: `translateY(${virtualRow.start}px)`,
                     }}
-                    className={`${bg} border-b border-border/50 font-mono tabular-nums text-[12px] sm:text-[13px] grid grid-cols-[60px_80px_90px_80px_50px_40px_40px_1fr] items-center gap-3 px-4 transition-colors`}
+                    className={`${bg} border-b border-border/50 font-mono tabular-nums text-[12px] sm:text-[13px] grid grid-cols-[40px_60px_90px_140px_40px_40px_40px_1fr] items-center gap-3 px-4 transition-colors`}
                   >
                     <div
-                      className={`truncate text-left ${presetStatus.isActive && !isPresetLog ? 'text-red-700 dark:text-red-400' : 'text-primary/80'}`}
-                      title={item.projectId}
+                      className={`truncate text-left ${item.presetStatus && item.presetStatus !== 'valid' ? 'text-red-700 dark:text-red-400 font-semibold' : 'text-primary/80'}`}
+                      title={
+                        item.presetStatus === 'valid'
+                          ? `Preset Action #${(item.presetIndex ?? 0) + 1} (Valid)`
+                          : item.presetStatus === 'incorrect_order'
+                            ? `Incorrect Order: Expected action #${(item.presetIndex ?? 0) + 1}`
+                            : item.presetStatus === 'unexpected_action'
+                              ? `Unexpected Action: Not in preset`
+                              : item.presetStatus === 'incomplete_old_preset'
+                                ? `Incomplete Old Preset transition`
+                                : `Project ID: ${item.projectId}`
+                      }
                     >
                       {item.projectId}
                     </div>
                     <div
-                      className={`text-right ${item.isCounterCorrect === false ? 'text-red-500 dark:text-red-400 font-bold animate-pulse' : 'text-muted-foreground'}`}
+                      className={`text-left ${item.isCounterCorrect === false ? 'text-red-500 dark:text-red-400 font-bold animate-pulse' : 'text-muted-foreground'}`}
                       title={
                         item.isCounterCorrect === false
                           ? `Counter mismatch detected at arrival time (counter: #${item.counter})`
@@ -493,38 +490,29 @@ export default function LeoLogger({ decoderId }: Props) {
                       }
                     >
                       #{item.counter}
-                      {item.isCounterCorrect === false && (
-                        <span
-                          className="ml-1 text-[10px] text-red-500"
-                          role="img"
-                          aria-label="warning"
-                        >
-                          ⚠️
-                        </span>
-                      )}
                     </div>
                     <div
-                      className={`text-right ${magicMismatch ? '!text-red-600 dark:!text-red-500 font-bold underline' : 'text-muted-foreground'}`}
+                      className={`text-left ${magicMismatch ? '!text-red-600 dark:!text-red-500 font-bold underline' : 'text-muted-foreground'}`}
                     >
                       {item.magic}
                     </div>
                     <div
-                      className="text-muted-foreground text-right truncate"
+                      className="text-muted-foreground text-left truncate"
                       title={item.reserved}
                     >
                       {item.reserved}
                     </div>
-                    <div className="text-muted-foreground text-center truncate">
+                    <div className="text-muted-foreground text-left truncate">
                       {item.messageType}
                     </div>
-                    <div className="text-muted-foreground text-center truncate">
+                    <div className="text-muted-foreground text-left truncate">
                       {item.management}
                     </div>
-                    <div className="text-muted-foreground text-center truncate">
+                    <div className="text-muted-foreground text-left truncate">
                       {item.threshold}
                     </div>
-                    <div className="text-right text-[11px] text-muted-foreground whitespace-nowrap">
-                      {item.timeOfArrival}
+                    <div className="text-left text-[11px] text-muted-foreground whitespace-nowrap">
+                      {item.timeOfArrival.slice(0, 19)}
                     </div>
                   </div>
                 );

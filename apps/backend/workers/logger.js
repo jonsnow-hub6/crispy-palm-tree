@@ -87,18 +87,18 @@ async function runForever() {
         timeOfArrival: new Date().toISOString(),
         decoderId: `decoder${Math.floor(Math.random() * 2) + 1}`,
       },
-      {
-        projectId: '1245',
-        counter: counter++,
-        magic: 12345678,
-        payload: '0x2345400000',
-        reserved: '0x23454000000',
-        messageType: Math.floor(Math.random() * 10),
-        management: Math.floor(Math.random() * 10),
-        threshold: Math.floor(Math.random() * 10),
-        timeOfArrival: new Date().toISOString(),
-        decoderId: `decoder${Math.floor(Math.random() * 2) + 1}`,
-      },
+      // {
+      //   projectId: '1245',
+      //   counter: counter++,
+      //   magic: 12345678,
+      //   payload: '0x2345400000',
+      //   reserved: '0x23454000000',
+      //   messageType: Math.floor(Math.random() * 10),
+      //   management: Math.floor(Math.random() * 10),
+      //   threshold: Math.floor(Math.random() * 10),
+      //   timeOfArrival: new Date().toISOString(),
+      //   decoderId: `decoder${Math.floor(Math.random() * 2) + 1}`,
+      // },
     ];
 
     for (const record of records) {

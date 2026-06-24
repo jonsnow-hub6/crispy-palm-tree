@@ -70,6 +70,9 @@ async function ensureSubscription() {
           decoderId: String(r.decoderId ?? ''),
           created: r.created,
           isCounterCorrect: r.isCounterCorrect !== undefined ? r.isCounterCorrect : null,
+          presetId: r.presetId || null,
+          presetIndex: r.presetIndex !== undefined ? r.presetIndex : null,
+          presetStatus: r.presetStatus || null,
         };
 
         subscriptionState.buffer.push(rec);
