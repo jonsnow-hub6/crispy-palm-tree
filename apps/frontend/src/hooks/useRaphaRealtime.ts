@@ -88,7 +88,7 @@ async function loadInitialData() {
     const carrierPoints = carrier
       .map((r: any) => {
         const v = r.parameters?.carrierPhase;
-        if (v === 0 || v === 1) {
+        if (v !== null && v !== undefined && typeof v === 'number' && Number.isFinite(v)) {
           return {
             ts: new Date(r.created).getTime(),
             value: v,
@@ -194,7 +194,7 @@ async function ensureSubscription() {
             const v = (rec as any).parameters?.carrierPhase;
             const dec = (rec as any).decoderId ?? undefined;
 
-            if (v === 0 || v === 1) {
+            if (v !== null && v !== undefined && typeof v === 'number' && Number.isFinite(v)) {
               subscriptionState.carrierPhaseBuffer.push({ ts, value: v, decoderId: dec });
 
               if (subscriptionState.carrierPhaseBuffer.length > MAX_BATCH) {
