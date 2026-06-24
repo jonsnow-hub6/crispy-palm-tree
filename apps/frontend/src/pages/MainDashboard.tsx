@@ -4,6 +4,7 @@ import { AppDispatch, RootState } from '@/store';
 import { fetchPresets, setActivePreset } from '@/store/slices/presetsSlice';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { fetchStations } from '@/store/slices/stationsSlice';
 import StationGraph from '@/components/StationGraph';
 import { AlertOctagon } from 'lucide-react';
@@ -36,6 +37,7 @@ export function MainDashboard() {
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [loadingApply, setLoadingApply] = useState(false);
+  const [password, setPassword] = useState('');
   const [message, setMessage] = useState<{
     type: 'success' | 'error';
     text: string;
@@ -60,6 +62,7 @@ export function MainDashboard() {
     setSelectedPresetId(presetId);
     setIsDialogOpen(true);
     setMessage(null);
+    setPassword('');
   };
 
   const handleConfirmApply = async () => {
@@ -202,6 +205,7 @@ export function MainDashboard() {
               if (!v) {
                 setSelectedPresetId(null);
                 setMessage(null);
+                setPassword('');
               }
             }}
           >
@@ -233,7 +237,26 @@ export function MainDashboard() {
                 ) : (
                   <div>Loading preset...</div>
                 )}
+                {selectedPreset?.passwordRequired && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Password required
+                    </label>
 
+                    <Input
+                      type="password"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+
+                        if (message?.type === 'error') {
+                          setMessage(null);
+                        }
+                      }}
+                      placeholder="Enter password"
+                    />
+                  </div>
+                )}
                 {message && (
                   <div
                     className={`p-2 rounded-md ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-destructive/10 text-destructive'}`}
@@ -250,13 +273,25 @@ export function MainDashboard() {
                     setIsDialogOpen(false);
                     setSelectedPresetId(null);
                     setMessage(null);
+                    setPassword('');
                   }}
                   disabled={loadingApply}
                 >
                   Cancel
                 </Button>
                 <Button
-                  onClick={handleConfirmApply}
+                  onClick={() => {
+                    if (selectedPreset?.passwordRequired) {
+                      if (password !== 'Preset1!') {
+                        setMessage({
+                          type: 'error',
+                          text: 'Incorrect password',
+                        });
+                        return;
+                      }
+                    }
+                    handleConfirmApply();
+                  }}
                   style={
                     selectedPreset
                       ? {
