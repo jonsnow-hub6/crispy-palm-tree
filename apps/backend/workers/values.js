@@ -40,7 +40,7 @@ async function insertRaphaData() {
     await pb.collection('rapha').create({
       name: 'carrierPhase',
       parameters: {
-        carrierPhase: Math.random() > 0.5 ? 1 : 0,
+        carrierPhase: Math.floor(Math.random() * 100),
       },
       decoderId: 'decoder2',
     });
@@ -72,7 +72,6 @@ async function insertRaphaData() {
     });
 
     console.log('Inserted dllM4:', dllM4);
-
   } catch (err) {
     console.error('Insert failed:', err.response || err.message);
   }

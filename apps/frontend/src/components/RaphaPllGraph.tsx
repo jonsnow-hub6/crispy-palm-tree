@@ -10,10 +10,8 @@ type Point = { ts: number; value: 0 | 1; decoderId?: string };
 
 export default function RaphaPllGraph({
   decoderId,
-  series = 'pll',
 }: {
   decoderId?: string | null;
-  series?: 'pll' | 'carrierPhase';
 } = {}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const plotRef = useRef<uPlot | null>(null);
@@ -22,16 +20,11 @@ export default function RaphaPllGraph({
   const yRef = useRef<Float64Array>(new Float64Array(800));
   const lastTsRef = useRef(0);
 
-  const allPoints = useSelector((s: RootState) =>
-    series === 'pll' ? s.rapha?.pllPoints ?? [] : s.rapha?.carrierPhasePoints ?? []
-  );
+  const allPoints = useSelector((s: RootState) => s.rapha?.pllPoints ?? []);
 
   // INIT
   useEffect(() => {
     if (!containerRef.current) return;
-
-    const label = series === 'pll' ? 'PLL' : 'Carrier Phase';
-    const stroke = series === 'pll' ? '#10b981' : '#f09328';
 
     const opts: uPlot.Options = {
       width: containerRef.current.clientWidth,
@@ -45,8 +38,8 @@ export default function RaphaPllGraph({
       series: [
         {},
         {
-          label,
-          stroke,
+          label: 'PLL',
+          stroke: '#10b981',
           width: 2,
         },
       ],
@@ -66,7 +59,7 @@ export default function RaphaPllGraph({
       plotRef.current?.destroy();
       plotRef.current = null;
     };
-  }, [series]);
+  }, []);
 
   // UPDATE (fast)
   useEffect(() => {
@@ -103,10 +96,7 @@ export default function RaphaPllGraph({
     const plot = plotRef.current;
     if (!plot) return;
 
-    plot.setData([
-      x.subarray(start, 800),
-      y.subarray(start, 800),
-    ]);
+    plot.setData([x.subarray(start, 800), y.subarray(start, 800)]);
 
     const nowSec = now / 1000;
 
