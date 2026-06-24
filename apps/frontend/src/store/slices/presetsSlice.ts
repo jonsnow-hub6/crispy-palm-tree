@@ -14,6 +14,7 @@ export interface Preset extends RecordModel {
     actions?: Action[];
   };
   active: boolean;
+  passwordRequired: boolean;
 }
 
 interface PresetsState {
@@ -45,7 +46,7 @@ export const createPreset = createAsyncThunk(
   'presets/create',
   async (data: { name: string; color: string; actions?: string[] }, { rejectWithValue }) => {
     try {
-      const record = await pb.collection('presets').create<Preset>(data);
+      const record = await pb.collection('presets').create<Preset>({...data, passwordRequired: true});
       return record;
     } catch (error: any) {
       console.error('PocketBase create preset error:', error);
@@ -113,6 +114,7 @@ export const importPresetFromJson = createAsyncThunk(
       const presetCreateData: any = {
         name: jsonData.presetName,
         color: jsonData.color,
+        passwordRequired: true,
       };
 
       if (actionIds.length > 0) {
