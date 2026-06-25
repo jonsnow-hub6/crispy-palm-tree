@@ -45,12 +45,19 @@ export function App() {
             />
             <Notifications toasts={toasts} onClose={removeToast} />
             <Routes>
-              <Route path="/" element={<MainDashboard />} />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute requiredPermission="dashboard">
+                    <MainDashboard />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/login" element={<LoginPage />} />
               <Route
                 path="/stations"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredPermission="stations">
                     <StationsPage />
                   </ProtectedRoute>
                 }
@@ -59,7 +66,7 @@ export function App() {
               <Route
                 path="/presets"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredPermission="presets">
                     <PresetsPage />
                   </ProtectedRoute>
                 }
@@ -67,7 +74,7 @@ export function App() {
               <Route
                 path="/decoder"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredPermission="decoder">
                     <RaphaPage />
                   </ProtectedRoute>
                 }

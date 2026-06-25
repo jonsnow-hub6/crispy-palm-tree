@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '@/store/slices/authSlice';
+import { logout, getUserAvatarUrl } from '@/store/slices/authSlice';
 import { RootState } from '@/store';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,11 +17,74 @@ import {
   XCircle,
   AlertCircle,
   Bell,
+  LogIn,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePresetStatus } from '@/hooks/usePresetStatus';
 import { useLeoContext } from '@/contexts/LeoContext';
+import type { Permission } from '@/store/slices/authSlice';
+
+const NAV_ITEMS: {
+  path: string;
+  label: string;
+  icon: any;
+  permission: Permission | null; // null = public (no login required)
+}[] = [
+  { path: '/', label: 'Dashboard', icon: Home, permission: 'dashboard' },
+  { path: '/stations', label: 'Stations', icon: Radio, permission: 'stations' },
+  { path: '/presets', label: 'Presets', icon: Palette, permission: 'presets' },
+  {
+    path: '/decoder',
+    label: 'Decoder',
+    icon: ChartLine,
+    permission: 'decoder',
+  },
+];
+
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash);
+}
+
+function getAvatarColor(name: string): string {
+  const h = hashString(name) % 360;
+  return `hsl(${h}, 65%, 45%)`;
+}
+
+function UserAvatar({
+  name,
+  avatarUrl,
+}: {
+  name: string;
+  avatarUrl: string | null;
+}) {
+  const initial = (name || '?').charAt(0).toUpperCase();
+
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name}
+        className="h-8 w-8 rounded-full object-cover border-2 border-primary/20"
+        title={name}
+      />
+    );
+  }
+
+  return (
+    <div
+      className="h-8 w-8 rounded-full flex items-center justify-center text-sm font-semibold select-none text-white"
+      style={{ backgroundColor: getAvatarColor(name) }}
+      title={name}
+    >
+      {initial}
+    </div>
+  );
+}
 
 export function NavBar({
   unreadCount = 0,
@@ -33,8 +96,8 @@ export function NavBar({
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const isAuthenticated = useSelector(
-    (state: RootState) => state.auth.isAuthenticated,
+  const { isAuthenticated, user } = useSelector(
+    (state: RootState) => state.auth,
   );
 
   const { presets, activePresetId } = useSelector(
@@ -47,20 +110,18 @@ export function NavBar({
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate('/');
+    navigate('/login');
   };
 
-  const navItems = [
-    { path: '/', label: 'Dashboard', icon: Home, public: true },
-    { path: '/stations', label: 'Stations', icon: Radio, public: false },
-    { path: '/presets', label: 'Presets', icon: Palette, public: false },
-    { path: '/decoder', label: 'Decoder', icon: ChartLine, public: false },
-  ];
+  // Filter nav items: show only items the user has permission for
+  const visibleItems = NAV_ITEMS.filter((item) => {
+    if (!isAuthenticated || !user) return false;
+    if (!item.permission) return true;
+    return user.permission.includes(item.permission);
+  });
 
-  const visibleItems = navItems.filter(
-    (item) => item.public || isAuthenticated,
-  );
   const activePreset = presets.find((p) => p.id === activePresetId);
+  const avatarUrl = user ? getUserAvatarUrl(user) : null;
 
   return (
     <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -97,7 +158,7 @@ export function NavBar({
             </div>
           </div>
 
-          {activePreset && (
+          {isAuthenticated && user && activePreset && (
             <div
               className={`flex items-center gap-2 px-3 py-1 rounded-md border shadow-sm transition-colors ${presetStatus.isMatched ? 'bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400'}`}
             >
@@ -122,21 +183,24 @@ export function NavBar({
               )}
             </div>
           )}
+
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onOpenSidebar}
-              className="relative h-9 w-9"
-              aria-label="Notifications"
-            >
-              <Bell className="h-4 w-4" />
-              {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
-            </Button>
+            {isAuthenticated && user && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onOpenSidebar}
+                className="relative h-9 w-9"
+                aria-label="Notifications"
+              >
+                <Bell className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -150,16 +214,20 @@ export function NavBar({
                 <Moon className="h-4 w-4" />
               )}
             </Button>
-            {isAuthenticated ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="flex items-center gap-2"
-              >
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
+            {isAuthenticated && user ? (
+              <div className="flex items-center gap-2">
+                <UserAvatar name={user.username} avatarUrl={avatarUrl} />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleLogout}
+                  className="h-9 w-9"
+                  aria-label="Logout"
+                  title="Logout"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
             ) : (
               <Link to="/login">
                 <Button
@@ -167,6 +235,7 @@ export function NavBar({
                   size="sm"
                   className="flex items-center gap-2"
                 >
+                  <LogIn className="h-4 w-4" />
                   Login
                 </Button>
               </Link>
