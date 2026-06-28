@@ -168,12 +168,12 @@ export function StationsPage() {
   // display stations in stored order (do not reorder)
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-screen bg-background p-8" data-cy="stations-page">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-end">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={handleCreate}>
+              <Button onClick={handleCreate} data-cy="add-station-btn">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Station
               </Button>
@@ -279,7 +279,7 @@ export function StationsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" data-cy="stations-list">
             {stations.map((station) => {
               const isActive = station.stationLinks.some((l) => l.active);
               const anyReachable = station.stationLinks.some(
@@ -291,6 +291,7 @@ export function StationsPage() {
               return (
                 <Card
                   key={station.id}
+                  data-cy={"station-item-" + station.id}
                   className={`border-2 shadow-sm transition-all hover:shadow-md ${
                     isActive
                       ? activeLink?.reachable

@@ -189,7 +189,7 @@ export function PresetsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-screen bg-background p-8" data-cy="presets-page">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-end">
           <div className="flex gap-2">
@@ -206,8 +206,8 @@ export function PresetsPage() {
                 }
               }}
             >
-              <DialogTrigger asChild>
-                <Button>
+                <DialogTrigger asChild>
+                <Button data-cy="import-json-btn">
                   <Upload className="h-4 w-4 mr-2" />
                   Import JSON
                 </Button>
@@ -381,10 +381,11 @@ export function PresetsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" data-cy="presets-list">
             {presets.map((preset) => (
               <Card
                 key={preset.id}
+                data-cy={"preset-item-" + preset.id}
                 className="group flex flex-col h-full transition-all duration-300 hover:shadow-lg"
                 style={{ borderLeft: `4px solid ${preset.color}` }}
               >

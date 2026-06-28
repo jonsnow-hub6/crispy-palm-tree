@@ -86,7 +86,10 @@ export function MainDashboard() {
   const selectedPreset = presets.find((p) => p.id === selectedPresetId) || null;
 
   return (
-    <div className="flex-1 overflow-y-auto bg-background p-8 min-h-0 scrollbar">
+    <div
+      className="flex-1 overflow-y-auto bg-background p-8 min-h-0 scrollbar"
+      data-cy="dashboard-widget"
+    >
       <div className="max-w-7xl mx-auto">
         <div className="max-w-3xl mx-auto">
           {activePresetId && (
