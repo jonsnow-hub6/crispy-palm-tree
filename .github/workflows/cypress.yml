@@ -42,4 +42,4 @@ jobs:
           CYPRESS_VIEWPORT_HEIGHT: 720
           CYPRESS_VIDEO: false
         run: |
-          npx cypress run --config-file apps/frontend/cypress/cypress.config.cjs --spec 'apps/frontend/cypress/e2e/{auth,dashboard,presets,stations}/*.cy.ts'
+          npx cypress run --config-file apps/frontend/cypress/cypress.config.ts --spec 'apps/frontend/cypress/e2e/{auth,dashboard,presets,stations}/*.cy.ts'
