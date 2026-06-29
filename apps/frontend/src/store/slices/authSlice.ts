@@ -103,7 +103,11 @@ const authSlice = createSlice({
 export function getUserAvatarUrl(user: User): string | null {
   if (!user.avatar) return null;
   return pb.files.getURL(
-    { id: user.id, collectionId: '_pb_users_auth_', collectionName: 'users' } as any,
+    {
+      id: user.id,
+      collectionId: '_pb_users_auth_',
+      collectionName: 'users',
+    } as any,
     user.avatar,
   );
 }

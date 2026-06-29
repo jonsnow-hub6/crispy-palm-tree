@@ -47,8 +47,6 @@ export function useRealtime() {
 
     const ensureCounterToast = (present: boolean) => {
       setToasts((t) => {
-        const hasMismatchToast = t.some((x) => x.id === 'counter-mismatch');
-
         // --------------------
         // MISMATCH PRESENT
         // --------------------
@@ -118,14 +116,14 @@ export function useRealtime() {
         const records = await pb.collection('stations').getFullList<any>();
         const anyMismatch = computeMismatchFromStations(records as any[]);
         ensureCounterToast(anyMismatch);
-      } catch (err) {
+      } catch {
         try {
           const state = store.getState();
           const anyMismatch = computeMismatchFromStations(
             state.stations.stations as any[],
           );
           ensureCounterToast(anyMismatch);
-        } catch (_) {}
+        } catch {}
       }
 
       // subscribe stations
@@ -160,7 +158,7 @@ export function useRealtime() {
                   state.stations.stations as any[],
                 );
                 ensureCounterToast(anyMismatch);
-              } catch (err) {}
+              } catch {}
             }
           } catch (err) {
             console.error('Realtime stations handler error', err);
@@ -185,9 +183,6 @@ export function useRealtime() {
             // if ((rec.type ?? '') === 'counter') {
             //   return;
             // }
-
-            const exists = (prevToasts: Toast[]) =>
-              prevToasts.some((t) => t.id === rec.id);
 
             const toast: Toast = {
               id: rec.id,

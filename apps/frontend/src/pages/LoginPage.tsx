@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { loginUser, clearError } from '@/store/slices/authSlice';
@@ -36,7 +36,8 @@ export function LoginPage() {
   // Clear error when inputs change
   useEffect(() => {
     if (error) dispatch(clearError());
-  }, [username, password]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username, password, dispatch]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

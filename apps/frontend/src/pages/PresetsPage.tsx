@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store';
 import {
@@ -10,13 +10,7 @@ import {
   Preset,
 } from '@/store/slices/presetsSlice';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 // removed unused table import; using card layout instead
@@ -30,20 +24,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Upload,
-  MoreVertical,
-  Download,
-} from 'lucide-react';
+import { Edit, Trash2, Upload, MoreVertical, Download } from 'lucide-react';
 
 export function PresetsPage() {
   const dispatch = useDispatch<AppDispatch>();
-  const { presets, loading, error } = useSelector(
-    (state: RootState) => state.presets,
-  );
+  const { presets, loading } = useSelector((state: RootState) => state.presets);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [editingPreset, setEditingPreset] = useState<Preset | null>(null);
@@ -55,7 +40,6 @@ export function PresetsPage() {
   const [importError, setImportError] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
-  const [showTopError, setShowTopError] = useState(true);
 
   useEffect(() => {
     dispatch(fetchPresets());
@@ -74,12 +58,6 @@ export function PresetsPage() {
     document.addEventListener('pointerdown', handler);
     return () => document.removeEventListener('pointerdown', handler);
   }, [menuOpenFor]);
-
-  const handleCreate = () => {
-    setEditingPreset(null);
-    setFormData({ name: '', color: '#3b82f6' });
-    setIsDialogOpen(true);
-  };
 
   const handleEdit = (preset: Preset) => {
     setEditingPreset(preset);

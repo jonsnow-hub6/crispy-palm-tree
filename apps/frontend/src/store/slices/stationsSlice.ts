@@ -86,7 +86,11 @@ export const activateStation = createAsyncThunk(
 export const activateStationLink = createAsyncThunk(
   'stations/activateLink',
   async (
-    { stationId, host, port }: { stationId: string; host: string; port: number },
+    {
+      stationId,
+      host,
+      port,
+    }: { stationId: string; host: string; port: number },
     thunkAPI,
   ) => {
     try {

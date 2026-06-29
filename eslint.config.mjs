@@ -1,84 +1,93 @@
-import js from "@eslint/js";
-import tseslint from "typescript-eslint";
-import react from "eslint-plugin-react";
-import reactHooks from "eslint-plugin-react-hooks";
-import globals from "globals";
+import js from '@eslint/js';
+import tseslint from 'typescript-eslint';
+import react from 'eslint-plugin-react';
+import reactHooks from 'eslint-plugin-react-hooks';
+import globals from 'globals';
 
 export default [
+  // Global ignores
   {
     ignores: [
-      "**/node_modules/**",
-      "**/dist/**",
-      "**/.nx/**",
-      "**/coverage/**",
-      "**/.husky/**",
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/.nx/**',
+      '**/coverage/**',
 
-      // PocketBase backend
-      "apps/backend/**"
-    ]
+      // PocketBase runtime
+      'apps/backend/pb_hooks/**',
+      'apps/backend/pb_migrations/**',
+      'apps/backend/pb_data/**',
+
+      // PocketBase binary
+      'apps/backend/pocketbase',
+
+      '**/splinter_cron_flow.json'
+    ],
   },
 
-  js.configs.recommended,
-
-  ...tseslint.configs.recommended,
-
+  // JavaScript
   {
-    files: ["**/*.{ts,tsx}"],
-
+    files: ['**/*.{js,mjs,cjs}'],
+    ...js.configs.recommended,
     languageOptions: {
-      parser: tseslint.parser,
-      parserOptions: {
-        ecmaVersion: "latest",
-        sourceType: "module"
+      globals: {
+        ...globals.node,
+        ...globals.browser,
       },
+    },
+  },
+
+  // TypeScript
+  ...tseslint.config({
+    files: ['**/*.{ts,tsx}'],
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    languageOptions: {
       globals: {
         ...globals.browser,
-        ...globals.node
-      }
+        ...globals.node,
+      },
     },
-
     plugins: {
       react,
-      "react-hooks": reactHooks
+      'react-hooks': reactHooks,
     },
-
     settings: {
       react: {
-        version: "detect"
-      }
+        version: 'detect',
+      },
     },
-
     rules: {
-      "@typescript-eslint/no-empty-object-type": "off",
-      "@typescript-eslint/ban-ts-comment": "off",
-
-      "no-empty": [
-        "error",
-        {
-          allowEmptyCatch: true
-        }
-      ],
-
-      "prefer-const": "warn",
-
       ...react.configs.recommended.rules,
-      ...reactHooks.configs.recommended.rules
-    }
-  },
+      ...reactHooks.configs.recommended.rules,
 
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
+      '@typescript-eslint/ban-ts-comment': 'off',
+
+      'react/react-in-jsx-scope': 'off',
+      'react/jsx-uses-react': 'off',
+
+      'prefer-const': 'warn',
+
+      'no-empty': [
+        'error',
+        {
+          allowEmptyCatch: true,
+        },
+      ],
+    },
+  }),
+
+  // Config files
   {
     files: [
-      "**/*.config.js",
-      "**/*.config.cjs",
-      "**/*.config.mjs",
-      "tailwind.config.js",
-      "tailwind.config.ts",
-      "postcss.config.js",
-      "vite.config.ts"
+      '**/*.config.{js,cjs,mjs,ts}',
+      'vite.config.ts',
+      'tailwind.config.ts',
+      'postcss.config.js',
     ],
-
     rules: {
-      "@typescript-eslint/no-require-imports": "off"
-    }
-  }
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
 ];

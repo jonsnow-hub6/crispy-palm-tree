@@ -1,6 +1,6 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const cors = require("cors");
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -22,12 +22,12 @@ setInterval(() => {
 
 setInterval(() => {
   console.log(
-    "Mock API State - port:",
+    'Mock API State - port:',
     PORT,
-    "active:",
+    'active:',
     active,
-    "preset:",
-    preset?.presetName || null
+    'preset:',
+    preset?.presetName || null,
   );
 }, 3000);
 
@@ -36,18 +36,18 @@ setInterval(() => {
 // -----------------------------
 
 // GET /api/getActive
-app.get("/api/getActive", (req, res) => {
-  console.log("getActive");
+app.get('/api/getActive', (req, res) => {
+  console.log('getActive');
   res.json(active);
 });
 
 // POST /api/setActive
-app.post("/api/setActive", (req, res) => {
+app.post('/api/setActive', (req, res) => {
   const { active: newActive } = req.body;
-  console.log("setActive -", newActive);
+  console.log('setActive -', newActive);
 
-  if (typeof newActive !== "boolean") {
-    return res.status(400).json({ error: "active must be boolean" });
+  if (typeof newActive !== 'boolean') {
+    return res.status(400).json({ error: 'active must be boolean' });
   }
 
   active = newActive;
@@ -55,8 +55,8 @@ app.post("/api/setActive", (req, res) => {
 });
 
 // GET /api/getCounter
-app.get("/api/getCounter", (req, res) => {
-  console.log("getCounter");
+app.get('/api/getCounter', (req, res) => {
+  console.log('getCounter');
   res.json(counter);
 });
 
@@ -65,25 +65,25 @@ app.get("/api/getCounter", (req, res) => {
 // -----------------------------
 
 // GET /api/getPreset
-app.get("/api/getPreset", (req, res) => {
-  console.log("getPreset");
+app.get('/api/getPreset', (req, res) => {
+  console.log('getPreset');
   res.json(preset);
 });
 
 // POST /api/setPreset
-app.post("/api/setPreset", (req, res) => {
-  console.log("setPreset");
+app.post('/api/setPreset', (req, res) => {
+  console.log('setPreset');
 
   const incoming = req.body;
 
   // minimal sanity check
   if (
     !incoming ||
-    typeof incoming.presetName !== "string" ||
+    typeof incoming.presetName !== 'string' ||
     !Array.isArray(incoming.commands)
   ) {
     return res.status(400).json({
-      error: "Invalid preset format",
+      error: 'Invalid preset format',
     });
   }
 

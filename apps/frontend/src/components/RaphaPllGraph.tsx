@@ -2,11 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import uPlot from 'uplot';
 import 'uplot/dist/uPlot.min.css';
 
-import useRaphaRealtime from '@/hooks/useRaphaRealtime';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-
-type Point = { ts: number; value: 0 | 1; decoderId?: string };
 
 export default function RaphaPllGraph({
   decoderId,

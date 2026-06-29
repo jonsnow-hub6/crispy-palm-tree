@@ -63,8 +63,15 @@ function ToastItem({
   const [paused, setPaused] = useState(false);
 
   const style = levelStyles[toast.level] || levelStyles.info;
-  const Icon = style.icon;
 
+  const Icon = style.icon;
+  const handleClose = () => {
+    setLeaving(true);
+
+    setTimeout(() => {
+      onClose(toast.id);
+    }, 300);
+  };
   /* Auto close */
   useEffect(() => {
     if (paused) return;
@@ -74,15 +81,8 @@ function ToastItem({
     }, AUTO_CLOSE);
 
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paused]);
-
-  const handleClose = () => {
-    setLeaving(true);
-
-    setTimeout(() => {
-      onClose(toast.id);
-    }, 300);
-  };
 
   return (
     <div

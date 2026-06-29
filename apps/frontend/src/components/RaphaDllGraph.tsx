@@ -1,19 +1,15 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import uPlot from 'uplot';
 import 'uplot/dist/uPlot.min.css';
 
-import useRaphaRealtime from '@/hooks/useRaphaRealtime';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-
-type Point = { ts: number; value: number; decoderId?: string };
 
 export default function RaphaDllGraph({
   decoderId,
 }: {
   decoderId?: string | null;
 } = {}) {
-
   const containerRef = useRef<HTMLDivElement | null>(null);
   const plotRef = useRef<uPlot | null>(null);
 
@@ -21,9 +17,7 @@ export default function RaphaDllGraph({
   const yRef = useRef<Float64Array>(new Float64Array(800));
   const lastTsRef = useRef(0);
 
-  const allPoints = useSelector(
-    (s: RootState) => s.rapha?.dllResults ?? []
-  );
+  const allPoints = useSelector((s: RootState) => s.rapha?.dllResults ?? []);
 
   // INIT CHART (once)
   useEffect(() => {
@@ -47,10 +41,7 @@ export default function RaphaDllGraph({
         },
       ],
 
-      axes: [
-        { stroke: '#888' },
-        { stroke: '#888' },
-      ],
+      axes: [{ stroke: '#888' }, { stroke: '#888' }],
     };
 
     plotRef.current = new uPlot(opts, [[], []], containerRef.current);
@@ -101,10 +92,7 @@ export default function RaphaDllGraph({
     const plot = plotRef.current;
     if (!plot) return;
 
-    plot.setData([
-      x.subarray(start, 800),
-      y.subarray(start, 800),
-    ]);
+    plot.setData([x.subarray(start, 800), y.subarray(start, 800)]);
 
     const nowSec = now / 1000;
 

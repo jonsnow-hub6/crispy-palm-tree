@@ -22,7 +22,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { pb } from '@/lib/pocketbase';
 
@@ -43,9 +42,7 @@ export function MainDashboard() {
     text: string;
   } | null>(null);
 
-  const { stations, activeStationId } = useSelector(
-    (state: RootState) => state.stations,
-  );
+  const { stations } = useSelector((state: RootState) => state.stations);
 
   useEffect(() => {
     dispatch(fetchStations());

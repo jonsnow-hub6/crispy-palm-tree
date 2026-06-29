@@ -7,7 +7,12 @@ import type {
   RaphaPllLockState,
 } from '@/types/rapha';
 import { store } from '@/store';
-import { addPllPoints, addDllResults, addCarrierPhasePoints, trimToLast60s } from '@/store/slices/raphaSlice';
+import {
+  addPllPoints,
+  addDllResults,
+  addCarrierPhasePoints,
+  trimToLast60s,
+} from '@/store/slices/raphaSlice';
 
 type Point = { ts: number; value: number; decoderId?: string };
 
@@ -43,7 +48,9 @@ function scheduleFlush() {
     }
 
     if (subscriptionState.carrierPhaseBuffer.length) {
-      store.dispatch(addCarrierPhasePoints(subscriptionState.carrierPhaseBuffer));
+      store.dispatch(
+        addCarrierPhasePoints(subscriptionState.carrierPhaseBuffer),
+      );
       subscriptionState.carrierPhaseBuffer.length = 0;
     }
   }, FLUSH_INTERVAL);
@@ -88,7 +95,12 @@ async function loadInitialData() {
     const carrierPoints = carrier
       .map((r: any) => {
         const v = r.parameters?.carrierPhase;
-        if (v !== null && v !== undefined && typeof v === 'number' && Number.isFinite(v)) {
+        if (
+          v !== null &&
+          v !== undefined &&
+          typeof v === 'number' &&
+          Number.isFinite(v)
+        ) {
           return {
             ts: new Date(r.created).getTime(),
             value: v,
@@ -109,7 +121,6 @@ async function loadInitialData() {
       sort: 'created',
     });
 
-    let lastM2: number | null = null;
     const dllPoints: Point[] = [];
 
     // track lastM2 per decoderId so pairing is decoder-specific
@@ -167,10 +178,17 @@ async function ensureSubscription() {
             const dec = (rec as any).decoderId ?? undefined;
 
             if (v === 0 || v === 1) {
-              subscriptionState.pllBuffer.push({ ts, value: v, decoderId: dec });
+              subscriptionState.pllBuffer.push({
+                ts,
+                value: v,
+                decoderId: dec,
+              });
 
               if (subscriptionState.pllBuffer.length > MAX_BATCH) {
-                subscriptionState.pllBuffer.splice(0, subscriptionState.pllBuffer.length - MAX_BATCH);
+                subscriptionState.pllBuffer.splice(
+                  0,
+                  subscriptionState.pllBuffer.length - MAX_BATCH,
+                );
               }
 
               scheduleFlush();
@@ -194,11 +212,23 @@ async function ensureSubscription() {
             const v = (rec as any).parameters?.carrierPhase;
             const dec = (rec as any).decoderId ?? undefined;
 
-            if (v !== null && v !== undefined && typeof v === 'number' && Number.isFinite(v)) {
-              subscriptionState.carrierPhaseBuffer.push({ ts, value: v, decoderId: dec });
+            if (
+              v !== null &&
+              v !== undefined &&
+              typeof v === 'number' &&
+              Number.isFinite(v)
+            ) {
+              subscriptionState.carrierPhaseBuffer.push({
+                ts,
+                value: v,
+                decoderId: dec,
+              });
 
               if (subscriptionState.carrierPhaseBuffer.length > MAX_BATCH) {
-                subscriptionState.carrierPhaseBuffer.splice(0, subscriptionState.carrierPhaseBuffer.length - MAX_BATCH);
+                subscriptionState.carrierPhaseBuffer.splice(
+                  0,
+                  subscriptionState.carrierPhaseBuffer.length - MAX_BATCH,
+                );
               }
 
               scheduleFlush();
@@ -215,10 +245,17 @@ async function ensureSubscription() {
               const m2 = subscriptionState.lastDllM2[dec] ?? null;
 
               if (m2 !== null) {
-                subscriptionState.dllBuffer.push({ ts, value: m2 * Math.trunc(v), decoderId: dec });
+                subscriptionState.dllBuffer.push({
+                  ts,
+                  value: m2 * Math.trunc(v),
+                  decoderId: dec,
+                });
 
                 if (subscriptionState.dllBuffer.length > MAX_BATCH) {
-                  subscriptionState.dllBuffer.splice(0, subscriptionState.dllBuffer.length - MAX_BATCH);
+                  subscriptionState.dllBuffer.splice(
+                    0,
+                    subscriptionState.dllBuffer.length - MAX_BATCH,
+                  );
                 }
 
                 scheduleFlush();
@@ -239,7 +276,6 @@ async function ensureSubscription() {
         try {
           store.dispatch(trimToLast60s());
         } catch (err) {
-          // eslint-disable-next-line no-console
           console.error('rapha cleanup error', err);
         }
       }, 1000);
@@ -253,9 +289,9 @@ export function useRaphaRealtime() {
   useEffect(() => {
     async function start() {
       if (
-            store.getState().rapha.pllPoints.length === 0 &&
-            store.getState().rapha.dllResults.length === 0 &&
-            store.getState().rapha.carrierPhasePoints.length === 0
+        store.getState().rapha.pllPoints.length === 0 &&
+        store.getState().rapha.dllResults.length === 0 &&
+        store.getState().rapha.carrierPhasePoints.length === 0
       ) {
         await loadInitialData(); // 👈 load last minute
       }
@@ -268,7 +304,6 @@ export function useRaphaRealtime() {
         try {
           subscriptionState.unsubscribe();
         } catch (err) {
-          // eslint-disable-next-line no-console
           console.error('Failed to unsubscribe rapha on unmount', err);
         }
         subscriptionState.unsubscribe = null;

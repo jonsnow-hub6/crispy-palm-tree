@@ -8,8 +8,13 @@ interface ProtectedRouteProps {
   requiredPermission?: Permission;
 }
 
-export function ProtectedRoute({ children, requiredPermission }: ProtectedRouteProps) {
-  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+export function ProtectedRoute({
+  children,
+  requiredPermission,
+}: ProtectedRouteProps) {
+  const { isAuthenticated, user } = useSelector(
+    (state: RootState) => state.auth,
+  );
   const location = useLocation();
 
   if (!isAuthenticated || !user) {

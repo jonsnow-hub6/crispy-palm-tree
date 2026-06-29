@@ -22,13 +22,15 @@ function scheduleFlush() {
     subscriptionState.flushTimer = null;
     if (subscriptionState.buffer.length === 0) return;
 
-    const batch = subscriptionState.buffer.splice(0, subscriptionState.buffer.length);
+    const batch = subscriptionState.buffer.splice(
+      0,
+      subscriptionState.buffer.length,
+    );
     for (const l of subscriptionState.listeners) {
       try {
         l(batch);
       } catch (err) {
         // listener errors should not break the pipeline
-        // eslint-disable-next-line no-console
         console.error('leo listener error', err);
       }
     }
@@ -69,7 +71,8 @@ async function ensureSubscription() {
           timeOfArrival: String(r.timeOfArrival ?? ''),
           decoderId: String(r.decoderId ?? ''),
           created: r.created,
-          isCounterCorrect: r.isCounterCorrect !== undefined ? r.isCounterCorrect : null,
+          isCounterCorrect:
+            r.isCounterCorrect !== undefined ? r.isCounterCorrect : null,
           presetId: r.presetId || null,
           presetIndex: r.presetIndex !== undefined ? r.presetIndex : null,
           presetStatus: r.presetStatus || null,
@@ -77,11 +80,13 @@ async function ensureSubscription() {
 
         subscriptionState.buffer.push(rec);
         if (subscriptionState.buffer.length > MAX_BATCH) {
-          subscriptionState.buffer.splice(0, subscriptionState.buffer.length - MAX_BATCH);
+          subscriptionState.buffer.splice(
+            0,
+            subscriptionState.buffer.length - MAX_BATCH,
+          );
         }
         scheduleFlush();
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error('leo realtime handler', err);
       }
     });
@@ -94,7 +99,6 @@ async function ensureSubscription() {
       subscriptionState.unsubscribe = unsub;
     }
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.error('Failed to subscribe to leo', err);
   } finally {
     subscriptionState.isSubscribing = false;
@@ -113,7 +117,6 @@ export function useLeoRealtime(onRecords: (batch: LeoRecord[]) => void) {
         try {
           pb.collection('leo').unsubscribe('*');
         } catch (err) {
-          // eslint-disable-next-line no-console
           console.error('Failed to unsubscribe leo', err);
         }
         subscriptionState.unsubscribe = null;

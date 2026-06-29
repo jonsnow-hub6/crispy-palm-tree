@@ -4,9 +4,7 @@ import { logout, getUserAvatarUrl } from '@/store/slices/authSlice';
 import { RootState } from '@/store';
 import { Button } from '@/components/ui/button';
 import {
-  LayoutDashboard,
   Radio,
-  FolderOpen,
   Palette,
   LogOut,
   Home,
@@ -15,7 +13,6 @@ import {
   ChartLine,
   CheckCircle2,
   XCircle,
-  AlertCircle,
   Bell,
   LogIn,
 } from 'lucide-react';

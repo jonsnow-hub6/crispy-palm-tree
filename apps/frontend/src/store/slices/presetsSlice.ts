@@ -31,29 +31,35 @@ const initialState: PresetsState = {
   activePresetId: null,
 };
 
-export const fetchPresets = createAsyncThunk(
-  'presets/fetchAll',
-  async () => {
-    const records = await pb.collection('presets').getFullList<Preset>({
-      expand: 'actions',
-      sort: '-created',
-    });
-    return records;
-  }
-);
+export const fetchPresets = createAsyncThunk('presets/fetchAll', async () => {
+  const records = await pb.collection('presets').getFullList<Preset>({
+    expand: 'actions',
+    sort: '-created',
+  });
+  return records;
+});
 
 export const createPreset = createAsyncThunk(
   'presets/create',
-  async (data: { name: string; color: string; actions?: string[] }, { rejectWithValue }) => {
+  async (
+    data: { name: string; color: string; actions?: string[] },
+    { rejectWithValue },
+  ) => {
     try {
-      const record = await pb.collection('presets').create<Preset>({...data, passwordRequired: true});
+      const record = await pb
+        .collection('presets')
+        .create<Preset>({ ...data, passwordRequired: true });
       return record;
     } catch (error: any) {
       console.error('PocketBase create preset error:', error);
-      const errorMessage = error?.response?.message || error?.message || error?.data?.message || 'Failed to create preset';
+      const errorMessage =
+        error?.response?.message ||
+        error?.message ||
+        error?.data?.message ||
+        'Failed to create preset';
       return rejectWithValue(errorMessage);
     }
-  }
+  },
 );
 
 export const updatePreset = createAsyncThunk(
@@ -61,7 +67,7 @@ export const updatePreset = createAsyncThunk(
   async ({ id, data }: { id: string; data: Partial<Preset> }) => {
     const record = await pb.collection('presets').update<Preset>(id, data);
     return record;
-  }
+  },
 );
 
 export const deletePreset = createAsyncThunk(
@@ -69,12 +75,19 @@ export const deletePreset = createAsyncThunk(
   async (id: string) => {
     await pb.collection('presets').delete(id);
     return id;
-  }
+  },
 );
 
 export const importPresetFromJson = createAsyncThunk(
   'presets/importFromJson',
-  async (jsonData: { presetName: string; commands: Array<{ id: string; payload: string }>; color: string }, { rejectWithValue }) => {
+  async (
+    jsonData: {
+      presetName: string;
+      commands: Array<{ id: string; payload: string }>;
+      color: string;
+    },
+    { rejectWithValue },
+  ) => {
     try {
       // First: create or find actions for each command, collecting IDs
       const actionIds: string[] = [];
@@ -90,16 +103,16 @@ export const importPresetFromJson = createAsyncThunk(
           //   filter: `payload="${payload}" && project="${projectId}"`,
           // });
 
-          let actionId: string;
+          // let actionId: string;
           // if (existingActions.length > 0) {
           //   actionId = existingActions[0].id;
           // } else {
-            // Create new action first
-            const action = await pb.collection('actions').create({
-              payload: String(payload),
-              project: projectId,
-            });
-            actionId = action.id;
+          // Create new action first
+          const action = await pb.collection('actions').create({
+            payload: String(payload),
+            project: projectId,
+          });
+          const actionId = action.id;
           // }
 
           actionIds.push(actionId);
@@ -121,13 +134,16 @@ export const importPresetFromJson = createAsyncThunk(
         presetCreateData.actions = actionIds;
       }
 
-
-      const preset = await pb.collection('presets').create<Preset>(presetCreateData);
+      const preset = await pb
+        .collection('presets')
+        .create<Preset>(presetCreateData);
 
       // Fetch the complete preset with expanded actions
-      const completePreset = await pb.collection('presets').getOne<Preset>(preset.id, {
-        expand: 'actions',
-      });
+      const completePreset = await pb
+        .collection('presets')
+        .getOne<Preset>(preset.id, {
+          expand: 'actions',
+        });
 
       if (errors.length > 0) {
         console.warn('Preset import completed with warnings:', errors);
@@ -136,10 +152,14 @@ export const importPresetFromJson = createAsyncThunk(
       return completePreset;
     } catch (error: any) {
       console.error('PocketBase import preset error:', error);
-      const errorMessage = error?.response?.message || error?.message || error?.data?.message || 'Failed to import preset';
+      const errorMessage =
+        error?.response?.message ||
+        error?.message ||
+        error?.data?.message ||
+        'Failed to import preset';
       return rejectWithValue(errorMessage);
     }
-  }
+  },
 );
 
 const presetsSlice = createSlice({
@@ -157,25 +177,25 @@ const presetsSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchPresets.fulfilled, (state, action) => {
-  state.loading = false;
-  state.presets = action.payload;
+        state.loading = false;
+        state.presets = action.payload;
 
-  // ✅ Get active preset from PB
-  const actives = action.payload.filter(p => p.active === true);
+        // ✅ Get active preset from PB
+        const actives = action.payload.filter((p) => p.active === true);
 
-  if (actives.length > 0) {
-    // Prefer DB state
-    state.activePresetId = actives[0].id;
-  } else {
-    // Fallback: none active in DB
-    state.activePresetId = null;
-  }
+        if (actives.length > 0) {
+          // Prefer DB state
+          state.activePresetId = actives[0].id;
+        } else {
+          // Fallback: none active in DB
+          state.activePresetId = null;
+        }
 
-  // Optional safety warning
-  if (actives.length > 1) {
-    console.warn('Multiple active presets in DB:', actives);
-  }
-})
+        // Optional safety warning
+        if (actives.length > 1) {
+          console.warn('Multiple active presets in DB:', actives);
+        }
+      })
 
       .addCase(fetchPresets.rejected, (state, action) => {
         state.loading = false;
@@ -191,16 +211,18 @@ const presetsSlice = createSlice({
       })
       .addCase(createPreset.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string || 'Failed to create preset';
+        state.error = (action.payload as string) || 'Failed to create preset';
       })
       .addCase(updatePreset.fulfilled, (state, action) => {
-        const index = state.presets.findIndex(p => p.id === action.payload.id);
+        const index = state.presets.findIndex(
+          (p) => p.id === action.payload.id,
+        );
         if (index !== -1) {
           state.presets[index] = action.payload;
         }
       })
       .addCase(deletePreset.fulfilled, (state, action) => {
-        state.presets = state.presets.filter(p => p.id !== action.payload);
+        state.presets = state.presets.filter((p) => p.id !== action.payload);
         if (state.activePresetId === action.payload) {
           state.activePresetId = null;
         }
@@ -215,7 +237,7 @@ const presetsSlice = createSlice({
       })
       .addCase(importPresetFromJson.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string || 'Failed to import preset';
+        state.error = (action.payload as string) || 'Failed to import preset';
       });
   },
 });

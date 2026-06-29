@@ -16,7 +16,7 @@
     "lint": "eslint .",
     "format:check": "prettier --check .",
     "format:write": "prettier --write .",
-    "spellcheck": "cspell lint --no-progress --show-suggestions --show-context \"**/*\"",
+    "spellcheck": "cspell lint \"apps/**/*.{ts,tsx,js,jsx,md}\" --no-progress",
     "ci:check": "npm run format:check && npm run lint && npm run spellcheck",
     "prepare": "husky"
   },

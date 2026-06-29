@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store';
 import {
@@ -38,7 +38,7 @@ import StationGraph from '@/components/StationGraph';
 
 export function StationsPage() {
   const dispatch = useDispatch<AppDispatch>();
-  const { stations, loading, activeStationId } = useSelector(
+  const { stations, loading } = useSelector(
     (state: RootState) => state.stations,
   );
   const [isDialogOpen, setIsDialogOpen] = useState(false);

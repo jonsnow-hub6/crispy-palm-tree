@@ -3,51 +3,64 @@
 ## Completed Assignments
 
 ### Assignment 1: Repository Analysis & Architecture ✅
+
 - Analyzed Nx monorepo structure
 - Documented PocketBase schema from migrations
 - Created architecture and flow diagrams (in plan)
 
 ### Assignment 2: Stations CRUD ✅
+
 **Frontend:**
+
 - Created `stationsSlice` Redux slice with full CRUD operations
 - Built `StationsPage` with table view, create/edit dialogs
 - Implemented station activation with automatic deactivation of others
 - Display link-level active state and counters
 
 **Backend:**
+
 - Created `pb_hooks/stations.js` with:
   - `onRecordAfterUpdate` hook to enforce single active station
   - API endpoint `/api/stations/:id/activate` for manual activation
 
 ### Assignment 3: Projects CRUD ✅
+
 **Frontend:**
+
 - Created `projectsSlice` Redux slice
 - Built `ProjectsPage` with project management UI
 - Display TCP connection status and packet information
 
 **Backend:**
+
 - Created `pb_hooks/projects.js` with:
   - TCP listener management (placeholder - requires Go hooks for full TCP)
   - HTTP endpoint `/api/projects/:id/packet` for packet reception
   - Packet status endpoints
 
 ### Assignment 4: Preset JSON Import ✅
+
 **Frontend:**
+
 - Created `presetsSlice` Redux slice
 - Built `PresetsPage` with JSON upload functionality
 - Color picker for preset selection
 - Automatic action creation and linking
 
 **Backend:**
+
 - JSON import logic in `importPresetFromJson` thunk
 - Creates preset and actions from JSON structure
 
 ### Assignment 5: Preset Distribution ✅
+
 **Frontend:**
+
 - Preset distribution triggered from main dashboard
 - API call to `/api/presets/:id/distribute`
 
 **Backend:**
+
 - Created `pb_hooks/presets.js` with:
   - `distributePresetToStations()` function
   - HTTP calls to all station links
@@ -55,19 +68,24 @@
   - Auto-distribution on preset update
 
 ### Assignment 6: Packet Validation ✅
+
 **Frontend:**
+
 - Health status calculation with 30-second rolling window
 - Real-time polling of packet validation status
 - Visual indicators (green/red) for system health
 
 **Backend:**
+
 - Created `pb_hooks/packets.js` with validation logic
 - Packet validation against active preset
 - 30-second rolling window calculation
 - Health status API endpoint `/api/system/health`
 
 ### Assignment 7: Main Dashboard ✅
+
 **Frontend:**
+
 - Public main screen (`MainDashboard`)
 - Preset selector with distribution
 - System health indicators (green/red)
@@ -75,7 +93,9 @@
 - Link-level status and counters
 
 ### Assignment 8: Authentication ✅
+
 **Frontend:**
+
 - Created `authSlice` Redux slice
 - `LoginPage` with password authentication
 - `ProtectedRoute` component for route guarding
@@ -85,6 +105,7 @@
 ## File Structure
 
 ### Frontend (`apps/frontend/src/`)
+
 ```
 src/
 ├── store/
@@ -111,6 +132,7 @@ src/
 ```
 
 ### Backend (`apps/backend/`)
+
 ```
 backend/
 ├── pb_hooks/
@@ -162,7 +184,9 @@ backend/
 ## Known Limitations & Schema Notes
 
 ### Schema Limitations
+
 The following fields are referenced in the code but **do not exist in the current schema**:
+
 - `projects.lastPacket` (text)
 - `projects.lastPacketTimestamp` (date)
 - `projects.lastPacketValid` (bool)
@@ -170,12 +194,15 @@ The following fields are referenced in the code but **do not exist in the curren
 **Workaround:** Packet data is stored in-memory in PocketBase hooks and polled via API endpoints. For production, these fields should be added via migration.
 
 ### TCP Listener Limitation
+
 PocketBase JSVM doesn't support native TCP server creation. The current implementation:
+
 - Registers TCP listener placeholders
 - Provides HTTP endpoint `/api/projects/:id/packet` as fallback
 - Full TCP support would require Go hooks
 
 ### Station API Assumptions
+
 - Station APIs are assumed to be HTTP/HTTPS
 - Endpoints: `/setPreset`, `/getPreset`, `/getCounter`, `/getIsActive`, `/setIsActive`
 - No authentication specified (can be added if needed)
@@ -183,6 +210,7 @@ PocketBase JSVM doesn't support native TCP server creation. The current implemen
 ## Environment Variables
 
 Required in `.env` or environment:
+
 - `VITE_POCKETBASE_URL` - PocketBase server URL (e.g., `http://localhost:8090`)
 - `VITE_AUTH_PASSWORD` - Authentication password (defaults to `admin`)
 

@@ -94,7 +94,10 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
       record.set('type', type);
       record.set('content', content);
       if (stationName) record.set('stationName', stationName);
-      record.set('metadata', JSON.stringify(getSystemMetadata(relevantStation)));
+      record.set(
+        'metadata',
+        JSON.stringify(getSystemMetadata(relevantStation)),
+      );
       $app.save(record);
       recentNotifications.unshift(record);
       return;
@@ -116,7 +119,10 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
       record.set('type', type);
       record.set('content', content);
       if (stationName) record.set('stationName', stationName);
-      record.set('metadata', JSON.stringify(getSystemMetadata(relevantStation)));
+      record.set(
+        'metadata',
+        JSON.stringify(getSystemMetadata(relevantStation)),
+      );
       $app.save(record);
       recentNotifications.unshift(record);
     }
@@ -214,7 +220,12 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
                 `Preset changed from "${existing.currentPreset}" to "${presetRes.value.presetName}" on station "${st.get('name')}" (${existing.host}:${existing.port})`,
               );
               recordPreset.set('stationName', st.get('name'));
-              recordPreset.set('metadata', JSON.stringify(getSystemMetadata({ record: st, link: existing })));
+              recordPreset.set(
+                'metadata',
+                JSON.stringify(
+                  getSystemMetadata({ record: st, link: existing }),
+                ),
+              );
               $app.save(recordPreset);
             }
           } else {

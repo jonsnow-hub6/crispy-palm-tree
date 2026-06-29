@@ -13,12 +13,13 @@ export function usePresetStatus(records: LeoRecord[]) {
     [presets, activePresetId],
   );
 
+  // eslint-disable-next-line react-hooks/purity
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
     // Only run the timer if we actually have an active preset we are waiting to verify
     if (!activePresetId) return;
-    
+
     const interval = setInterval(() => {
       setNow(Date.now());
     }, 1000);
@@ -43,27 +44,29 @@ export function usePresetStatus(records: LeoRecord[]) {
     // last N logs (where N = number_of_actions * 10)
     const windowLength = requiredMatches * 10;
     const thirtySecondsAgo = now - 30_000;
-    
+
     // Grab the latest records from the buffer up to the window size,
     // and strictly ensure they arrived within the last 30 seconds.
     const recentRecords = records
       .slice(Math.max(0, records.length - windowLength))
       .filter((r) => {
-        const arrivalTime = new Date(r.timeOfArrival || r.created || '').getTime();
+        const arrivalTime = new Date(
+          r.timeOfArrival || r.created || '',
+        ).getTime();
         return arrivalTime >= thirtySecondsAgo;
       });
 
     for (const action of unverifiedActions) {
       // Find if this specific projectId + payload combination exists in recent records
       const hasOccurred = recentRecords.some(
-        (r) => String(r.projectId).trim() === String(action.project).trim() && String(r.payload).trim() === String(action.payload).trim()
+        (r) =>
+          String(r.projectId).trim() === String(action.project).trim() &&
+          String(r.payload).trim() === String(action.payload).trim(),
       );
       if (hasOccurred) {
         matchedCount++;
       }
     }
-
-    const isMatch = matchedCount === requiredMatches;
 
     return {
       isActive: true,

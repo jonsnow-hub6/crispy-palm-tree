@@ -5,29 +5,10 @@ const PocketBase = require('pocketbase/cjs');
 console.log('Logger script starting...');
 
 const PB_URL = process.env.PB_URL || 'http://127.0.0.1:8090';
-const ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL;
-const ADMIN_PASSWORD = process.env.PB_ADMIN_PASSWORD;
 
 const pb = new PocketBase(PB_URL);
 
 let counter = 0;
-
-// ----------------------------
-// Optional admin login
-// ----------------------------
-async function loginAdmin() {
-  if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
-    console.log('Skipping admin login');
-    return;
-  }
-
-  try {
-    await pb.admins.authWithPassword(ADMIN_EMAIL, ADMIN_PASSWORD);
-    console.log('Admin authenticated');
-  } catch (err) {
-    console.error('Admin auth failed:', err.message);
-  }
-}
 
 // ----------------------------
 // Send one record
