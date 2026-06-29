@@ -1,7 +1,7 @@
 name: Docker Image Build
 
 on:
-  push: {}
+  workflow_call:
 
 jobs:
   build-backend:

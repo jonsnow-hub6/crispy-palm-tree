@@ -4,64 +4,18 @@ on:
   push:
     branches:
       - main
-      - master
       - develop
+
   pull_request:
 
 jobs:
   quality:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - run: npm ci
-
-      - run: npm run ci:check
+    uses: ./.github/workflows/quality.yml
 
   build:
     needs: quality
-    runs-on: ubuntu-latest
+    uses: ./.github/workflows/build.yml
 
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - run: npm ci
-
-      - run: npm run build
-
-  docker-backend:
-    needs: quality
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - run: |
-          docker build \
-            -f apps/backend/Dockerfile \
-            -t backend:test \
-            apps/backend
-
-  docker-frontend:
-    needs: quality
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - run: |
-          docker build \
-            -f apps/frontend/Dockerfile \
-            -t frontend:test \
-            apps/frontend
+  docker:
+    needs: build
+    uses: ./.github/workflows/docker-build.yml
