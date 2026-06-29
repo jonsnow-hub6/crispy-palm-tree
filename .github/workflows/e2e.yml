@@ -12,28 +12,82 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: ./.github/actions/setup-node
-
-      - name: Download build artifact
+      # -------------------------
+      # Download Docker images
+      # -------------------------
+      - name: Download backend image
         uses: actions/download-artifact@v4
         with:
-          name: frontend-build
-          path: dist
+          name: backend-image
 
-      - name: Start frontend server
-        env:
-          VITE_POCKETBASE_URL: http://127.0.0.1:8090
-          CYPRESS_BASE_URL: http://127.0.0.1:4200
+      - name: Download frontend image
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-image
+
+      # -------------------------
+      # Load Docker images
+      # -------------------------
+      - name: Load backend image
+        run: docker load -i backend.tar
+
+      - name: Load frontend image
+        run: docker load -i frontend.tar
+
+      # -------------------------
+      # Create docker compose
+      # -------------------------
+      - name: Create docker compose
         run: |
-          npx serve dist -l 4200 > /tmp/frontend.log 2>&1 &
+          cat <<EOF > docker-compose.ci.yml
+          version: "3.9"
+
+          services:
+            backend:
+              image: backend:latest
+              ports:
+                - "8090:8090"
+
+            frontend:
+              image: frontend:latest
+              ports:
+                - "4200:80"
+              depends_on:
+                - backend
+          EOF
+
+      # -------------------------
+      # Start stack
+      # -------------------------
+      - name: Start stack
+        run: |
+          docker compose -f docker-compose.ci.yml up -d
           npx wait-on http://127.0.0.1:4200
+          npx wait-on http://127.0.0.1:8090/_/
+
+      # -------------------------
+      # Run Cypress
+      # -------------------------
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Run Cypress tests
         env:
           CYPRESS_BASE_URL: http://127.0.0.1:4200
-          CYPRESS_VIEWPORT_WIDTH: 1280
-          CYPRESS_VIEWPORT_HEIGHT: 720
-          CYPRESS_VIDEO: false
+          VITE_POCKETBASE_URL: http://127.0.0.1:8090
         run: |
-          npx cypress run --config-file apps/frontend/cypress/cypress.config.ts --spec 'apps/frontend/cypress/e2e/{auth,dashboard,presets,stations}/*.cy.ts'
+          npx cypress run \
+            --config-file apps/frontend/cypress/cypress.config.ts \
+            --spec 'apps/frontend/cypress/e2e/{auth,dashboard,presets,stations}/*.cy.ts'
+
+      # -------------------------
+      # Cleanup
+      # -------------------------
+      - name: Shutdown
+        if: always()
+        run: docker compose -f docker-compose.ci.yml down

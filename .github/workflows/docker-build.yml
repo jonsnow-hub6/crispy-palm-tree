@@ -4,9 +4,9 @@ on:
   workflow_call:
 
 jobs:
-  build-backend:
-    name: Build Backend Docker Image
+  build-images:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -18,16 +18,27 @@ jobs:
             -t backend:latest \
             .
 
-  build-frontend:
-    name: Build Frontend Docker Image
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Build frontend image
         run: |
           docker build \
             -f apps/frontend/Dockerfile \
             -t frontend:latest \
             .
+
+      - name: Save backend image
+        run: docker save backend:latest -o backend.tar
+
+      - name: Save frontend image
+        run: docker save frontend:latest -o frontend.tar
+
+      - name: Upload backend image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-image
+          path: backend.tar
+
+      - name: Upload frontend image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-image
+          path: frontend.tar
