@@ -9,74 +9,50 @@ jobs:
     timeout-minutes: 25
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-node
 
       # -------------------------
-      # Download Docker images
+      # Download artifacts
       # -------------------------
-      - name: Download backend image
+
+      - name: Download frontend artifact
         uses: actions/download-artifact@v4
         with:
-          name: backend-image
+          name: frontend-dist
+          path: dist/apps/frontend
 
-      - name: Download frontend image
+      - name: Download backend runtime
         uses: actions/download-artifact@v4
         with:
-          name: frontend-image
+          name: backend-runtime
+          path: apps/backend
 
       # -------------------------
-      # Load Docker images
+      # Start PocketBase
       # -------------------------
-      - name: Load backend image
-        run: docker load -i backend.tar
 
-      - name: Load frontend image
-        run: docker load -i frontend.tar
-
-      # -------------------------
-      # Create docker compose
-      # -------------------------
-      - name: Create docker compose
+      - name: Start PocketBase
         run: |
-          cat <<EOF > docker-compose.ci.yml
-          version: "3.9"
-
-          services:
-            backend:
-              image: backend:latest
-              ports:
-                - "8090:8090"
-
-            frontend:
-              image: frontend:latest
-              ports:
-                - "4200:80"
-              depends_on:
-                - backend
-          EOF
-
-      # -------------------------
-      # Start stack
-      # -------------------------
-      - name: Start stack
-        run: |
-          docker compose -f docker-compose.ci.yml up -d
-          npx wait-on http://127.0.0.1:4200
+          chmod +x apps/backend/pocketbase
+          ./apps/backend/pocketbase serve --http=0.0.0.0:8090 &
           npx wait-on http://127.0.0.1:8090/_/
 
       # -------------------------
-      # Run Cypress
+      # Start frontend
       # -------------------------
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Serve frontend
+        run: |
+          npx serve dist/apps/frontend -l 4200 &
+          npx wait-on http://127.0.0.1:4200
 
-      - name: Run Cypress tests
+      # -------------------------
+      # Cypress
+      # -------------------------
+
+      - name: Run Cypress
         env:
           CYPRESS_BASE_URL: http://127.0.0.1:4200
           VITE_POCKETBASE_URL: http://127.0.0.1:8090
@@ -84,10 +60,3 @@ jobs:
           npx cypress run \
             --config-file apps/frontend/cypress/cypress.config.ts \
             --spec 'apps/frontend/cypress/e2e/{auth,dashboard,presets,stations}/*.cy.ts'
-
-      # -------------------------
-      # Cleanup
-      # -------------------------
-      - name: Shutdown
-        if: always()
-        run: docker compose -f docker-compose.ci.yml down

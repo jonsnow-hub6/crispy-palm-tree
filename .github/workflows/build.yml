@@ -4,11 +4,37 @@ on:
   workflow_call:
 
 jobs:
-  build:
+  frontend:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: ./.github/actions/setup-node
-      - run: npm run build
+
+      - name: Build frontend
+        run: npx nx build frontend
+
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist/apps/frontend
+
+  backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make PocketBase executable
+        run: chmod +x apps/backend/pocketbase
+
+      - name: Upload backend runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-runtime
+          path: |
+            apps/backend/pocketbase
+            apps/backend/pb_hooks
+            apps/backend/pb_migrations

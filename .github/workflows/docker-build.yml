@@ -1,44 +1,25 @@
-name: Docker Image Build
+name: Docker Build
 
 on:
   workflow_call:
 
 jobs:
-  build-images:
+  docker:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Build backend image
         run: |
           docker build \
             -f apps/backend/Dockerfile \
-            -t backend:latest \
+            -t backend:ci \
             .
 
       - name: Build frontend image
         run: |
           docker build \
             -f apps/frontend/Dockerfile \
-            -t frontend:latest \
+            -t frontend:ci \
             .
-
-      - name: Save backend image
-        run: docker save backend:latest -o backend.tar
-
-      - name: Save frontend image
-        run: docker save frontend:latest -o frontend.tar
-
-      - name: Upload backend image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-image
-          path: backend.tar
-
-      - name: Upload frontend image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-image
-          path: frontend.tar
