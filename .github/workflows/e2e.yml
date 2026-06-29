@@ -45,7 +45,7 @@ jobs:
 
       - name: Serve frontend
         run: |
-          npx serve dist/apps/frontend -l 4200 &
+          npx serve -s dist/apps/frontend -l 4200 &
           npx wait-on http://127.0.0.1:4200
 
       # -------------------------
