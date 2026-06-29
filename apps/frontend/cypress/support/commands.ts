@@ -1,4 +1,7 @@
 /// <reference types="cypress" />
+
+import { AuthParameters } from "../types";
+
 // Custom Cypress commands
 
 declare global {
@@ -7,7 +10,7 @@ declare global {
       login(username?: string, password?: string): Chainable<Element>;
       logout(): Chainable<Element>;
       mockApi(): Chainable<void>;
-      setPocketBaseAuth(auth: any): Chainable<void>;
+      setPocketBaseAuth(auth: AuthParameters): Chainable<void>;
     }
   }
 }
@@ -55,7 +58,7 @@ Cypress.Commands.add('setPocketBaseAuth', (auth) => {
 
 Cypress.Commands.add('login', (username = 'testuser', password = 'password') => {
   // Directly seed the PocketBase auth store for stable authenticated tests
-  cy.fixture('auth.json').then((auth) => {
+  cy.fixture('auth.json').then((auth: AuthParameters) => {
     cy.setPocketBaseAuth(auth);
   });
 });
