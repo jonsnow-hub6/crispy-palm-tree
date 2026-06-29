@@ -27,7 +27,7 @@ describe('Auth - Login', () => {
   });
 
   it('redirects on successful login (mocked)', () => {
-    page.fillUsername('testuser');
+    page.fillUsername('testUser');
     page.fillPassword('password');
     page.submit();
     cy.location('pathname').should('eq', '/');

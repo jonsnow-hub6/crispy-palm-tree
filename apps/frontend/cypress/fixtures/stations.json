@@ -8,15 +8,27 @@
       "id": "station_1",
       "name": "Station One",
       "stationLinks": [
-        { "host": "host1", "port": 8080, "active": true, "reachable": true, "counter": 42 }
+        {
+          "host": "host1",
+          "port": 8080,
+          "active": true,
+          "reachable": true,
+          "counter": 42
+        }
       ]
     },
     {
       "id": "station_2",
       "name": "Station Two",
       "stationLinks": [
-        { "host": "host2", "port": 8081, "active": false, "reachable": false, "counter": 0 }
-        ]
+        {
+          "host": "host2",
+          "port": 8081,
+          "active": false,
+          "reachable": false,
+          "counter": 0
+        }
+      ]
     }
   ]
 }

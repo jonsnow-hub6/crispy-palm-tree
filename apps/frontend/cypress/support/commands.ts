@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-namespace */
 /// <reference types="cypress" />
 
-import { AuthParameters } from "../types";
+import { AuthParameters } from '../types';
 
 // Custom Cypress commands
 
@@ -19,9 +20,13 @@ Cypress.Commands.add('mockApi', () => {
   // Load fixtures and set up common intercepts for PocketBase endpoints
   cy.fixture('auth.json').then((auth) => {
     // Auth endpoint
-    cy.intercept('POST', '**/api/collections/users/auth-with-password', (req) => {
-      req.reply({ statusCode: 200, body: auth });
-    });
+    cy.intercept(
+      'POST',
+      '**/api/collections/users/auth-with-password',
+      (req) => {
+        req.reply({ statusCode: 200, body: auth });
+      },
+    );
     // user record fetches
     cy.intercept('GET', '**/api/collections/users/*', (req) => {
       req.reply({ statusCode: 200, body: auth.record });
@@ -56,7 +61,7 @@ Cypress.Commands.add('setPocketBaseAuth', (auth) => {
   });
 });
 
-Cypress.Commands.add('login', (username = 'testuser', password = 'password') => {
+Cypress.Commands.add('login', () => {
   // Directly seed the PocketBase auth store for stable authenticated tests
   cy.fixture('auth.json').then((auth: AuthParameters) => {
     cy.setPocketBaseAuth(auth);
@@ -67,7 +72,7 @@ Cypress.Commands.add('logout', () => {
   cy.window().then((win) => {
     try {
       win.localStorage.clear();
-    } catch (e) {
+    } catch {
       // ignore
     }
   });

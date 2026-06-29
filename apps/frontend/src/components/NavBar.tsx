@@ -145,7 +145,7 @@ export function NavBar({
                         'flex items-center gap-2',
                         isActive && 'bg-primary text-primary-foreground',
                       )}
-                      data-cy={"nav-link-" + item.label.toLowerCase()}
+                      data-cy={'nav-link-' + item.label.toLowerCase()}
                     >
                       <Icon className="h-4 w-4" />
                       {item.label}

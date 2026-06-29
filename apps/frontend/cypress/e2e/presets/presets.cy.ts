@@ -11,6 +11,9 @@ describe('Presets', () => {
 
   it('loads and displays presets list', () => {
     page.getList().should('exist');
-    page.getList().find('[data-cy^="preset-item-"]').should('have.length.greaterThan', 0);
+    page
+      .getList()
+      .find('[data-cy^="preset-item-"]')
+      .should('have.length.greaterThan', 0);
   });
 });

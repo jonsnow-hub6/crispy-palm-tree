@@ -11,6 +11,9 @@ describe('Stations', () => {
 
   it('loads and displays stations list', () => {
     page.getList().should('exist');
-    page.getList().find('[data-cy^="station-item-"]').should('have.length.greaterThan', 0);
+    page
+      .getList()
+      .find('[data-cy^="station-item-"]')
+      .should('have.length.greaterThan', 0);
   });
 });

@@ -279,7 +279,10 @@ export function StationsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" data-cy="stations-list">
+          <div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            data-cy="stations-list"
+          >
             {stations.map((station) => {
               const isActive = station.stationLinks.some((l) => l.active);
               const anyReachable = station.stationLinks.some(
@@ -291,7 +294,7 @@ export function StationsPage() {
               return (
                 <Card
                   key={station.id}
-                  data-cy={"station-item-" + station.id}
+                  data-cy={'station-item-' + station.id}
                   className={`border-2 shadow-sm transition-all hover:shadow-md ${
                     isActive
                       ? activeLink?.reachable
