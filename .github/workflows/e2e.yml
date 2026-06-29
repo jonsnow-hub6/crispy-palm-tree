@@ -1,0 +1,60 @@
+name: Cypress E2E
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  cypress:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-node
+
+      - name: Setup Node.js
+      - uses: ./.github/actions/setup-node
+
+        # uses: actions/setup-node@v4
+        # with:
+        #   node-version: 20
+        #   cache: npm
+
+      # - name: Install dependencies
+      #   run: npm ci
+
+      # - name: Build frontend app
+      #   env:
+      #     VITE_POCKETBASE_URL: http://127.0.0.1:8090
+      #   run: npm run build
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: dist
+
+      - name: Start frontend server
+        env:
+          VITE_POCKETBASE_URL: http://127.0.0.1:8090
+          CYPRESS_BASE_URL: http://127.0.0.1:4200
+        # run: |
+        #   npm run dev:frontend -- --host 127.0.0.1 > /tmp/frontend.log 2>&1 &
+        #   npx wait-on http://127.0.0.1:4200
+          run: |
+            npx serve dist -l 4200 > /tmp/frontend.log 2>&1 &
+            npx wait-on http://127.0.0.1:4200
+
+      - name: Run Cypress tests
+        env:
+          CYPRESS_BASE_URL: http://127.0.0.1:4200
+          CYPRESS_VIEWPORT_WIDTH: 1280
+          CYPRESS_VIEWPORT_HEIGHT: 720
+          CYPRESS_VIDEO: false
+        run: |
+          npx cypress run --config-file apps/frontend/cypress/cypress.config.ts --spec 'apps/frontend/cypress/e2e/{auth,dashboard,presets,stations}/*.cy.ts'

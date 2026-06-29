@@ -15,6 +15,10 @@ jobs:
     needs: quality
     uses: ./.github/workflows/build.yml
 
+  test-e2e:
+    needs: build
+    uses: ./.github/workflows/e2e.yml
+
   docker:
     needs: build
     uses: ./.github/workflows/docker-build.yml
