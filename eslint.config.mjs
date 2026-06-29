@@ -21,7 +21,7 @@ export default [
       // PocketBase binary
       'apps/backend/pocketbase',
 
-      '**/splinter_cron_flow.json'
+      '**/splinter_cron_flow.json',
     ],
   },
 
