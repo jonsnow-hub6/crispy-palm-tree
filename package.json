@@ -18,7 +18,10 @@
     "format:write": "prettier --write .",
     "spellcheck": "cspell lint \"apps/**/*.{ts,tsx,js,jsx,md}\" --no-progress",
     "ci:check": "npm run format:check && npm run lint && npm run spellcheck",
-    "prepare": "husky"
+    "prepare": "husky",
+    "cy:open": "npx cypress open --config-file apps/frontend/cypress/cypress.config.ts",
+    "cy:run": "npx cypress run --config-file apps/frontend/cypress/cypress.config.ts",
+    "cy:ci": "npx cypress run --config-file apps/frontend/cypress/cypress.config.ts --headless"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
@@ -55,6 +58,7 @@
     "@vitest/ui": "^1.6.0",
     "autoprefixer": "10.4.13",
     "cspell": "^10.0.1",
+    "cypress": "^15.18.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
