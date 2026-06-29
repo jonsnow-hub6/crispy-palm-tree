@@ -7,13 +7,13 @@ import authReducer from './store/slices/authSlice';
 import raphaReducer from './store/slices/raphaSlice';
 
 export const store = configureStore({
-    reducer: {
-        stations: stationsReducer,
-        presets: presetsReducer,
-        rapha: raphaReducer,
-        system: systemReducer,
-        auth: authReducer,
-    },
+  reducer: {
+    stations: stationsReducer,
+    presets: presetsReducer,
+    rapha: raphaReducer,
+    system: systemReducer,
+    auth: authReducer,
+  },
 });
 
 export type RootState = ReturnType<typeof store.getState>;

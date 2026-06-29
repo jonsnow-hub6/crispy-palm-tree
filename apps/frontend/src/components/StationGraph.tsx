@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Radio, X, AlertTriangle } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Radio, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';

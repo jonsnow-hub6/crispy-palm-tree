@@ -6,7 +6,7 @@ import React, {
   useMemo,
 } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -19,10 +19,9 @@ import {
 } from 'lucide-react';
 import type { LeoRecord } from '@/types/leo.types';
 import useLeoRealtime from '@/hooks/useLeoRealtime';
-import { usePresetStatus } from '@/hooks/usePresetStatus';
 import { pb } from '@/lib/pocketbase';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/store';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/store';
 import { fetchStations } from '@/store/slices/stationsSlice';
 
 const SOFT_CAP = 200; // only keep the latest 200 logs in this view
@@ -33,7 +32,6 @@ type Props = {
 
 export default function LeoLogger({ decoderId }: Props) {
   const dispatch = useDispatch<AppDispatch>();
-  const { stations } = useSelector((state: RootState) => state.stations);
 
   const [records, setRecords] = useState<LeoRecord[]>([]);
   const parentRef = useRef<HTMLDivElement | null>(null);
@@ -41,28 +39,6 @@ export default function LeoLogger({ decoderId }: Props) {
   useEffect(() => {
     dispatch(fetchStations());
   }, [dispatch]);
-
-  const expectedCounter = useMemo(() => {
-    let activeLinkCounter: number | null = null;
-    let fallbackCounter: number | null = null;
-
-    for (const st of stations) {
-      const links = st.stationLinks || [];
-      for (const l of links) {
-        if (typeof l.counter === 'number') {
-          if (l.active === true) {
-            activeLinkCounter = l.counter;
-            break;
-          }
-          if (fallbackCounter === null) {
-            fallbackCounter = l.counter;
-          }
-        }
-      }
-      if (activeLinkCounter !== null) break;
-    }
-    return activeLinkCounter !== null ? activeLinkCounter : fallbackCounter;
-  }, [stations]);
 
   const [counterDelta, setCounterDelta] = useState('0');
 
@@ -90,23 +66,18 @@ export default function LeoLogger({ decoderId }: Props) {
         await pb
           .collection('settings')
           .update(record.id, { value: counterDelta });
-      } catch (err) {
+      } catch {
         try {
           await pb
             .collection('settings')
             .create({ key: 'delta', value: counterDelta });
-        } catch (e) {
+        } catch {
           // Ignore
         }
       }
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [counterDelta]);
-
-  const deltaNum = useMemo(() => {
-    const parsed = parseInt(counterDelta, 10);
-    return isNaN(parsed) ? 0 : parsed;
   }, [counterDelta]);
 
   const hasLatestCounterMismatch = useMemo(() => {
@@ -145,12 +116,12 @@ export default function LeoLogger({ decoderId }: Props) {
         await pb
           .collection('settings')
           .update(record.id, { value: expectedMagic });
-      } catch (err) {
+      } catch {
         try {
           await pb
             .collection('settings')
             .create({ key: 'magic', value: expectedMagic });
-        } catch (e) {
+        } catch {
           // Ignore
         }
       }
@@ -238,8 +209,6 @@ export default function LeoLogger({ decoderId }: Props) {
     };
   }, [decoderId]);
 
-  const presetStatus = usePresetStatus(records);
-
   const appendRecords = useCallback(
     (batch: LeoRecord[]) => {
       // If paused, we simply drop new records to save memory and avoid moving list
@@ -283,6 +252,7 @@ export default function LeoLogger({ decoderId }: Props) {
     );
   }, [records, searchQuery]);
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: displayedRecords.length,
     getScrollElement: () => parentRef.current,

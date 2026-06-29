@@ -14,10 +14,7 @@
       },
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.3,
-      "position": [
-        0,
-        0
-      ],
+      "position": [0, 0],
       "id": "bb3af45e-6f75-4bbf-82d9-88f6f8099cb0",
       "name": "Schedule Trigger"
     },
@@ -31,10 +28,7 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [
-        208,
-        0
-      ],
+      "position": [208, 0],
       "id": "f159e606-d03c-479c-898e-fcb6e4961fc4",
       "name": "HTTP Request"
     }

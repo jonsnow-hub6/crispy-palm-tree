@@ -14,7 +14,13 @@ export interface LeoRecord {
   isCounterCorrect?: boolean | null;
   presetId?: string | null;
   presetIndex?: number | null;
-  presetStatus?: 'valid' | 'unexpected_action' | 'incorrect_order' | 'missing_action' | 'incomplete_old_preset' | null;
+  presetStatus?:
+    | 'valid'
+    | 'unexpected_action'
+    | 'incorrect_order'
+    | 'missing_action'
+    | 'incomplete_old_preset'
+    | null;
 }
 
 export type LeoEventRaw = Partial<LeoRecord> & { id?: string };

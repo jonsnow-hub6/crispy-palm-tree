@@ -30,6 +30,7 @@ Open browser DevTools (F12) and check the Console tab for errors when creating a
 ### 3. Verify PocketBase Connection
 
 Check that:
+
 - PocketBase server is running (`npm run dev:backend`)
 - `VITE_POCKETBASE_URL` environment variable is set correctly (default: `http://localhost:8090`)
 - No CORS errors in browser console
@@ -37,6 +38,7 @@ Check that:
 ### 4. Unique Constraints
 
 Projects have two unique constraints:
+
 - Project `name` must be unique
 - `host` + `port` combination must be unique
 
@@ -45,6 +47,7 @@ If you get a unique constraint error, try a different name or host:port combinat
 ### 5. Required Fields
 
 Ensure all required fields are provided:
+
 - `name` (string, required)
 - `host` (string, required)
 - `port` (number, required, 1-65535)

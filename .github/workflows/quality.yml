@@ -1,0 +1,35 @@
+name: Quality
+
+on:
+  workflow_call:
+
+jobs:
+  format:
+    name: Prettier
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-node
+      - run: npm run format:check
+
+  lint:
+    name: ESLint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-node
+      - run: npm run lint
+
+  spellcheck:
+    name: CSpell
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-node
+      - run: npm run spellcheck

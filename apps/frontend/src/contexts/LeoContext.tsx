@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, ReactNode, useCallback, useRef } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useCallback,
+} from 'react';
 import useLeoRealtime from '@/hooks/useLeoRealtime';
 import type { LeoRecord } from '@/types/leo.types';
 
@@ -18,12 +24,13 @@ export function LeoProvider({ children }: { children: ReactNode }) {
 
   const appendRecords = useCallback((batch: LeoRecord[]) => {
     setRecords((prev) => {
-      const existingIds = new Set(prev.map(p => p.id));
-      const newBatch = batch.filter(f => f.id && !existingIds.has(f.id));
+      const existingIds = new Set(prev.map((p) => p.id));
+      const newBatch = batch.filter((f) => f.id && !existingIds.has(f.id));
       if (!newBatch.length) return prev;
 
       const merged = prev.concat(newBatch);
-      if (merged.length > SOFT_CAP) return merged.slice(merged.length - SOFT_CAP);
+      if (merged.length > SOFT_CAP)
+        return merged.slice(merged.length - SOFT_CAP);
       return merged;
     });
   }, []);
