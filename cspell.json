@@ -1,0 +1,41 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "useGitignore": true,
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.nx/**",
+    "**/coverage/**",
+    "**/.git/**",
+    "**/package-lock.json",
+    "apps/backend/pocketbase",
+    "apps/backend/pb_data/**"
+  ],
+  "words": [
+    "PocketBase",
+    "pocketbase",
+    "vite",
+    "vitest",
+    "radix",
+    "lucide",
+    "recharts",
+    "tailwindcss",
+    "glassmorphism",
+    "waiton",
+    "wait-on",
+    "thunk",
+    "shadcn",
+    "uplot",
+    "clsx",
+    "swc",
+    "jsdom",
+    "ndjson",
+    "Biome",
+    "monorepo",
+    "tsx",
+    "tsconfig",
+    "eslint",
+    "prettier"
+  ]
+}
