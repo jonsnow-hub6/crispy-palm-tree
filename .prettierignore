@@ -4,8 +4,4 @@
 /.nx/cache
 /.nx/workspace-data
 
-apps/backend/pb_hooks/
-apps/backend/pb_migrations/
-apps/backend/pb_data/
-
-apps/backend/pocketbase
+apps/backend/

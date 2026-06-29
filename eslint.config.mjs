@@ -13,13 +13,8 @@ export default [
       '**/.nx/**',
       '**/coverage/**',
 
-      // PocketBase runtime
-      'apps/backend/pb_hooks/**',
-      'apps/backend/pb_migrations/**',
-      'apps/backend/pb_data/**',
-
-      // PocketBase binary
-      'apps/backend/pocketbase',
+      // PocketBase
+      'apps/backend/**',
 
       '**/splinter_cron_flow.json',
     ],
