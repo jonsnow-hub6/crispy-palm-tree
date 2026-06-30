@@ -394,6 +394,7 @@ onRecordAfterCreateSuccess((e) => {
         body: JSON.stringify({
           level: e.record.get('level'),
           message: e.record.get('message'),
+          source: 'MB',
           metadata: e.record.get('metadata'),
           timestamp: e.record.get('created'),
         }),

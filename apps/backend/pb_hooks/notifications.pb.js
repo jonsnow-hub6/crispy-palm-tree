@@ -9,6 +9,7 @@ onRecordAfterCreateSuccess(async (e) => {
         level: e.record.get('level'),
         type: e.record.get('type'),
         message: e.record.get('content'),
+        source: 'home',
         metadata: e.record.get('metadata'),
         timestamp: e.record.get('created'),
       }),
