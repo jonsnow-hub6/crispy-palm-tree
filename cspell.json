@@ -18,7 +18,8 @@
     "**/coverage/**",
     "**/*.md",
     "**/backend/**",
-    "**/splinter_cron_flow.json"
+    "**/splinter_cron_flow.json",
+    "**/frontend/cypress/fixtures/**"
   ],
   "words": [
     "PocketBase",
