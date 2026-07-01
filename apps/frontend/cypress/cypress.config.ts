@@ -1,5 +1,6 @@
 import { defineConfig } from 'cypress';
 import path from 'path';
+import { spawn, ChildProcess } from 'child_process';
 
 export default defineConfig({
   e2e: {
@@ -11,6 +12,49 @@ export default defineConfig({
     supportFile: path.resolve(__dirname, 'support/e2e.ts'),
     fixturesFolder: path.resolve(__dirname, 'fixtures'),
     setupNodeEvents(on, config) {
+      config.env.POCKETBASE_USERNAME =
+        process.env.POCKETBASE_USERNAME || 'e2e@example.com';
+      config.env.POCKETBASE_PASSWORD =
+        process.env.POCKETBASE_PASSWORD || 'Aa123456';
+
+      let mockProcess: ChildProcess | undefined;
+
+      on('task', {
+        startMockStationServer(args) {
+          const port = args?.port ?? '4000';
+          const host = args?.host ?? 'localhost';
+
+          if (mockProcess) {
+            return null; // already running
+          }
+
+          const mockPath = path.resolve(
+            __dirname,
+            '../../../mocks/station-mock/mock.js',
+          );
+
+          mockProcess = spawn('node', [mockPath], {
+            stdio: 'inherit',
+            shell: true, // helps on Windows; harmless on Linux/macOS
+            env: {
+              ...process.env,
+              HOST: host,
+              PORT: port,
+            },
+          });
+          return null;
+        },
+
+        stopMockStationServer() {
+          if (mockProcess) {
+            mockProcess.kill('SIGTERM');
+            mockProcess = undefined;
+          }
+
+          return null;
+        },
+      });
+
       return config;
     },
   },

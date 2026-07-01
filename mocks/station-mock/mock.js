@@ -98,6 +98,10 @@ app.post('/api/setPreset', (req, res) => {
   });
 });
 
+app.get('/health', (_req, res) => {
+  res.status(200).send('OK');
+});
+
 // -----------------------------
 // Start server
 // -----------------------------

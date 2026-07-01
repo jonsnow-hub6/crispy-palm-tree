@@ -196,6 +196,7 @@ export function StationGraph({
           >
             <div
               className="relative"
+              data-cy="station-link-hover-target"
               onMouseEnter={() => {
                 if (closeTimer.current) {
                   clearTimeout(closeTimer.current);
@@ -216,6 +217,7 @@ export function StationGraph({
                 </div>
               )}
               <button
+                data-cy={`station-link-${station.id}-${i}`}
                 onClick={() =>
                   link.reachable !== false &&
                   !link.active &&

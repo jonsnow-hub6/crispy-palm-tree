@@ -36,6 +36,21 @@ import {
 import { Plus, Edit, Trash2, Power, MoreVertical } from 'lucide-react';
 import StationGraph from '@/components/StationGraph';
 
+type StationFormLink = Omit<StationLink, 'port'> & { port: string | number };
+
+type StationFormData = {
+  name: string;
+  stationLinks: StationFormLink[];
+};
+
+const normalizeStationFormData = (formData: StationFormData) => ({
+  ...formData,
+  stationLinks: formData.stationLinks.map((link) => ({
+    ...link,
+    port: Number(link.port),
+  })),
+});
+
 export function StationsPage() {
   const dispatch = useDispatch<AppDispatch>();
   const { stations, loading } = useSelector(
@@ -43,9 +58,9 @@ export function StationsPage() {
   );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStation, setEditingStation] = useState<Station | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<StationFormData>({
     name: '',
-    stationLinks: [] as StationLink[],
+    stationLinks: [],
   });
   const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -76,7 +91,7 @@ export function StationsPage() {
     setFormData({
       name: '',
       stationLinks: [
-        { host: '', port: 8080, active: false, counter: 0, reachable: false },
+        { host: '', port: '8080', active: false, counter: 0, reachable: false },
       ],
     });
     setIsDialogOpen(true);
@@ -84,7 +99,13 @@ export function StationsPage() {
 
   const handleEdit = (station: Station) => {
     setEditingStation(station);
-    setFormData({ name: station.name, stationLinks: station.stationLinks });
+    setFormData({
+      name: station.name,
+      stationLinks: station.stationLinks.map((link) => ({
+        ...link,
+        port: String(link.port),
+      })),
+    });
     setIsDialogOpen(true);
   };
 
@@ -133,36 +154,46 @@ export function StationsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const normalizedFormData = normalizeStationFormData(formData);
+
     if (editingStation) {
-      await dispatch(updateStation({ id: editingStation.id, data: formData }));
+      await dispatch(
+        updateStation({ id: editingStation.id, data: normalizedFormData }),
+      );
     } else {
-      await dispatch(createStation(formData));
+      await dispatch(createStation(normalizedFormData));
     }
     setIsDialogOpen(false);
     setEditingStation(null);
   };
 
   const addLink = () => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       stationLinks: [
-        ...formData.stationLinks,
-        { host: '', port: 8080, active: false, counter: 0, reachable: false },
+        ...prev.stationLinks,
+        { host: '', port: '8080', active: false, counter: 0, reachable: false },
       ],
-    });
+    }));
   };
 
   const removeLink = (index: number) => {
-    setFormData({
-      ...formData,
-      stationLinks: formData.stationLinks.filter((_, i) => i !== index),
-    });
+    setFormData((prev) => ({
+      ...prev,
+      stationLinks: prev.stationLinks.filter((_, i) => i !== index),
+    }));
   };
 
-  const updateLink = (index: number, field: keyof StationLink, value: any) => {
-    const updated = [...formData.stationLinks];
-    updated[index] = { ...updated[index], [field]: value };
-    setFormData({ ...formData, stationLinks: updated });
+  const updateLink = (
+    index: number,
+    field: keyof StationFormLink,
+    value: any,
+  ) => {
+    setFormData((prev) => {
+      const updated = [...prev.stationLinks];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, stationLinks: updated };
+    });
   };
 
   // display stations in stored order (do not reorder)
@@ -173,7 +204,7 @@ export function StationsPage() {
         <div className="flex items-center justify-end">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={handleCreate} data-cy="add-station-btn">
+              <Button onClick={handleCreate} data-cy="add-station-button">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Station
               </Button>
@@ -189,11 +220,16 @@ export function StationsPage() {
                     : 'Add a new station with links'}
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-4"
+                data-cy="schema-form"
+              >
                 <div className="space-y-2">
                   <Label htmlFor="name">Station Name</Label>
                   <Input
                     id="name"
+                    data-cy="schema-form-field-name"
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
@@ -223,6 +259,7 @@ export function StationsPage() {
                       <div className="flex-1 space-y-2">
                         <Input
                           placeholder="Host"
+                          data-cy={`schema-form-field-link-host-${idx}`}
                           value={link.host}
                           onChange={(e) =>
                             updateLink(idx, 'host', e.target.value)
@@ -232,13 +269,10 @@ export function StationsPage() {
                         <Input
                           type="number"
                           placeholder="Port"
+                          data-cy={`schema-form-field-link-port-${idx}`}
                           value={link.port}
                           onChange={(e) =>
-                            updateLink(
-                              idx,
-                              'port',
-                              parseInt(e.target.value) || 0,
-                            )
+                            updateLink(idx, 'port', e.target.value)
                           }
                           required
                         />
@@ -260,10 +294,13 @@ export function StationsPage() {
                     type="button"
                     variant="outline"
                     onClick={() => setIsDialogOpen(false)}
+                    data-cy="schema-form-cancel"
                   >
                     Cancel
                   </Button>
-                  <Button type="submit">Save</Button>
+                  <Button type="submit" data-cy="schema-form-submit">
+                    Save
+                  </Button>
                 </DialogFooter>
               </form>
             </DialogContent>
