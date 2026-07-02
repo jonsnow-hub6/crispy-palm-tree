@@ -5,18 +5,11 @@ export type RaphaBase = {
   parameters: Record<string, unknown>;
 };
 
-export type RaphaDllM2 = {
+export type RaphaSnr = {
   id: string;
   created: string;
-  name: 'dllM2';
-  parameters: { dllM2: number };
-};
-
-export type RaphaDllM4 = {
-  id: string;
-  created: string;
-  name: 'dllM4';
-  parameters: { dllM4: number };
+  name: 'snr';
+  parameters: { snr: number };
 };
 
 export type RaphaPllLockState = {
@@ -26,7 +19,7 @@ export type RaphaPllLockState = {
   parameters: { pllLockState: 0 | 1 };
 };
 
-export type RaphaKnown = RaphaDllM2 | RaphaDllM4 | RaphaPllLockState;
+export type RaphaKnown = RaphaSnr | RaphaPllLockState;
 
 export type RaphaRecord = RaphaKnown | RaphaBase;
 

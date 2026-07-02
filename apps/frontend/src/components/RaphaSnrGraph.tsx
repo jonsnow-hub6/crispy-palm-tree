@@ -5,7 +5,7 @@ import 'uplot/dist/uPlot.min.css';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 
-export default function RaphaDllGraph({
+export default function RaphaSnrGraph({
   decoderId,
 }: {
   decoderId?: string | null;
@@ -17,7 +17,7 @@ export default function RaphaDllGraph({
   const yRef = useRef<Float64Array>(new Float64Array(800));
   const lastTsRef = useRef(0);
 
-  const allPoints = useSelector((s: RootState) => s.rapha?.dllResults ?? []);
+  const allPoints = useSelector((s: RootState) => s.rapha?.snrPoints ?? []);
 
   // INIT CHART (once)
   useEffect(() => {
@@ -35,7 +35,7 @@ export default function RaphaDllGraph({
       series: [
         {},
         {
-          label: 'DLL',
+          label: 'SNR',
           stroke: '#0ea5e9',
           width: 2,
         },

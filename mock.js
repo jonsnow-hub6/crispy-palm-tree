@@ -18,7 +18,7 @@ let preset = null; // <-- NEW
 // Optional: auto-increment counter to simulate activity
 setInterval(() => {
   counter += 1;
-}, 3000);
+}, 1000);
 
 setInterval(() => {
   console.log(

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import RaphaPllGraph from '@/components/RaphaPllGraph';
-import RaphaDllGraph from '@/components/RaphaDllGraph';
+import RaphaSnrGraph from '@/components/RaphaSnrGraph';
 import RaphaCarrierPhaseGraph from '@/components/RaphaCarrierPhaseGraph';
 import LeoLogger from '@/components/LeoLogger';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -14,7 +14,7 @@ export default function RaphaPage() {
   useRaphaRealtime();
 
   const pllPoints = useSelector((s: RootState) => s.rapha?.pllPoints ?? []);
-  const dllPoints = useSelector((s: RootState) => s.rapha?.dllResults ?? []);
+  const snrPoints = useSelector((s: RootState) => s.rapha?.snrPoints ?? []);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedDecoder, setSelectedDecoder] = useState<string | null>(null);
@@ -23,9 +23,9 @@ export default function RaphaPage() {
   const decoders = useMemo(() => {
     const set = new Set<string>();
     for (const p of pllPoints) if (p.decoderId) set.add(p.decoderId);
-    for (const p of dllPoints) if (p.decoderId) set.add(p.decoderId);
+    for (const p of snrPoints) if (p.decoderId) set.add(p.decoderId);
     return Array.from(set).sort();
-  }, [pllPoints, dllPoints]);
+  }, [pllPoints, snrPoints]);
 
   useEffect(() => {
     if (!selectedDecoder && decoders.length > 0)
@@ -168,14 +168,14 @@ export default function RaphaPage() {
           <Card className="shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-medium flex items-center justify-between">
-                <span>DLL multiply (dllM2 × dllM4)</span>
+                <span>SNR</span>
                 <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded">
                   last 60s
                 </span>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <RaphaDllGraph decoderId={selectedDecoder ?? undefined} />
+              <RaphaSnrGraph decoderId={selectedDecoder ?? undefined} />
             </CardContent>
           </Card>
         </div>

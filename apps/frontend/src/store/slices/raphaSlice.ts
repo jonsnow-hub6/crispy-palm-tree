@@ -4,14 +4,14 @@ type Point = { ts: number; value: number; decoderId?: string };
 
 interface RaphaState {
   pllPoints: Point[];
-  dllResults: Point[];
+  snrPoints: Point[];
   carrierPhasePoints: Point[];
   maxPoints: number;
 }
 
 const initialState: RaphaState = {
   pllPoints: [],
-  dllResults: [],
+  snrPoints: [],
   carrierPhasePoints: [],
   maxPoints: 1200,
 };
@@ -33,16 +33,15 @@ const raphaSlice = createSlice({
       }
     },
 
-    addDllResults: (state, action: PayloadAction<Point[]>) => {
-      // Merge incoming points, then keep only last 60s and enforce maxPoints.
+    addSnrPoints: (state, action: PayloadAction<Point[]>) => {
       const cutoff = Date.now() - 60_000;
-      const merged = state.dllResults.concat(action.payload);
+      const merged = state.snrPoints.concat(action.payload);
       const filtered = merged.filter((p) => p.ts >= cutoff);
       filtered.sort((a, b) => a.ts - b.ts);
       if (filtered.length > state.maxPoints) {
-        state.dllResults = filtered.slice(filtered.length - state.maxPoints);
+        state.snrPoints = filtered.slice(filtered.length - state.maxPoints);
       } else {
-        state.dllResults = filtered;
+        state.snrPoints = filtered;
       }
     },
 
@@ -62,7 +61,7 @@ const raphaSlice = createSlice({
 
     resetRapha: (state) => {
       state.pllPoints.length = 0;
-      state.dllResults.length = 0;
+      state.snrPoints.length = 0;
       state.carrierPhasePoints.length = 0;
     },
 
@@ -70,7 +69,7 @@ const raphaSlice = createSlice({
     trimToLast60s: (state) => {
       const cutoff = Date.now() - 60_000;
       state.pllPoints = state.pllPoints.filter((p) => p.ts >= cutoff);
-      state.dllResults = state.dllResults.filter((p) => p.ts >= cutoff);
+      state.snrPoints = state.snrPoints.filter((p) => p.ts >= cutoff);
       state.carrierPhasePoints = state.carrierPhasePoints.filter(
         (p) => p.ts >= cutoff,
       );
@@ -78,8 +77,8 @@ const raphaSlice = createSlice({
       if (state.pllPoints.length > state.maxPoints) {
         state.pllPoints.splice(0, state.pllPoints.length - state.maxPoints);
       }
-      if (state.dllResults.length > state.maxPoints) {
-        state.dllResults.splice(0, state.dllResults.length - state.maxPoints);
+      if (state.snrPoints.length > state.maxPoints) {
+        state.snrPoints.splice(0, state.snrPoints.length - state.maxPoints);
       }
       if (state.carrierPhasePoints.length > state.maxPoints) {
         state.carrierPhasePoints.splice(
@@ -93,7 +92,7 @@ const raphaSlice = createSlice({
 
 export const {
   addPllPoints,
-  addDllResults,
+  addSnrPoints,
   addCarrierPhasePoints,
   resetRapha,
   trimToLast60s,

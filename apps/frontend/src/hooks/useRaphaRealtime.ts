@@ -1,15 +1,10 @@
 import { useEffect } from 'react';
 import { pb } from '@/lib/pocketbase';
-import type {
-  RaphaRecord,
-  RaphaDllM2,
-  RaphaDllM4,
-  RaphaPllLockState,
-} from '@/types/rapha';
+import type { RaphaRecord, RaphaPllLockState } from '@/types/rapha';
 import { store } from '@/store';
 import {
   addPllPoints,
-  addDllResults,
+  addSnrPoints,
   addCarrierPhasePoints,
   trimToLast60s,
 } from '@/store/slices/raphaSlice';
@@ -18,10 +13,8 @@ type Point = { ts: number; value: number; decoderId?: string };
 
 const subscriptionState = {
   unsubscribe: null as (() => void) | null,
-  // track last dllM2 per decoderId
-  lastDllM2: {} as Record<string, number | null>,
   pllBuffer: [] as Point[],
-  dllBuffer: [] as Point[],
+  snrBuffer: [] as Point[],
   carrierPhaseBuffer: [] as Point[],
   flushTimer: null as NodeJS.Timeout | null,
   cleanupTimer: null as NodeJS.Timeout | null,
@@ -42,9 +35,9 @@ function scheduleFlush() {
       subscriptionState.pllBuffer.length = 0;
     }
 
-    if (subscriptionState.dllBuffer.length) {
-      store.dispatch(addDllResults(subscriptionState.dllBuffer));
-      subscriptionState.dllBuffer.length = 0;
+    if (subscriptionState.snrBuffer.length) {
+      store.dispatch(addSnrPoints(subscriptionState.snrBuffer));
+      subscriptionState.snrBuffer.length = 0;
     }
 
     if (subscriptionState.carrierPhaseBuffer.length) {
@@ -86,7 +79,7 @@ async function loadInitialData() {
       store.dispatch(addPllPoints(pllPoints as Point[]));
     }
 
-    // Carrier Phase data (0/1)
+    // Carrier Phase data
     const carrier = await pb.collection('rapha').getFullList({
       filter: `name="carrierPhase" && created >= "${since}"`,
       sort: 'created',
@@ -115,40 +108,28 @@ async function loadInitialData() {
       store.dispatch(addCarrierPhasePoints(carrierPoints as Point[]));
     }
 
-    // DLL data
-    const dll = await pb.collection('rapha').getFullList({
-      filter: `(name="dllM2" || name="dllM4") && created >= "${since}"`,
+    // SNR data
+    const snr = await pb.collection('rapha').getFullList({
+      filter: `name="snr" && created >= "${since}"`,
       sort: 'created',
     });
 
-    const dllPoints: Point[] = [];
-
-    // track lastM2 per decoderId so pairing is decoder-specific
-    const lastM2ByDecoder: Record<string, number | null> = {};
-    for (const r of dll) {
-      const dec = (r as any).decoderId ?? 'unknown';
-      if (r.name === 'dllM2') {
-        const v = r.parameters?.dllM2;
-        if (typeof v === 'number') lastM2ByDecoder[dec] = Math.trunc(v);
-        continue;
-      }
-
-      if (r.name === 'dllM4') {
-        const v = r.parameters?.dllM4;
-        const m2 = lastM2ByDecoder[dec] ?? null;
-
-        if (typeof v === 'number' && m2 !== null) {
-          dllPoints.push({
+    const snrPoints = snr
+      .map((r: any) => {
+        const v = r.parameters?.snr;
+        if (typeof v === 'number' && Number.isFinite(v)) {
+          return {
             ts: new Date(r.created).getTime(),
-            value: m2 * Math.trunc(v),
-            decoderId: dec,
-          });
+            value: v,
+            decoderId: (r as any).decoderId ?? undefined,
+          };
         }
-      }
-    }
+        return null;
+      })
+      .filter(Boolean);
 
-    if (dllPoints.length) {
-      store.dispatch(addDllResults(dllPoints));
+    if (snrPoints.length) {
+      store.dispatch(addSnrPoints(snrPoints as Point[]));
     }
   } catch (err) {
     console.error('Failed loading initial rapha data', err);
@@ -197,17 +178,6 @@ async function ensureSubscription() {
             return;
           }
 
-          if (rec.name === 'dllM2') {
-            const v = (rec as RaphaDllM2).parameters?.dllM2;
-            const dec = (rec as any).decoderId ?? 'unknown';
-
-            if (typeof v === 'number' && Number.isFinite(v)) {
-              subscriptionState.lastDllM2[dec] = Math.trunc(v);
-            }
-
-            return;
-          }
-
           if (rec.name === 'carrierPhase') {
             const v = (rec as any).parameters?.carrierPhase;
             const dec = (rec as any).decoderId ?? undefined;
@@ -237,29 +207,25 @@ async function ensureSubscription() {
             return;
           }
 
-          if (rec.name === 'dllM4') {
-            const v = (rec as RaphaDllM4).parameters?.dllM4;
-            const dec = (rec as any).decoderId ?? 'unknown';
+          if (rec.name === 'snr') {
+            const v = (rec as any).parameters?.snr;
+            const dec = (rec as any).decoderId ?? undefined;
 
             if (typeof v === 'number' && Number.isFinite(v)) {
-              const m2 = subscriptionState.lastDllM2[dec] ?? null;
+              subscriptionState.snrBuffer.push({
+                ts,
+                value: v,
+                decoderId: dec,
+              });
 
-              if (m2 !== null) {
-                subscriptionState.dllBuffer.push({
-                  ts,
-                  value: m2 * Math.trunc(v),
-                  decoderId: dec,
-                });
-
-                if (subscriptionState.dllBuffer.length > MAX_BATCH) {
-                  subscriptionState.dllBuffer.splice(
-                    0,
-                    subscriptionState.dllBuffer.length - MAX_BATCH,
-                  );
-                }
-
-                scheduleFlush();
+              if (subscriptionState.snrBuffer.length > MAX_BATCH) {
+                subscriptionState.snrBuffer.splice(
+                  0,
+                  subscriptionState.snrBuffer.length - MAX_BATCH,
+                );
               }
+
+              scheduleFlush();
             }
 
             return;
@@ -290,7 +256,7 @@ export function useRaphaRealtime() {
     async function start() {
       if (
         store.getState().rapha.pllPoints.length === 0 &&
-        store.getState().rapha.dllResults.length === 0 &&
+        store.getState().rapha.snrPoints.length === 0 &&
         store.getState().rapha.carrierPhasePoints.length === 0
       ) {
         await loadInitialData(); // 👈 load last minute
