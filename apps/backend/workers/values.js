@@ -47,31 +47,16 @@ async function insertRaphaData() {
 
     console.log('Inserted pllLockState');
 
-    // dllM2 (signed 32-bit safe range)
-    const dllM2 = Math.floor(Math.random() * 100);
-
     await pb.collection('rapha').create({
-      name: 'dllM2',
+      name: 'snr',
       parameters: {
-        dllM2: dllM2,
+        snr: Math.floor(Math.random() * 1000),
       },
       decoderId: 'decoder2',
     });
 
-    console.log('Inserted dllM2:', dllM2);
+    console.log('Inserted snr');
 
-    // dllM4
-    const dllM4 = Math.floor(Math.random() * 50);
-
-    await pb.collection('rapha').create({
-      name: 'dllM4',
-      parameters: {
-        dllM4: dllM4,
-      },
-      decoderId: 'decoder2',
-    });
-
-    console.log('Inserted dllM4:', dllM4);
   } catch (err) {
     console.error('Insert failed:', err.response || err.message);
   }
