@@ -1,16 +1,4 @@
 {
-  "page": 1,
-  "perPage": 30,
-  "totalItems": 1,
-  "totalPages": 1,
-  "items": [
-    {
-      "id": "preset_1",
-      "name": "Preset One",
-      "color": "#3b82f6",
-      "active": false,
-      "passwordRequired": false,
-      "expand": { "actions": [] }
-    }
-  ]
+  "presetName": "test1",
+  "commands": [{ "id": "firstCommand", "payload": "0x00000000000001" }]
 }

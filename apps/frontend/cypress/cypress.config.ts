@@ -1,6 +1,6 @@
 import { defineConfig } from 'cypress';
 import path from 'path';
-import { spawn, ChildProcess } from 'child_process';
+import { registerMockTasks } from './support/utils/mock-stations/register-stations-mock-tasks';
 
 export default defineConfig({
   e2e: {
@@ -17,43 +17,7 @@ export default defineConfig({
       config.env.POCKETBASE_PASSWORD =
         process.env.POCKETBASE_PASSWORD || 'Aa123456';
 
-      let mockProcess: ChildProcess | undefined;
-
-      on('task', {
-        startMockStationServer(args) {
-          const port = args?.port ?? '4000';
-          const host = args?.host ?? 'localhost';
-
-          if (mockProcess) {
-            return null; // already running
-          }
-
-          const mockPath = path.resolve(
-            __dirname,
-            '../../../mocks/station-mock/mock.js',
-          );
-
-          mockProcess = spawn('node', [mockPath], {
-            stdio: 'inherit',
-            shell: true, // helps on Windows; harmless on Linux/macOS
-            env: {
-              ...process.env,
-              HOST: host,
-              PORT: port,
-            },
-          });
-          return null;
-        },
-
-        stopMockStationServer() {
-          if (mockProcess) {
-            mockProcess.kill('SIGTERM');
-            mockProcess = undefined;
-          }
-
-          return null;
-        },
-      });
+      registerMockTasks(on);
 
       return config;
     },

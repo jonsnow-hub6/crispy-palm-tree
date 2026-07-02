@@ -241,6 +241,7 @@ export function PresetsPage() {
                           : 'No file'}
                       </div>
                       <input
+                        data-cy="open-preset-import-input"
                         ref={fileInputRef}
                         type="file"
                         accept=".json"
@@ -289,6 +290,7 @@ export function PresetsPage() {
                     Cancel
                   </Button>
                   <Button
+                    data-cy="submit-json-import"
                     onClick={handleImportConfirm}
                     disabled={!selectedFile}
                   >
@@ -385,10 +387,10 @@ export function PresetsPage() {
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
             data-cy="presets-list"
           >
-            {presets.map((preset) => (
+            {presets.map((preset: Preset) => (
               <Card
                 key={preset.id}
-                data-cy={'preset-item-' + preset.id}
+                data-cy={`preset-item-${preset.name}`}
                 className="group flex flex-col h-full transition-all duration-300 hover:shadow-lg"
                 style={{ borderLeft: `4px solid ${preset.color}` }}
               >

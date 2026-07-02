@@ -40,6 +40,7 @@ export const triggerStationProbeInPocketBase = () => {
   })
     .its('status')
     .should('eq', 200);
+  cy.wait(1000);
 };
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>

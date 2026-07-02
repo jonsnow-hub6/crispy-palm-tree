@@ -154,6 +154,7 @@ export function MainDashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {presets.map((preset) => (
                     <div
+                      data-cy={`preset-item-${JSON.stringify(preset)}`}
                       key={preset.id}
                       className="flex items-center justify-between p-3 border rounded-md"
                       style={{ borderColor: preset.color }}
@@ -172,6 +173,7 @@ export function MainDashboard() {
                       </div>
                       <div>
                         <Button
+                          data-cy={`preset-change-button-${preset.name}`}
                           variant={
                             activePresetId === preset.id
                               ? 'secondary'
@@ -244,6 +246,7 @@ export function MainDashboard() {
                     </label>
 
                     <Input
+                      data-cy={`preset-change-password`}
                       type="password"
                       value={password}
                       onChange={(e) => {
@@ -280,6 +283,7 @@ export function MainDashboard() {
                   Cancel
                 </Button>
                 <Button
+                  data-cy="submit-apply-preset"
                   onClick={() => {
                     if (selectedPreset?.passwordRequired) {
                       if (password !== 'Preset1!') {

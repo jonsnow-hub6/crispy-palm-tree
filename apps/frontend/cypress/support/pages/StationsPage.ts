@@ -4,10 +4,16 @@ import {
   seedStationsInPocketBase,
   triggerStationProbeInPocketBase,
 } from '../utils/stations';
+import { StationValues } from '../utils/types';
 
 export class StationsPage {
   visit() {
     cy.visit('/stations');
+  }
+
+  refresh() {
+    cy.reload(true);
+    cy.wait(1000);
   }
 
   getList() {
@@ -60,10 +66,7 @@ export class StationsPage {
     cy.contains(name, { timeout: 3000 }).should('be.visible');
   }
 
-  assertStationLinkValues(
-    name: string,
-    stationLinks: Array<{ host: string; port: number }>,
-  ) {
+  assertStationLinkValues(name: string, stationLink: StationValues) {
     this.assertStationVisible(name);
 
     cy.contains('[data-cy^="station-item-"]', name)
@@ -71,17 +74,37 @@ export class StationsPage {
       .first()
       .trigger('mouseover', { force: true });
 
-    cy.contains('IP:', { timeout: 10000 }).should('be.visible');
-    cy.contains(`${stationLinks[0].host}`).should('be.visible');
-    cy.contains(`${stationLinks[0].port}`).should('be.visible');
+    this.assertStationLinkValue(stationLink, 'host', 'IP');
+    this.assertStationLinkValue(stationLink, 'port', 'Port');
+    this.assertStationLinkValue(stationLink, 'counter', 'Counter');
+    this.assertStationLinkValue(stationLink, 'status', 'Status');
+    // Status:Inactive
+
+    // IP:localhost
+    // Port:4000
+    // Status:Inactive
+    // Counter:49
+    // Preset:unknown
   }
 
-  startMockStationServer(port: number, host: string) {
-    cy.task('startMockStationServer', { port, host });
+  assertStationLinkValue(
+    stationLink: StationValues,
+    name: keyof StationValues,
+    label: string,
+  ) {
+    if (stationLink[name]) {
+      cy.contains(`${label}:`, { timeout: 3000 }).should('be.visible');
+      cy.contains(`${stationLink[name]}`).should('be.visible');
+    }
   }
 
-  stopMockStationServer() {
-    cy.task('stopMockStationServer');
+  assertStationLinkValueExists(name: string, label: string, regex?: RegExp) {
+    cy.contains('[data-cy^="station-item-"]', name)
+      .find('[data-cy="station-link-hover-target"]')
+      .first()
+      .trigger('mouseover', { force: true });
+    cy.contains(`${label}:`, { timeout: 3000 }).should('be.visible');
+    cy.contains(regex ?? '', { timeout: 3000 }).should('exist');
   }
 
   createStationMock(
@@ -89,23 +112,61 @@ export class StationsPage {
     port: number = 4000,
     host: string = 'localhost',
   ) {
-    this.startMockStationServer(port, host);
+    cy.createMockStationServer({ port, host, id: stationName });
     this.seedStationsInPocketBase([
       {
         name: stationName,
         stationLinks: [{ host: host, port: port }],
       },
     ]);
+    this.assertStationVisible(stationName);
+  }
+
+  stopMockStationServer(id: string) {
+    cy.stopMockStationServer(id);
   }
 
   triggerStationProbe() {
     triggerStationProbeInPocketBase();
   }
 
-  assertDisconnectAlertVisible() {
+  assertConnectedCriticalAlertVisible(
+    expectedText: string = 'No active stations detected',
+  ) {
     cy.get('[data-cy^="notification-connection-critical"]', { timeout: 3000 })
       .should('be.visible')
-      .should('contain.text', 'No active stations detected');
+      .should('contain.text', expectedText);
+  }
+
+  openStationMenu(name: string) {
+    cy.get(`[data-cy=station-menu-button-${name}]`).click({ force: true });
+  }
+
+  clickMenuActivateStation(name: string) {
+    cy.get(`[data-cy=station-menu-activate-button-${name}]`).click({
+      force: true,
+    });
+  }
+
+  clickMenuDeactivateStation(name: string) {
+    cy.get(`[data-cy=station-menu-deactivate-button-${name}]`).click({
+      force: true,
+    });
+  }
+
+  clickConfirmActivationButton() {
+    cy.get('[data-cy=station-activation-confirm-button]').click();
+  }
+
+  activateStation(name: string) {
+    this.openStationMenu(name);
+    this.clickMenuActivateStation(name);
+    this.clickConfirmActivationButton();
+  }
+
+  deactivateStation(name: string) {
+    this.openStationMenu(name);
+    this.clickMenuDeactivateStation(name);
   }
 
   submitForm() {

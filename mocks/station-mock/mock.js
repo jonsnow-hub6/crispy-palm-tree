@@ -3,7 +3,8 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT ?? 4000;
+const HOST = process.env.HOST ?? 'localhost';
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -11,6 +12,7 @@ app.use(bodyParser.json());
 // -----------------------------
 // In-memory mock state
 // -----------------------------
+// console.log(`Starting with values: port:${PORT} host:${HOST}`)
 let active = false;
 let counter = 0;
 let preset = null; // <-- NEW
@@ -105,6 +107,6 @@ app.get('/health', (_req, res) => {
 // -----------------------------
 // Start server
 // -----------------------------
-app.listen(PORT, () => {
-  console.log(`Mock Link API running on http://localhost:${PORT}`);
+app.listen({ host: HOST, port: PORT }, () => {
+  console.log(`Mock Link API running on http://${HOST}:${PORT}`);
 });

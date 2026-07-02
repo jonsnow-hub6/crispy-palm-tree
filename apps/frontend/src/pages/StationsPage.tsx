@@ -375,6 +375,7 @@ export function StationsPage() {
                       <div className="relative" data-menu-id={station.id}>
                         <div style={{ position: 'absolute', right: 8, top: 8 }}>
                           <button
+                            data-cy={`station-menu-button-${station.name}`}
                             aria-haspopup="menu"
                             aria-expanded={menuOpenFor === station.id}
                             onClick={() =>
@@ -410,6 +411,7 @@ export function StationsPage() {
 
                               {/* Activate */}
                               <button
+                                data-cy={`station-menu-activate-button-${station.name}`}
                                 role="menuitem"
                                 aria-disabled={isActive || !anyReachable}
                                 className={`flex items-center gap-2 w-full px-3 py-2 text-sm text-green-700 ${
@@ -430,6 +432,7 @@ export function StationsPage() {
                               {/* Deactivate (only if active) */}
                               {isActive && (
                                 <button
+                                  data-cy={`station-menu-deactivate-button-${station.name}`}
                                   role="menuitem"
                                   className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-yellow-600"
                                   onClick={() => {
@@ -492,7 +495,11 @@ export function StationsPage() {
             <Button variant="outline" onClick={() => setConfirmOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={confirmActivate} variant="default">
+            <Button
+              data-cy="station-activation-confirm-button"
+              onClick={confirmActivate}
+              variant="default"
+            >
               Confirm
             </Button>
           </DialogFooter>

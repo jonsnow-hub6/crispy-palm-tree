@@ -2,6 +2,7 @@
 /// <reference types="cypress" />
 
 import { AuthParameters } from '../types';
+import { CreateStationArgs } from './utils/mock-stations/mock-stations-manager';
 
 // Custom Cypress commands
 
@@ -50,6 +51,9 @@ declare global {
       truncateCollection(collection: string): Chainable<void>;
       resetCollection(collections?: string[]): Chainable<void>;
       resetDB(): Chainable<void>;
+      createMockStationServer(args: CreateStationArgs): Chainable<void>;
+      stopMockStationServer(id: string): Chainable<void>;
+      stopAllMockStationServers(): Chainable<void>;
     }
   }
 }
@@ -331,8 +335,26 @@ Cypress.Commands.add('resetCollection', (collections: string[] = []) => {
 });
 
 Cypress.Commands.add('resetDB', () => {
-  const collectionsToReset = ['stations', 'presets', 'notifications'];
+  const collectionsToReset = [
+    'stations',
+    'presets',
+    'notifications',
+    'alerts',
+    'actions',
+  ];
   cy.resetCollection(collectionsToReset);
+});
+
+Cypress.Commands.add('createMockStationServer', (args) => {
+  cy.task('startMockStationServer', args);
+});
+
+Cypress.Commands.add('stopMockStationServer', (id: string) => {
+  cy.task('startMockStationServer', { id });
+});
+
+Cypress.Commands.add('stopAllMockStationServers', () => {
+  cy.task('stopAllMockStationServers');
 });
 
 export {};
