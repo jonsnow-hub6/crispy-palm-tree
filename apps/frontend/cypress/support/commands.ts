@@ -350,7 +350,7 @@ Cypress.Commands.add('createMockStationServer', (args) => {
 });
 
 Cypress.Commands.add('stopMockStationServer', (id: string) => {
-  cy.task('startMockStationServer', { id });
+  cy.task('stopMockStationServer', { id });
 });
 
 Cypress.Commands.add('stopAllMockStationServers', () => {

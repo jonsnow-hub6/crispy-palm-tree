@@ -68,6 +68,7 @@
     "finalizer",
     "turso",
     "libc",
-    "daos"
+    "daos",
+    "criticalconnection"
   ]
 }

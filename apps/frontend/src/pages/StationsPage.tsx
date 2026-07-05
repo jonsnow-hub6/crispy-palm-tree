@@ -331,7 +331,7 @@ export function StationsPage() {
               return (
                 <Card
                   key={station.id}
-                  data-cy={'station-item-' + station.id}
+                  data-cy={'station-item-' + station.name}
                   className={`border-2 shadow-sm transition-all hover:shadow-md ${
                     isActive
                       ? activeLink?.reachable
@@ -353,7 +353,10 @@ export function StationsPage() {
                           {station.name}
                         </span>
                         {isActive && !activeLink?.reachable ? (
-                          <Badge variant="destructive">
+                          <Badge
+                            variant="destructive"
+                            data-cy={`station-${station.name}-unreachable-active`}
+                          >
                             Unreachable Active
                           </Badge>
                         ) : isActive ? (
@@ -361,9 +364,19 @@ export function StationsPage() {
                         ) : station.stationLinks.every(
                             (l) => l.reachable === false,
                           ) ? (
-                          <Badge variant="destructive">Unreachable</Badge>
+                          <Badge
+                            variant="destructive"
+                            data-cy={`station-${station.name}-unreachable`}
+                          >
+                            Unreachable
+                          </Badge>
                         ) : (
-                          <Badge variant="outline">Inactive</Badge>
+                          <Badge
+                            variant="outline"
+                            data-cy={`station-${station.name}-inactive`}
+                          >
+                            Inactive
+                          </Badge>
                         )}
 
                         {activeCounter !== undefined && (

@@ -192,23 +192,22 @@ export function StationGraph({
           <div
             key={i}
             style={{ left: x, top: `${linksY - 12}px` }}
-            className="absolute flex items-center justify-center pointer-events-none transform -translate-x-1/2"
+            className="absolute flex items-center justify-center transform -translate-x-1/2"
           >
             <div
               className="relative"
-              data-cy="station-link-hover-target"
-              onMouseEnter={() => {
-                if (closeTimer.current) {
-                  clearTimeout(closeTimer.current);
-                  closeTimer.current = null;
-                }
-                setOpenTooltip(`${link.host}:${link.port}`);
-              }}
-              onMouseLeave={() => {
-                closeTimer.current = setTimeout(() => {
-                  setOpenTooltip(null);
-                }, 120);
-              }}
+              data-cy={`station-link-${station.name}-${link.host}-${link.port}`}
+              data-link-host={link.host}
+              data-link-port={link.port}
+              data-link-status={
+                link.reachable === false
+                  ? 'Unreachable'
+                  : link.active
+                    ? 'Active'
+                    : 'Inactive'
+              }
+              data-link-counter={link.counter}
+              data-link-preset={link.currentPreset || 'N/A'}
             >
               {/* Out of sync warning badge */}
               {isOutOfSync && (
@@ -217,7 +216,19 @@ export function StationGraph({
                 </div>
               )}
               <button
-                data-cy={`station-link-${station.id}-${i}`}
+                data-cy={`station-link-btn-${station.name}-${link.host}-${link.port}`}
+                onMouseEnter={() => {
+                  if (closeTimer.current) {
+                    clearTimeout(closeTimer.current);
+                    closeTimer.current = null;
+                  }
+                  setOpenTooltip(`${link.host}:${link.port}`);
+                }}
+                onMouseLeave={() => {
+                  closeTimer.current = setTimeout(() => {
+                    setOpenTooltip(null);
+                  }, 120);
+                }}
                 onClick={() =>
                   link.reachable !== false &&
                   !link.active &&

@@ -15,13 +15,15 @@ export class MockStationManager {
     if (this.processes.has(args.id)) {
       return;
     }
-    const mockPath = path.resolve(
-      __dirname,
-      '../../../../../../mocks/station-mock/mock.js',
+    const mockPath = path.join(
+      process.cwd(),
+      'mocks',
+      'station-mock',
+      'mock.js',
     );
+
     const proc = spawn('node', [mockPath], {
       stdio: 'inherit',
-      shell: true,
       env: {
         ...process.env,
         HOST: args.host ?? 'localhost',

@@ -59,6 +59,7 @@
     "autoprefixer": "10.4.13",
     "cspell": "^10.0.1",
     "cypress": "^15.18.0",
+    "cypress-real-events": "^1.15.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
