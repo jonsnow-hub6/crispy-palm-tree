@@ -196,6 +196,18 @@ export function StationGraph({
           >
             <div
               className="relative"
+              onMouseEnter={() => {
+                if (closeTimer.current) {
+                  clearTimeout(closeTimer.current);
+                  closeTimer.current = null;
+                }
+                setOpenTooltip(`${link.host}:${link.port}`);
+              }}
+              onMouseLeave={() => {
+                closeTimer.current = setTimeout(() => {
+                  setOpenTooltip(null);
+                }, 120);
+              }}
               data-cy={`station-link-${station.name}-${link.host}-${link.port}`}
               data-link-host={link.host}
               data-link-port={link.port}
@@ -217,18 +229,6 @@ export function StationGraph({
               )}
               <button
                 data-cy={`station-link-btn-${station.name}-${link.host}-${link.port}`}
-                onMouseEnter={() => {
-                  if (closeTimer.current) {
-                    clearTimeout(closeTimer.current);
-                    closeTimer.current = null;
-                  }
-                  setOpenTooltip(`${link.host}:${link.port}`);
-                }}
-                onMouseLeave={() => {
-                  closeTimer.current = setTimeout(() => {
-                    setOpenTooltip(null);
-                  }, 120);
-                }}
                 onClick={() =>
                   link.reachable !== false &&
                   !link.active &&

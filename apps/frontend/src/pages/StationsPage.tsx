@@ -145,7 +145,6 @@ export function StationsPage() {
   const addLink = () => {
     setFormData({
       ...formData,
-
       stationLinks: [
         ...formData.stationLinks,
         { host: '', port: 8080, active: false, counter: 0, reachable: false },
