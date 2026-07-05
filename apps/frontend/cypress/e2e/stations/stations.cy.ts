@@ -78,7 +78,6 @@ describe('Stations', () => {
 
     page.stopMockStationServer(stationName);
     cy.triggerProbeAllInPocketBase();
-    cy.wait(1000);
 
     page.assertConnectedCriticalAlertVisible('No active stations detected');
   });
@@ -89,7 +88,6 @@ describe('Stations', () => {
     cy.intercept('POST', '/probe-all').as('probe');
 
     cy.triggerProbeAllInPocketBase();
-    cy.wait(1000);
 
     page.assertStationLinkValueExists(
       stationName,

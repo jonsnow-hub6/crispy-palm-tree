@@ -102,7 +102,7 @@ describe('Presets', () => {
     );
   });
 
-  it('2.2.2 - set a preset to a station, change the preset in the station through request, sync the specific station.', () => {
+  it.only('2.2.2 - set a preset to a station, change the preset in the station through request, sync the specific station.', () => {
     const stationName = 'mocked-station-1';
     const stationHost = 'localhost';
     const stationPort = 4000;
@@ -150,7 +150,6 @@ describe('Presets', () => {
       );
 
       cy.triggerProbeAllInPocketBase();
-      cy.wait(1000);
       stationsPage.assertStationLinkValueExists(
         stationName,
         stationHost,

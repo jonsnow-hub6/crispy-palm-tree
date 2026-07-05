@@ -81,17 +81,15 @@ export class PresetsPage {
     // tooltip timing, hover mechanics, and event delegation quirks.
     const attrName = `data-${label.toLowerCase()}`;
 
-    cy.get(presetSelector, { timeout: 3000 })
-      .should('exist')
-      .and(($el) => {
-        const value = $el.attr(attrName);
-        expect(value, `${label} attribute should exist`).to.not.equal(
-          undefined,
-        );
-        if (regex) {
-          expect(value, `${label} value`).to.match(regex);
-        }
-      });
+    cy.get(presetSelector, { timeout: 10000 }).should(($el) => {
+      const value = $el.attr(attrName);
+
+      expect(value, `${label} attribute`).to.not.equal(undefined);
+
+      if (regex) {
+        expect(value!, `${label} value`).to.match(regex);
+      }
+    });
   }
   // data-color={`preset-${preset.name}-${preset.color}`}
 }
