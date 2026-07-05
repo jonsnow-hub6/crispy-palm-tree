@@ -88,6 +88,8 @@ describe('Stations', () => {
 
     cy.triggerProbeAllInPocketBase();
 
+    page.refresh();
+
     page.assertStationLinkValueExists(
       stationName,
       'localhost',
@@ -102,6 +104,8 @@ describe('Stations', () => {
     page.createStationMock(stationName);
 
     cy.triggerProbeAllInPocketBase();
+
+    page.refresh();
 
     page.assertStationLinkValueExists(
       stationName,
