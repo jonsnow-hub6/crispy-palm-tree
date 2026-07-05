@@ -36,21 +36,6 @@ import {
 import { Plus, Edit, Trash2, Power, MoreVertical } from 'lucide-react';
 import StationGraph from '@/components/StationGraph';
 
-type StationFormLink = Omit<StationLink, 'port'> & { port: string | number };
-
-type StationFormData = {
-  name: string;
-  stationLinks: StationFormLink[];
-};
-
-const normalizeStationFormData = (formData: StationFormData) => ({
-  ...formData,
-  stationLinks: formData.stationLinks.map((link) => ({
-    ...link,
-    port: Number(link.port),
-  })),
-});
-
 export function StationsPage() {
   const dispatch = useDispatch<AppDispatch>();
   const { stations, loading } = useSelector(
@@ -58,9 +43,9 @@ export function StationsPage() {
   );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStation, setEditingStation] = useState<Station | null>(null);
-  const [formData, setFormData] = useState<StationFormData>({
+  const [formData, setFormData] = useState({
     name: '',
-    stationLinks: [],
+    stationLinks: [] as StationLink[],
   });
   const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -91,7 +76,7 @@ export function StationsPage() {
     setFormData({
       name: '',
       stationLinks: [
-        { host: '', port: '8080', active: false, counter: 0, reachable: false },
+        { host: '', port: 8080, active: false, counter: 0, reachable: false },
       ],
     });
     setIsDialogOpen(true);
@@ -99,13 +84,7 @@ export function StationsPage() {
 
   const handleEdit = (station: Station) => {
     setEditingStation(station);
-    setFormData({
-      name: station.name,
-      stationLinks: station.stationLinks.map((link) => ({
-        ...link,
-        port: String(link.port),
-      })),
-    });
+    setFormData({ name: station.name, stationLinks: station.stationLinks });
     setIsDialogOpen(true);
   };
 
@@ -154,46 +133,37 @@ export function StationsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const normalizedFormData = normalizeStationFormData(formData);
-
     if (editingStation) {
-      await dispatch(
-        updateStation({ id: editingStation.id, data: normalizedFormData }),
-      );
+      await dispatch(updateStation({ id: editingStation.id, data: formData }));
     } else {
-      await dispatch(createStation(normalizedFormData));
+      await dispatch(createStation(formData));
     }
     setIsDialogOpen(false);
     setEditingStation(null);
   };
 
   const addLink = () => {
-    setFormData((prev) => ({
-      ...prev,
+    setFormData({
+      ...formData,
+
       stationLinks: [
-        ...prev.stationLinks,
-        { host: '', port: '8080', active: false, counter: 0, reachable: false },
+        ...formData.stationLinks,
+        { host: '', port: 8080, active: false, counter: 0, reachable: false },
       ],
-    }));
+    });
   };
 
   const removeLink = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      stationLinks: prev.stationLinks.filter((_, i) => i !== index),
-    }));
+    setFormData({
+      ...formData,
+      stationLinks: formData.stationLinks.filter((_, i) => i !== index),
+    });
   };
 
-  const updateLink = (
-    index: number,
-    field: keyof StationFormLink,
-    value: any,
-  ) => {
-    setFormData((prev) => {
-      const updated = [...prev.stationLinks];
-      updated[index] = { ...updated[index], [field]: value };
-      return { ...prev, stationLinks: updated };
-    });
+  const updateLink = (index: number, field: keyof StationLink, value: any) => {
+    const updated = [...formData.stationLinks];
+    updated[index] = { ...updated[index], [field]: value };
+    setFormData({ ...formData, stationLinks: updated });
   };
 
   // display stations in stored order (do not reorder)
@@ -272,7 +242,7 @@ export function StationsPage() {
                           data-cy={`schema-form-field-link-port-${idx}`}
                           value={link.port}
                           onChange={(e) =>
-                            updateLink(idx, 'port', e.target.value)
+                            updateLink(idx, 'port', parseInt(e.target.value))
                           }
                           required
                         />
