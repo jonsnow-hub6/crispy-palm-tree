@@ -8,14 +8,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
+    strategy:
+      fail-fast: false
+      matrix:
+        spec:
+          - apps/frontend/cypress/e2e/auth
+          - apps/frontend/cypress/e2e/dashboard
+          - apps/frontend/cypress/e2e/presets
+          - apps/frontend/cypress/e2e/stations
+
     steps:
       - uses: actions/checkout@v4
 
       - uses: ./.github/actions/setup-node
-
-      # -------------------------
-      # Download artifacts
-      # -------------------------
 
       - name: Download frontend artifact
         uses: actions/download-artifact@v4
@@ -33,28 +38,16 @@ jobs:
         working-directory: apps/frontend/cypress/mocks/station-mock
         run: npm install
 
-      # -------------------------
-      # Start PocketBase
-      # -------------------------
-
       - name: Start PocketBase
         run: |
           chmod +x apps/backend/pocketbase
           ./apps/backend/pocketbase serve --http=0.0.0.0:8090 &
           npx wait-on http://127.0.0.1:8090/_/
 
-      # -------------------------
-      # Start frontend
-      # -------------------------
-
       - name: Serve frontend
         run: |
           npx serve -s dist/apps/frontend -l 4200 &
           npx wait-on http://127.0.0.1:4200
-
-      # -------------------------
-      # Cypress
-      # -------------------------
 
       - name: Run Cypress
         env:
@@ -63,4 +56,4 @@ jobs:
         run: |
           npx cypress run \
             --config-file apps/frontend/cypress/cypress.config.ts \
-            --spec 'apps/frontend/cypress/e2e/{auth,dashboard,presets,stations}/*.cy.ts'
+            --spec '${{ matrix.spec }}/*.cy.ts'
