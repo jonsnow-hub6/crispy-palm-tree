@@ -150,6 +150,7 @@ describe('Presets', () => {
       );
 
       cy.triggerProbeAllInPocketBase();
+      cy.wait(1000);
       stationsPage.assertStationLinkValueExists(
         stationName,
         stationHost,

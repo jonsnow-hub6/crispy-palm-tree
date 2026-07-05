@@ -133,6 +133,7 @@ export class StationsPage {
         }
       });
   }
+
   assertStationIsUnreachableActive(name: string) {
     cy.get(`[data-cy=station-${name}-unreachable-active]`).should('exist');
   }

@@ -78,6 +78,7 @@ describe('Stations', () => {
 
     page.stopMockStationServer(stationName);
     cy.triggerProbeAllInPocketBase();
+    cy.wait(1000);
 
     page.assertConnectedCriticalAlertVisible('No active stations detected');
   });
@@ -87,6 +88,7 @@ describe('Stations', () => {
     page.createStationMock(stationName, 4000, 'localhost');
 
     cy.triggerProbeAllInPocketBase();
+    cy.wait(1000);
 
     page.assertStationLinkValueExists(
       stationName,
