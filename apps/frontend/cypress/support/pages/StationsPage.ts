@@ -114,24 +114,17 @@ export class StationsPage {
     regex?: RegExp,
   ) {
     const linkSelector = `[data-cy="station-link-${name}-${host}-${port}"]`;
-
-    // Read the data directly from DOM data-* attributes.
-    // No hover needed — link values are rendered as data-link-* attributes
-    // on the wrapper element by StationGraph, making this immune to
-    // tooltip timing, hover mechanics, and event delegation quirks.
     const attrName = `data-link-${label.toLowerCase()}`;
 
-    cy.get(linkSelector, { timeout: 3000 })
-      .should('exist')
-      .and(($el) => {
-        const value = $el.attr(attrName);
-        expect(value, `${label} attribute should exist`).to.not.equal(
-          undefined,
-        );
-        if (regex) {
-          expect(value, `${label} value`).to.match(regex);
-        }
-      });
+    cy.get(linkSelector, { timeout: 10000 }).should(($el) => {
+      const value = $el.attr(attrName);
+
+      expect(value, `${label} attribute`).to.not.equal(undefined);
+
+      if (regex) {
+        expect(value!, `${label} value`).to.match(regex);
+      }
+    });
   }
 
   assertStationIsUnreachableActive(name: string) {

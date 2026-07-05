@@ -86,6 +86,7 @@ describe('Stations', () => {
   it('1.2.1 - go to stations page, hover a station, should contain counter', () => {
     const stationName = 'mocked-station';
     page.createStationMock(stationName, 4000, 'localhost');
+    cy.intercept('POST', '/probe-all').as('probe');
 
     cy.triggerProbeAllInPocketBase();
     cy.wait(1000);
