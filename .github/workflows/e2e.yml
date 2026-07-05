@@ -28,6 +28,10 @@ jobs:
         with:
           name: backend-runtime
           path: apps/backend
+      
+      - name: Install mock server dependencies
+        working-directory: apps/frontend/cypress/mocks/station-mock
+        run: npm install
 
       # -------------------------
       # Start PocketBase
