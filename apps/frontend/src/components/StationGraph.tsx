@@ -218,9 +218,9 @@ export function StationGraph({
                     ? 'Active'
                     : 'Inactive'
               }
-              data-link-counter={link.counter || 'N/A'}
-              data-link-preset={link.currentPreset || 'N/A'}
-              data-link-out-of-sync={isOutOfSync || 'N/A'}
+              data-link-counter={link.counter ?? 'N/A'}
+              data-link-preset={link.currentPreset ?? 'N/A'}
+              data-link-out-of-sync={isOutOfSync ?? 'N/A'}
             >
               {/* Out of sync warning badge */}
               {isOutOfSync && (
