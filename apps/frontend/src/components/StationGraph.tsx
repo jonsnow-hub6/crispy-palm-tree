@@ -220,6 +220,7 @@ export function StationGraph({
               }
               data-link-counter={link.counter}
               data-link-preset={link.currentPreset || 'N/A'}
+              data-link-out-of-sync={isOutOfSync}
             >
               {/* Out of sync warning badge */}
               {isOutOfSync && (
@@ -317,6 +318,7 @@ export function StationGraph({
                           </Badge>
 
                           <button
+                            data-cy={`link-sync-button-${link.host}:${link.port}`}
                             disabled={syncing === `${link.host}:${link.port}`}
                             onClick={() => handleSync(link)}
                             className="px-2 py-1 text-[10px] rounded bg-cyan-500 text-white hover:bg-cyan-600 disabled:opacity-50"

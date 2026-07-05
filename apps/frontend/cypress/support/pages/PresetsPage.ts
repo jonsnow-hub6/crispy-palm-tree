@@ -18,14 +18,14 @@ export class PresetsPage {
   }
 
   importPresetIntoInput(fixtureName: string) {
-    cy.get('[data-cy="open-preset-import-input"]').selectFile(
+    cy.get('[data-cy=open-preset-import-input]').selectFile(
       `apps/frontend/cypress/fixtures/${fixtureName}`,
       { force: true }, // because the input is hidden
     );
   }
 
   submitImportPresetButton() {
-    cy.get('[data-cy="submit-json-import"]').click({ force: true });
+    cy.get('[data-cy=submit-json-import]').click({ force: true });
   }
 
   validatePresetExists(name: string) {
@@ -41,6 +41,59 @@ export class PresetsPage {
     this.submitImportPresetButton();
     this.validatePresetExists(stationName);
   }
+
+  openPresetsMenu(name: string) {
+    cy.get(`[data-cy=preset-menu-btn-${name}]`).click();
+  }
+
+  pressEditMenuButton(name: string) {
+    cy.get(`[data-cy=edit-preset-btn-${name}]`).click();
+  }
+
+  openEditPresetDialog(name: string) {
+    this.openPresetsMenu(name);
+    this.pressEditMenuButton(name);
+  }
+
+  fillFields(parameters: Record<string, string | number>) {
+    cy.fillSchemaFormFields(parameters);
+  }
+
+  fillFormField(fieldName: string, value: string | number) {
+    this.fillFields({ [fieldName]: value });
+  }
+
+  assertFieldValue(fieldName: string, value: string | number) {
+    cy.assertSchemaFormFieldValue(fieldName, value);
+  }
+
+  submitForm() {
+    cy.submitSchemaForm();
+  }
+
+  assertPresetValueExists(name: string, label: string, regex?: RegExp) {
+    const presetSelector = `[data-cy="preset-item-${name}"]`;
+    // data-cy={`preset-item-${preset.name}`}
+    //
+    // Read the data directly from DOM data-* attributes.
+    // No hover needed — link values are rendered as data-link-* attributes
+    // on the wrapper element by StationGraph, making this immune to
+    // tooltip timing, hover mechanics, and event delegation quirks.
+    const attrName = `data-${label.toLowerCase()}`;
+
+    cy.get(presetSelector, { timeout: 3000 })
+      .should('exist')
+      .and(($el) => {
+        const value = $el.attr(attrName);
+        expect(value, `${label} attribute should exist`).to.not.equal(
+          undefined,
+        );
+        if (regex) {
+          expect(value, `${label} value`).to.match(regex);
+        }
+      });
+  }
+  // data-color={`preset-${preset.name}-${preset.color}`}
 }
 
 export default PresetsPage;

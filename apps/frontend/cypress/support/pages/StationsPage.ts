@@ -241,6 +241,20 @@ export class StationsPage {
   submitForm() {
     cy.submitSchemaForm();
   }
+
+  hoverStationLink(stationName: string, host: string, port: number) {
+    cy.get(`[data-cy="station-link-${stationName}-${host}-${port}"]`)
+      .trigger('mouseover')
+      .trigger('mouseenter');
+  }
+
+  pressStationLinkSyncButton(stationName: string, host: string, port: number) {
+    this.hoverStationLink(stationName, host, port);
+
+    cy.get(`[data-cy="link-sync-button-${host}:${port}"]`, { timeout: 5000 })
+      .should('be.visible')
+      .click();
+  }
 }
 
 export default StationsPage;

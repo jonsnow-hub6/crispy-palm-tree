@@ -313,7 +313,11 @@ export function PresetsPage() {
                       : 'No creation via UI. Use Import JSON.'}
                   </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form
+                  onSubmit={handleSubmit}
+                  className="space-y-4"
+                  data-cy="schema-form"
+                >
                   {submitError && (
                     <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md border border-destructive/20">
                       {submitError}
@@ -343,6 +347,8 @@ export function PresetsPage() {
                         className="w-20 h-10"
                       />
                       <Input
+                        // id='colorString'
+                        name="colorStringInput"
                         value={formData.color}
                         onChange={(e) =>
                           setFormData({ ...formData, color: e.target.value })
@@ -391,6 +397,7 @@ export function PresetsPage() {
               <Card
                 key={preset.id}
                 data-cy={`preset-item-${preset.name}`}
+                data-color={preset.color}
                 className="group flex flex-col h-full transition-all duration-300 hover:shadow-lg"
                 style={{ borderLeft: `4px solid ${preset.color}` }}
               >
@@ -410,7 +417,11 @@ export function PresetsPage() {
                       />
 
                       {/* Menu */}
-                      <div className="relative" data-menu-id={preset.id}>
+                      <div
+                        className="relative"
+                        data-menu-id={preset.id}
+                        data-cy={`preset-menu-btn-${preset.name}`}
+                      >
                         <button
                           aria-haspopup="menu"
                           aria-expanded={menuOpenFor === preset.id}
@@ -432,6 +443,7 @@ export function PresetsPage() {
                             <div className="py-1">
                               <button
                                 role="menuitem"
+                                data-cy={`edit-preset-btn-${preset.name}`}
                                 className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60"
                                 onClick={() => {
                                   setMenuOpenFor(null);
