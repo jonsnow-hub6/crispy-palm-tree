@@ -33,7 +33,7 @@ export const seedStationsInPocketBase = (stations: StationSeed[]) => {
   });
 };
 
-export const triggerStationProbeInPocketBase = () => {
+export const triggerProbeAllInPocketBase = () => {
   cy.request({
     method: 'POST',
     url: 'http://127.0.0.1:8090/api/cron/probe-all ',

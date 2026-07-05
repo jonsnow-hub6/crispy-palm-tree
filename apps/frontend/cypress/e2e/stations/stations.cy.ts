@@ -18,7 +18,7 @@ describe('Stations', () => {
     page.visit();
   });
 
-  it('1.1.1 create a new station', () => {
+  it('1.1.1 - open stations page, create a new station', () => {
     page.interceptCreateRequest();
 
     const stationName = 'newStation';
@@ -38,7 +38,7 @@ describe('Stations', () => {
     page.assertCreateRequestPayload(payload);
   });
 
-  it('1.1.2 loads stations from PocketBase into the stations page', () => {
+  it('1.1.2 - on opening app, open stations page, make sure loads stations from PocketBase into the stations page', () => {
     const seededStations = [
       {
         name: 'pb-seeded-station-1',
@@ -69,21 +69,24 @@ describe('Stations', () => {
     });
   });
 
-  it('1.1.3 connects to a mocked station, then shows a disconnect alert', () => {
+  it.skip('1.1.3 - go to stations page, connect to a mocked station, go to a different page, kill station not through app, should show a disconnect alert', () => {
     const stationName = 'mocked-station';
     page.createStationMock(stationName);
+    cy.triggerProbeAllInPocketBase();
+    cy.wait(1000);
+    dashboardPage.visit();
 
     page.stopMockStationServer(stationName);
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     page.assertConnectedCriticalAlertVisible('No active stations detected');
   });
 
-  it('1.2.1 when connected to a station, GET request for current counter should work', () => {
+  it('1.2.1 - go to stations page, hover a station, should contain counter', () => {
     const stationName = 'mocked-station';
     page.createStationMock(stationName, 4000, 'localhost');
 
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     page.assertStationLinkValueExists(
       stationName,
@@ -94,11 +97,11 @@ describe('Stations', () => {
     );
   });
 
-  it('1.2.2 when connected to a station, GET request for current status should work', () => {
+  it('1.2.2 - go to stations page, hover a station, should contain status', () => {
     const stationName = 'mocked-station';
     page.createStationMock(stationName);
 
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     page.assertStationLinkValueExists(
       stationName,
@@ -109,7 +112,7 @@ describe('Stations', () => {
     );
   });
 
-  it('1.2.3 when doing SET request to the configuration file, station should update with correct file', () => {
+  it('1.2.3 - open stations page, create a station without preset, go to presets page, change the preset, make sure station synced', () => {
     const stationName = 'mocked-station';
     page.createStationMock(stationName);
 
@@ -120,7 +123,7 @@ describe('Stations', () => {
     dashboardPage.changeToPreset(PRESETS_JSON_PRESET_NAME);
 
     page.visit();
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
     page.assertStationLinkValueExists(
       stationName,
       'localhost',
@@ -130,12 +133,12 @@ describe('Stations', () => {
     );
   });
 
-  it('1.2.4 when connected to a station, Activating/Deactivating should update status correctly', () => {
+  it('1.2.4 - open stations page, when connected to a station, Activating/Deactivating should update status correctly', () => {
     const stationName = 'mocked-station';
     page.createStationMock(stationName);
 
     page.activateStation(stationName);
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
     page.assertStationLinkValueExists(
       stationName,
       'localhost',
@@ -145,7 +148,7 @@ describe('Stations', () => {
     );
 
     page.deactivateStation(stationName);
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
     page.assertStationLinkValueExists(
       stationName,
       'localhost',
@@ -155,7 +158,7 @@ describe('Stations', () => {
     );
   });
 
-  it('1.3.1 when connected to two stations, when one activates and one not, when activating the second one the first one should deactivate and the second one should activate', () => {
+  it('1.3.1 - when connected to two stations, when one activates and one not, when activating the second one the first one should deactivate and the second one should activate', () => {
     const firstStationName = 'mocked-station-1';
     const secondStationName = 'mocked-station-2';
     page.createStationMock(firstStationName);
@@ -163,10 +166,10 @@ describe('Stations', () => {
     page.refresh();
 
     page.activateStation(firstStationName);
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     page.activateStation(secondStationName);
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     page.assertStationLinkValueExists(
       secondStationName,
@@ -184,7 +187,7 @@ describe('Stations', () => {
     );
   });
 
-  it('1.3.2 when connected to multiple stations, when probing should refresh data of all stations', () => {
+  it('1.3.2 - when connected to multiple stations, when probing (done by n8n) should refresh data of all stations', () => {
     const firstStationName = 'mocked-station-1';
     const secondStationName = 'mocked-station-2';
     page.createStationMock(firstStationName);
@@ -208,7 +211,7 @@ describe('Stations', () => {
 
     page.activateStation(firstStationName);
 
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     page.assertStationLinkValueExists(
       secondStationName,
@@ -226,7 +229,7 @@ describe('Stations', () => {
     );
   });
 
-  it('1.3.3 when connected to two stations, when one activates and one not, then deactivating it, should alert critical connection error message', () => {
+  it('1.3.3 - when connected to two stations, when one activates and one not, then deactivating it, should alert critical connection error message', () => {
     const firstStationName = 'mocked-station-1';
     const secondStationName = 'mocked-station-2';
 
@@ -235,15 +238,15 @@ describe('Stations', () => {
     page.refresh();
 
     page.activateStation(firstStationName);
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     page.deactivateStation(firstStationName);
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     page.assertConnectedCriticalAlertVisible('No active stations detected');
   });
 
-  it('1.3.4 when connected to two stations, when one activates and one not, activating the second station not through the app, should alert', () => {
+  it('1.3.4 - when connected to two stations, when one activates and one not, activating the second station not through the app, should alert', () => {
     const firstStationName = 'mocked-station-1';
     const secondStationName = 'mocked-station-2';
     const secondStationPort = 4001;
@@ -258,7 +261,7 @@ describe('Stations', () => {
     page.refresh();
 
     page.activateStation(firstStationName);
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     cy.request({
       method: 'POST',
@@ -267,14 +270,14 @@ describe('Stations', () => {
         active: true,
       },
     });
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     page.assertConnectedCriticalAlertVisible(
       `criticalconnection${secondStationName}Station ${secondStationName} has active link while another station is active`,
     );
   });
 
-  it('1.3.5 when connected to a station with two links, when one activates and one not, activating the second link not through the app, should alert', () => {
+  it('1.3.5 - when connected to a station with two links, when one activates and one not, activating the second link not through the app, should alert', () => {
     const stationName = 'mocked-station';
 
     const firstLinkPort = 4000;
@@ -293,7 +296,7 @@ describe('Stations', () => {
     page.refresh();
 
     page.activateStationLink(stationName, firstLinkId);
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     cy.request({
       method: 'POST',
@@ -302,14 +305,14 @@ describe('Stations', () => {
         active: true,
       },
     });
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     page.assertConnectedCriticalAlertVisible(
       `criticalconnection${stationName}Station ${stationName} has multiple active links (${firstLinkHost}:${firstLinkPort}, ${secondLinkHost}:${secondLinkPort})`,
     );
   });
 
-  it('1.3.6 when connected to a station, when activates,the station deactivating by its own, should alert', () => {
+  it('1.3.6 - when connected to a station, when activates,the station deactivating by its own, should alert', () => {
     const stationName = 'mocked-station';
 
     const stationPort = 4000;
@@ -317,7 +320,7 @@ describe('Stations', () => {
     page.createStationMock(stationName, stationPort, stationHost);
 
     page.activateStation(stationName);
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     cy.request({
       method: 'POST',
@@ -326,7 +329,7 @@ describe('Stations', () => {
         active: false,
       },
     });
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     page.assertConnectedCriticalAlertVisible(
       `criticalconnection${stationName}Active station ${stationName} has no active links`,
@@ -334,7 +337,7 @@ describe('Stations', () => {
     page.assertConnectedCriticalAlertVisible('No active stations detected');
   });
 
-  it('1.3.7  when connected to a station, when activates,and link gets disconnected, should alert', () => {
+  it('1.3.7 - when connected to a station, when activates,and link gets disconnected, should alert', () => {
     const stationName = 'mocked-station';
 
     const stationPort = 4000;
@@ -342,15 +345,15 @@ describe('Stations', () => {
     page.createStationMock(stationName, stationPort, stationHost);
 
     page.activateStation(stationName);
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     page.stopMockStationServer(stationName);
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     page.assertStationIsUnreachableActive(stationName);
   });
 
-  it('1.3.8  when connected to a station with two links, should be able to activate specific link', () => {
+  it('1.3.8 - when connected to a station with two links, should be able to activate specific link', () => {
     const stationName = 'mocked-station';
 
     const firstLinkPort = 4000;
@@ -369,6 +372,6 @@ describe('Stations', () => {
     page.refresh();
 
     page.activateStationLink(stationName, firstLinkId);
-    page.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
   });
 });

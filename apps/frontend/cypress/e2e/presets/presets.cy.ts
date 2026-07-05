@@ -18,13 +18,13 @@ describe('Presets', () => {
     page.visit();
   });
 
-  it('2.1.1 create new preset', () => {
+  it('2.1.1 - create new preset', () => {
     page.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
 
     page.validatePresetExists(PRESETS_JSON_PRESET_NAME);
   });
 
-  it('2.1.2 edit existing preset', () => {
+  it('2.1.2 - edit existing preset', () => {
     const newName = 'test2';
     const newColor = '#ffddaa';
 
@@ -48,7 +48,7 @@ describe('Presets', () => {
     // page.assertCreateRequestPayload(payload);
   });
 
-  it('2.1.3 set existing preset as activated preset in mainDashboard', () => {
+  it('2.1.3 - set existing preset as activated preset in mainDashboard', () => {
     page.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
 
     page.validatePresetExists(PRESETS_JSON_PRESET_NAME);
@@ -57,14 +57,14 @@ describe('Presets', () => {
     dashboardPage.changeToPreset(PRESETS_JSON_PRESET_NAME);
   });
 
-  it('2.2.1 set a preset to a station, add a new station, sync the specific station.', () => {
+  it('2.2.1 - set a preset to a station, add a new station, sync the specific station.', () => {
     const firstStationName = 'mocked-station-1';
     const secondStationName = 'mocked-station-2';
 
     stationsPage.visit();
 
     stationsPage.createStationMock(firstStationName);
-    stationsPage.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     page.visit();
     page.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
@@ -73,11 +73,11 @@ describe('Presets', () => {
 
     dashboardPage.visit();
     dashboardPage.changeToPreset(PRESETS_JSON_PRESET_NAME);
-    stationsPage.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     stationsPage.visit();
     stationsPage.createStationMock(secondStationName, 4001);
-    stationsPage.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     stationsPage.assertStationLinkValueExists(
       secondStationName,
@@ -92,7 +92,7 @@ describe('Presets', () => {
       4001,
     );
 
-    stationsPage.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
     stationsPage.assertStationLinkValueExists(
       secondStationName,
       'localhost',
@@ -102,7 +102,7 @@ describe('Presets', () => {
     );
   });
 
-  it('2.2.2 set a preset to a station, change the preset in the station through request, sync the specific station.', () => {
+  it('2.2.2 - set a preset to a station, change the preset in the station through request, sync the specific station.', () => {
     const stationName = 'mocked-station-1';
     const stationHost = 'localhost';
     const stationPort = 4000;
@@ -114,7 +114,7 @@ describe('Presets', () => {
     stationsPage.visit();
 
     stationsPage.createStationMock(stationName);
-    stationsPage.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     page.visit();
     page.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
@@ -123,7 +123,7 @@ describe('Presets', () => {
 
     dashboardPage.visit();
     dashboardPage.changeToPreset(PRESETS_JSON_PRESET_NAME);
-    stationsPage.triggerStationProbe();
+    cy.triggerProbeAllInPocketBase();
 
     stationsPage.visit();
     cy.request({
@@ -134,7 +134,7 @@ describe('Presets', () => {
         commands: newPresetCommands,
       },
     }).then(() => {
-      stationsPage.triggerStationProbe();
+      cy.triggerProbeAllInPocketBase();
 
       stationsPage.assertStationLinkValueExists(
         stationName,
@@ -149,7 +149,7 @@ describe('Presets', () => {
         stationPort,
       );
 
-      stationsPage.triggerStationProbe();
+      cy.triggerProbeAllInPocketBase();
       stationsPage.assertStationLinkValueExists(
         stationName,
         stationHost,

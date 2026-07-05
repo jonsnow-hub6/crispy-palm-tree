@@ -2,10 +2,8 @@ import {
   assertStationCreatePayload,
   interceptStationCreate,
   seedStationsInPocketBase,
-  triggerStationProbeInPocketBase,
 } from '../utils/stations';
 import { StationValues } from '../utils/types';
-import 'cypress-real-events/support';
 
 export class StationsPage {
   visit() {
@@ -176,10 +174,6 @@ export class StationsPage {
 
   stopMockStationServer(id: string) {
     cy.stopMockStationServer(id);
-  }
-
-  triggerStationProbe() {
-    triggerStationProbeInPocketBase();
   }
 
   assertConnectedCriticalAlertVisible(

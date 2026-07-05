@@ -2,6 +2,7 @@
 /// <reference types="cypress" />
 
 import { AuthParameters } from '../types';
+import { POCKETBASE_URL } from './consts';
 import { CreateStationArgs } from './utils/mock-stations/mock-stations-manager';
 
 // Custom Cypress commands
@@ -54,6 +55,7 @@ declare global {
       createMockStationServer(args: CreateStationArgs): Chainable<void>;
       stopMockStationServer(id: string): Chainable<void>;
       stopAllMockStationServers(): Chainable<void>;
+      triggerProbeAllInPocketBase(): Chainable<void>;
     }
   }
 }
@@ -355,6 +357,15 @@ Cypress.Commands.add('stopMockStationServer', (id: string) => {
 
 Cypress.Commands.add('stopAllMockStationServers', () => {
   cy.task('stopAllMockStationServers');
+});
+
+Cypress.Commands.add('triggerProbeAllInPocketBase', () => {
+  cy.request({
+    method: 'POST',
+    url: `${POCKETBASE_URL}/api/cron/probe-all`,
+  })
+    .its('status')
+    .should('eq', 200);
 });
 
 export {};
