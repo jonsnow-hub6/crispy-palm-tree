@@ -81,7 +81,7 @@ describe('Stations', () => {
 
   it('1.2.1 when connected to a station, GET request for current counter should work', () => {
     const stationName = 'mocked-station';
-    page.createStationMock(stationName);
+    page.createStationMock(stationName, 4000, 'localhost');
 
     page.triggerStationProbe();
 
@@ -89,7 +89,7 @@ describe('Stations', () => {
       stationName,
       'localhost',
       4000,
-      'counter',
+      'Counter',
       /[0-9]+/,
     );
   });
@@ -350,7 +350,7 @@ describe('Stations', () => {
     page.assertStationIsUnreachableActive(stationName);
   });
 
-  it('1.3.8  when connected to a station with two links, should be able two activate specific link', () => {
+  it('1.3.8  when connected to a station with two links, should be able to activate specific link', () => {
     const stationName = 'mocked-station';
 
     const firstLinkPort = 4000;
