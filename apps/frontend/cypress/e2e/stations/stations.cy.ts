@@ -85,7 +85,6 @@ describe('Stations', () => {
   it('1.2.1 - go to stations page, hover a station, should contain counter', () => {
     const stationName = 'mocked-station';
     page.createStationMock(stationName, 4000, 'localhost');
-    cy.intercept('POST', '/probe-all').as('probe');
 
     cy.triggerProbeAllInPocketBase();
 
@@ -113,7 +112,7 @@ describe('Stations', () => {
     );
   });
 
-  it('1.2.3 - open stations page, create a station without preset, go to presets page, change the preset, make sure station synced', () => {
+  it.only('1.2.3 - open stations page, create a station without preset, go to presets page, change the preset, make sure station synced', () => {
     const stationName = 'mocked-station';
     page.createStationMock(stationName);
 

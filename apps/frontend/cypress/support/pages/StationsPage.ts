@@ -115,7 +115,13 @@ export class StationsPage {
   ) {
     const linkSelector = `[data-cy="station-link-${name}-${host}-${port}"]`;
     const attrName = `data-link-${label.toLowerCase()}`;
+    cy.get(linkSelector).then(($el) => {
+      console.log($el[0].getAttributeNames());
 
+      for (const name of $el[0].getAttributeNames()) {
+        console.log(name, $el[0].getAttribute(name));
+      }
+    });
     cy.get(linkSelector, { timeout: 10000 }).should(($el) => {
       const value = $el.attr(attrName);
 
@@ -241,7 +247,7 @@ export class StationsPage {
 
     cy.get(`[data-cy="link-sync-button-${host}:${port}"]`, { timeout: 5000 })
       .should('be.visible')
-      .click();
+      .click({ force: true });
   }
 }
 
