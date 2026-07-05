@@ -112,7 +112,7 @@ describe('Stations', () => {
     );
   });
 
-  it.only('1.2.3 - open stations page, create a station without preset, go to presets page, change the preset, make sure station synced', () => {
+  it('1.2.3 - open stations page, create a station without preset, go to presets page, change the preset, make sure station synced', () => {
     const stationName = 'mocked-station';
     page.createStationMock(stationName);
 

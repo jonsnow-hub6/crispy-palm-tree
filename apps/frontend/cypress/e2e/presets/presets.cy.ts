@@ -125,7 +125,6 @@ describe('Presets', () => {
     dashboardPage.changeToPreset(PRESETS_JSON_PRESET_NAME);
     cy.triggerProbeAllInPocketBase();
 
-    stationsPage.visit();
     cy.request({
       method: 'POST',
       url: `http://${stationHost}:${stationPort}/api/setPreset`,
@@ -134,6 +133,8 @@ describe('Presets', () => {
         commands: newPresetCommands,
       },
     }).then(() => {
+      stationsPage.visit();
+
       cy.triggerProbeAllInPocketBase();
 
       stationsPage.assertStationLinkValueExists(
