@@ -349,7 +349,12 @@ export function StationsPage() {
                         )}
 
                         {activeCounter !== undefined && (
-                          <Badge variant="secondary" className="ml-1">
+                          <Badge
+                            variant="secondary"
+                            className="ml-1"
+                            data-cy={`station-${station.name}-counter`}
+                            data-counter={activeCounter}
+                          >
                             Counter: {activeCounter}
                           </Badge>
                         )}

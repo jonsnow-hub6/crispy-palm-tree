@@ -5,6 +5,12 @@ import {
 import DashboardPage from '../../support/pages/DashboardPage';
 import PresetsPage from '../../support/pages/PresetsPage';
 import StationsPage from '../../support/pages/StationsPage';
+import {
+  EXAMPLE_STATION_NAME,
+  SECOND_EXAMPLE_STATION_NAME,
+  STATION_LINK_1,
+  STATION_LINK_2,
+} from '../stations/consts';
 
 describe('Presets', () => {
   const page = new PresetsPage();
@@ -58,12 +64,12 @@ describe('Presets', () => {
   });
 
   it('2.2.1 - set a preset to a station, add a new station, sync the specific station.', () => {
-    const firstStationName = 'mocked-station-1';
-    const secondStationName = 'mocked-station-2';
-
     stationsPage.visit();
 
-    stationsPage.createStationMock(firstStationName);
+    stationsPage.createStationMock({
+      name: EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_1],
+    });
     cy.triggerProbeAllInPocketBase();
 
     page.visit();
@@ -76,36 +82,33 @@ describe('Presets', () => {
     cy.triggerProbeAllInPocketBase();
 
     stationsPage.visit();
-    stationsPage.createStationMock(secondStationName, 4001);
+    stationsPage.createStationMock({
+      name: SECOND_EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_2],
+    });
     cy.triggerProbeAllInPocketBase();
 
     stationsPage.assertStationLinkValueExists(
-      secondStationName,
-      'localhost',
-      4001,
+      SECOND_EXAMPLE_STATION_NAME,
+      STATION_LINK_2,
       'out-of-sync',
       new RegExp(`^${true}`, 'i'),
     );
     stationsPage.pressStationLinkSyncButton(
-      secondStationName,
-      'localhost',
-      4001,
+      SECOND_EXAMPLE_STATION_NAME,
+      STATION_LINK_2,
     );
 
     cy.triggerProbeAllInPocketBase();
     stationsPage.assertStationLinkValueExists(
-      secondStationName,
-      'localhost',
-      4001,
+      SECOND_EXAMPLE_STATION_NAME,
+      STATION_LINK_2,
       'out-of-sync',
       new RegExp(`^${false}`, 'i'),
     );
   });
 
-  it.only('2.2.2 - set a preset to a station, change the preset in the station through request, sync the specific station.', () => {
-    const stationName = 'mocked-station-1';
-    const stationHost = 'localhost';
-    const stationPort = 4000;
+  it('2.2.2 - set a preset to a station, change the preset in the station through request, sync the specific station.', () => {
     const newPresetName = 'newPresetName';
     const newPresetCommands = [
       { id: 'newCommand', payload: '0x00000000000002' },
@@ -113,7 +116,10 @@ describe('Presets', () => {
 
     stationsPage.visit();
 
-    stationsPage.createStationMock(stationName);
+    stationsPage.createStationMock({
+      name: EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_1],
+    });
     cy.triggerProbeAllInPocketBase();
 
     page.visit();
@@ -125,39 +131,34 @@ describe('Presets', () => {
     dashboardPage.changeToPreset(PRESETS_JSON_PRESET_NAME);
     cy.triggerProbeAllInPocketBase();
 
-    cy.request({
-      method: 'POST',
-      url: `http://${stationHost}:${stationPort}/api/setPreset`,
-      body: {
+    stationsPage
+      .sendRequestToStationLink(STATION_LINK_1, '/api/setPreset', 'POST', {
         presetName: newPresetName,
         commands: newPresetCommands,
-      },
-    }).then(() => {
-      stationsPage.visit();
+      })
+      .then(() => {
+        stationsPage.visit();
 
-      cy.triggerProbeAllInPocketBase();
+        cy.triggerProbeAllInPocketBase();
 
-      stationsPage.assertStationLinkValueExists(
-        stationName,
-        stationHost,
-        stationPort,
-        'out-of-sync',
-        new RegExp(`^${true}`, 'i'),
-      );
-      stationsPage.pressStationLinkSyncButton(
-        stationName,
-        stationHost,
-        stationPort,
-      );
+        stationsPage.assertStationLinkValueExists(
+          EXAMPLE_STATION_NAME,
+          STATION_LINK_1,
+          'out-of-sync',
+          new RegExp(`^${true}`, 'i'),
+        );
+        stationsPage.pressStationLinkSyncButton(
+          EXAMPLE_STATION_NAME,
+          STATION_LINK_1,
+        );
 
-      cy.triggerProbeAllInPocketBase();
-      stationsPage.assertStationLinkValueExists(
-        stationName,
-        stationHost,
-        stationPort,
-        'out-of-sync',
-        new RegExp(`^${false}`, 'i'),
-      );
-    });
+        cy.triggerProbeAllInPocketBase();
+        stationsPage.assertStationLinkValueExists(
+          EXAMPLE_STATION_NAME,
+          STATION_LINK_1,
+          'out-of-sync',
+          new RegExp(`^${false}`, 'i'),
+        );
+      });
   });
 });

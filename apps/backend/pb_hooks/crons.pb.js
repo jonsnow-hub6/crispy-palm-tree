@@ -445,13 +445,6 @@ routerAdd('POST', '/api/cron/probe-all', async (c) => {
         } catch {
           links = [];
         }
-        links = links.filter(
-          (l) =>
-            l.active === true ||
-            l.active === 'true' ||
-            l.active === 1 ||
-            l.active === '1',
-        );
 
         const probes = await Promise.all(links.map((l) => httpGetCounter(l)));
         probes.forEach((p) => {

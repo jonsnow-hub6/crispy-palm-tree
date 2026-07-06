@@ -1,7 +1,4 @@
-type StationSeed = {
-  name: string;
-  stationLinks: Array<{ host: string; port: number }>;
-};
+import { Station } from '../types';
 
 export const interceptStationCreate = () => {
   cy.intercept('POST', '**/api/collections/stations/records').as(
@@ -9,7 +6,7 @@ export const interceptStationCreate = () => {
   );
 };
 
-export const seedStationsInPocketBase = (stations: StationSeed[]) => {
+export const seedStationsInPocketBase = (stations: Station[]) => {
   cy.request({
     method: 'POST',
     url: 'http://127.0.0.1:8090/api/collections/_superusers/auth-with-password',

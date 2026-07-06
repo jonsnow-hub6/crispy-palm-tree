@@ -20,7 +20,7 @@ let preset = null; // <-- NEW
 // Optional: auto-increment counter to simulate activity
 setInterval(() => {
   counter += 1;
-}, 3000);
+}, 2000);
 
 setInterval(() => {
   console.log(
@@ -60,6 +60,34 @@ app.post('/api/setActive', (req, res) => {
 app.get('/api/getCounter', (req, res) => {
   console.log('getCounter');
   res.json(counter);
+});
+
+// POST /api/setCounter
+app.post('/api/setCounter', (req, res) => {
+  console.log('setCounter request:', req.body);
+
+  const { setCounter } = req.body;
+
+  if (typeof setCounter !== 'number' || Number.isNaN(setCounter)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Request body must contain a numeric "setCounter" field.',
+      received: req.body,
+      expected: {
+        setCounter: 123,
+      },
+    });
+  }
+
+  counter = setCounter;
+
+  console.log(`Counter updated to ${counter}`);
+
+  return res.status(200).json({
+    success: true,
+    message: 'Counter updated successfully.',
+    counter,
+  });
 });
 
 // -----------------------------

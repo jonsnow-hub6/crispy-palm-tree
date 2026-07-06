@@ -1,9 +1,9 @@
+import { Station, StationLink } from '../types';
 import {
   assertStationCreatePayload,
   interceptStationCreate,
   seedStationsInPocketBase,
 } from '../utils/stations';
-import { StationValues } from '../utils/types';
 
 export class StationsPage {
   visit() {
@@ -39,12 +39,7 @@ export class StationsPage {
     assertStationCreatePayload(expectedValues);
   }
 
-  seedStationsInPocketBase(
-    stations: Array<{
-      name: string;
-      stationLinks: Array<{ host: string; port: number }>;
-    }>,
-  ) {
+  seedStationsInPocketBase(stations: Station[]) {
     seedStationsInPocketBase(stations);
   }
 
@@ -64,26 +59,18 @@ export class StationsPage {
     cy.contains(name, { timeout: 3000 }).should('be.visible');
   }
 
-  assertStationLinkValues(name: string, stationLink: StationValues) {
-    this.assertStationVisible(name);
-    // [data-cy="station-link-pb-seeded-station-1-example-one-8001"]
-    // in station-item-pb-seeded-station-1
-    // cy.contains('[data-cy^="station-item-"]', name)
-    //   .find('[data-cy="station-link-hover-target"]')
-    //   .first()
-    //   .trigger('mouseover', { force: true });
+  assertStationLinkValues(stationName: string, stationLink: StationLink) {
+    this.assertStationVisible(stationName);
 
     this.assertStationLinkValueExists(
-      name,
-      stationLink.host,
-      stationLink.port,
+      stationName,
+      stationLink,
       'host',
       new RegExp(`^${stationLink.host}`, 'i'),
     );
     this.assertStationLinkValueExists(
-      name,
-      stationLink.host,
-      stationLink.port,
+      stationName,
+      stationLink,
       'port',
       new RegExp(`^${stationLink.port}`, 'i'),
     );
@@ -95,33 +82,14 @@ export class StationsPage {
     // Preset:unknown
   }
 
-  // assertStationLinkValue(
-  //   stationLink: StationValues,
-  //   name: keyof StationValues,
-  //   label: string,
-  // ) {
-  //   if (stationLink[name]) {
-  //     cy.contains(`${label}:`, { timeout: 3000 }).should('be.visible');
-  //     cy.contains(`${stationLink[name]}`).should('be.visible');
-  //   }
-  // }
-
   assertStationLinkValueExists(
-    name: string,
-    host: string,
-    port: number,
+    stationName: string,
+    { host, port }: StationLink,
     label: string,
     regex?: RegExp,
   ) {
-    const linkSelector = `[data-cy="station-link-${name}-${host}-${port}"]`;
+    const linkSelector = `[data-cy="station-link-${stationName}-${host}-${port}"]`;
     const attrName = `data-link-${label.toLowerCase()}`;
-    cy.get(linkSelector).then(($el) => {
-      console.log($el[0].getAttributeNames());
-
-      for (const name of $el[0].getAttributeNames()) {
-        console.log(name, $el[0].getAttribute(name));
-      }
-    });
     cy.get(linkSelector, { timeout: 10000 }).should(($el) => {
       const value = $el.attr(attrName);
 
@@ -133,69 +101,65 @@ export class StationsPage {
     });
   }
 
-  assertStationIsUnreachableActive(name: string) {
-    cy.get(`[data-cy=station-${name}-unreachable-active]`).should('exist');
+  getStationLinkValue(
+    stationName: string,
+    { host, port }: StationLink,
+    label: string,
+    regex?: RegExp,
+  ): Cypress.Chainable<string> {
+    const linkSelector = `[data-cy="station-link-${stationName}-${host}-${port}"]`;
+    const attrName = `data-link-${label.toLowerCase()}`;
+
+    return cy.get(linkSelector, { timeout: 10000 }).then(($el) => {
+      const value = $el.attr(attrName);
+
+      expect(value, `${label} attribute`).to.not.equal(undefined);
+
+      if (regex) {
+        expect(value!, `${label} value`).to.match(regex);
+      }
+
+      return value!;
+    });
   }
 
-  createStationMock(
-    stationName: string,
-    port: number = 4000,
-    host: string = 'localhost',
-  ) {
-    cy.createMockStationServer({ port, host, id: stationName });
-    this.seedStationsInPocketBase([
-      {
-        name: stationName,
-        stationLinks: [{ host: host, port: port }],
-      },
-    ]);
-    this.assertStationVisible(stationName);
+  assertStationIsUnreachableActive(stationName: string) {
+    cy.get(`[data-cy=station-${stationName}-unreachable-active]`).should(
+      'exist',
+    );
   }
-  createStationMockWithMultipleLinks(
-    stationName: string,
-    links: {
-      host: string;
-      port: number;
-      id: string;
-    }[],
-  ) {
-    const stationLinks = links.map(({ host, port, id }) => {
+
+  createStationMock({ name, stationLinks }: Station) {
+    stationLinks.forEach(({ host, id, port }) => {
       cy.createMockStationServer({ port, host, id });
-      return { host, port };
     });
     this.seedStationsInPocketBase([
       {
-        name: stationName,
-        stationLinks: stationLinks,
+        name,
+        stationLinks,
       },
     ]);
-    this.assertStationVisible(stationName);
+    this.assertStationVisible(name);
   }
 
-  stopMockStationServer(id: string) {
-    cy.stopMockStationServer(id);
+  stopMockStationLinkServer(stationName: string) {
+    cy.stopMockStationServer(stationName);
   }
 
-  assertConnectedCriticalAlertVisible(
-    expectedText: string = 'No active stations detected',
-  ) {
-    cy.get('[data-cy^="notification-connection-critical"]', { timeout: 3000 })
-      .should('be.visible')
-      .should('contain.text', expectedText);
-  }
-
-  openStationMenu(name: string) {
-    cy.get(`[data-cy=station-menu-button-${name}]`).click({ force: true });
-  }
-
-  clickMenuActivateStation(name: string) {
-    cy.get(`[data-cy=station-menu-activate-button-${name}]`).click({
+  openStationMenu(stationName: string) {
+    cy.get(`[data-cy=station-menu-button-${stationName}]`).click({
       force: true,
     });
   }
 
-  clickMenuDeactivateStation(name: string) {
-    cy.get(`[data-cy=station-menu-deactivate-button-${name}]`).click({
+  clickMenuActivateStation(stationName: string) {
+    cy.get(`[data-cy=station-menu-activate-button-${stationName}]`).click({
+      force: true,
+    });
+  }
+
+  clickMenuDeactivateStation(stationName: string) {
+    cy.get(`[data-cy=station-menu-deactivate-button-${stationName}]`).click({
       force: true,
     });
   }
@@ -206,48 +170,122 @@ export class StationsPage {
     }).click();
   }
 
-  activateStation(name: string) {
-    this.openStationMenu(name);
-    this.clickMenuActivateStation(name);
+  activateStation(stationName: string) {
+    this.openStationMenu(stationName);
+    this.clickMenuActivateStation(stationName);
     this.clickConfirmActivationButton();
   }
 
-  activateStationLink(name: string, linkId: string) {
-    cy.get(`[data-cy=station-link-btn-${name}-${linkId}]`).click({
+  activateStationLink(stationName: string, { id }: StationLink) {
+    cy.get(`[data-cy=station-link-btn-${stationName}-${id}]`).click({
       force: true,
     });
     this.clickConfirmActivationButton();
   }
 
-  assertLinkIsActive(name: string, linkId: string) {
-    cy.get(`[data-cy=station-link-${name}-${linkId}]`).should(
+  assertLinkIsActive(stationName: string, { id }: StationLink) {
+    cy.get(`[data-cy=station-link-${stationName}-${id}]`).should(
       'have.attr',
       'aria-pressed',
       'true',
     );
   }
 
-  deactivateStation(name: string) {
-    this.openStationMenu(name);
-    this.clickMenuDeactivateStation(name);
+  deactivateStation(stationName: string) {
+    this.openStationMenu(stationName);
+    this.clickMenuDeactivateStation(stationName);
   }
 
   submitForm() {
     cy.submitSchemaForm();
   }
 
-  hoverStationLink(stationName: string, host: string, port: number) {
-    cy.get(`[data-cy="station-link-${stationName}-${host}-${port}"]`)
+  hoverStationLink(stationName: string, { id }: StationLink) {
+    cy.get(`[data-cy="station-link-${stationName}-${id}"]`)
       .trigger('mouseover')
       .trigger('mouseenter');
   }
 
-  pressStationLinkSyncButton(stationName: string, host: string, port: number) {
-    this.hoverStationLink(stationName, host, port);
+  pressStationLinkSyncButton(stationName: string, stationLink: StationLink) {
+    this.hoverStationLink(stationName, stationLink);
 
-    cy.get(`[data-cy="link-sync-button-${host}:${port}"]`, { timeout: 5000 })
+    cy.get(`[data-cy="link-sync-button-${stationLink.id}"]`, { timeout: 5000 })
       .should('be.visible')
       .click({ force: true });
+  }
+
+  assertCounterIncreasing(stationName: string, stationLink: StationLink) {
+    const timeout = 5000;
+    const interval = 250;
+    this.getStationLinkValue(stationName, stationLink, 'Counter').then(
+      (initial) => {
+        const start = Date.now();
+        cy.triggerProbeAllInPocketBase();
+        const initialValue = Number(initial);
+
+        const check = (): Cypress.Chainable<void> => {
+          cy.triggerProbeAllInPocketBase();
+          return this.getStationLinkValue(
+            stationName,
+            stationLink,
+            'Counter',
+          ).then((current) => {
+            const currentValue = Number(current);
+
+            if (currentValue > initialValue) {
+              expect(currentValue).to.be.greaterThan(initialValue);
+              return;
+            }
+
+            if (Date.now() - start >= timeout) {
+              throw new Error(
+                `Counter did not increase within ${timeout}ms. Initial=${initialValue}, Current=${currentValue}`,
+              );
+            }
+
+            return cy.wait(interval).then(check);
+          });
+        };
+
+        return check();
+      },
+    );
+  }
+
+  sendRequestToStationLink(
+    { host, port }: StationLink,
+    path: string,
+    method: string,
+    body: object,
+  ) {
+    return cy.request({
+      method: method,
+      url: `http://${host}:${port}${path}`,
+      body: body,
+    });
+  }
+
+  getCounterVariableFromStation(stationName: string, regex?: RegExp) {
+    const linkSelector = `[data-cy=station-${stationName}-counter]`;
+    const attrName = `data-counter`;
+
+    return cy.get(linkSelector, { timeout: 10000 }).then(($el) => {
+      const value = $el.attr(attrName);
+
+      expect(value, `counter attribute`).to.not.equal(undefined);
+
+      if (regex) {
+        expect(value!, `counter value`).to.match(regex);
+      }
+
+      return value!;
+    });
+  }
+
+  assertAlertVisible(type: string, level: string, expectedText: string) {
+    cy.get(`[data-cy^="notification-${type}-${level}"]`, { timeout: 3000 })
+      .should('be.visible')
+      .should('contain.text', expectedText);
   }
 }
 

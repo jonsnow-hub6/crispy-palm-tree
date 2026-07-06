@@ -16,6 +16,7 @@ jobs:
           - apps/frontend/cypress/e2e/dashboard
           - apps/frontend/cypress/e2e/presets
           - apps/frontend/cypress/e2e/stations
+          - apps/frontend/cypress/e2e/counter
 
     steps:
       - uses: actions/checkout@v4

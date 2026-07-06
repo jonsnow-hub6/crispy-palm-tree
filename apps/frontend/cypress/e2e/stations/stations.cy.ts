@@ -5,6 +5,14 @@ import {
   PRESETS_JSON_NAME,
   PRESETS_JSON_PRESET_NAME,
 } from '../../support/consts';
+import {
+  EXAMPLE_STATION_NAME,
+  SECOND_EXAMPLE_STATION_NAME,
+  STATION_LINK_1,
+  STATION_LINK_2,
+  STATION_LINK_3,
+} from './consts';
+import { Station } from '../../support/types';
 
 describe('Stations', () => {
   const page = new StationsPage();
@@ -21,15 +29,15 @@ describe('Stations', () => {
   it('1.1.1 - open stations page, create a new station', () => {
     page.interceptCreateRequest();
 
-    const stationName = 'newStation';
+    const name = 'newStation';
     const payload = {
-      name: stationName,
+      name: name,
       stationLinks: [{ host: 'localhost', port: 9090 }],
     };
 
     page.openCreateStationDialog();
     page.fillFields({
-      name: stationName,
+      name: name,
       host: 'localhost',
       port: '9090',
     });
@@ -39,18 +47,18 @@ describe('Stations', () => {
   });
 
   it('1.1.2 - on opening app, open stations page, make sure loads stations from PocketBase into the stations page', () => {
-    const seededStations = [
+    const seededStations: Station[] = [
       {
         name: 'pb-seeded-station-1',
-        stationLinks: [{ host: 'example-one', port: 8001 }],
+        stationLinks: [STATION_LINK_1],
       },
       {
         name: 'pb-seeded-station-2',
-        stationLinks: [{ host: 'example-two', port: 8002 }],
+        stationLinks: [STATION_LINK_2],
       },
       {
         name: 'pb-seeded-station-3',
-        stationLinks: [{ host: 'example-three', port: 8003 }],
+        stationLinks: [STATION_LINK_3],
       },
     ];
 
@@ -70,55 +78,68 @@ describe('Stations', () => {
   });
 
   it.skip('1.1.3 - go to stations page, connect to a mocked station, go to a different page, kill station not through app, should show a disconnect alert', () => {
-    const stationName = 'mocked-station';
-    page.createStationMock(stationName);
+    page.createStationMock({
+      name: EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_1],
+    });
     cy.triggerProbeAllInPocketBase();
-    cy.wait(1000);
     dashboardPage.visit();
 
-    page.stopMockStationServer(stationName);
+    page.stopMockStationLinkServer(EXAMPLE_STATION_NAME);
     cy.triggerProbeAllInPocketBase();
 
-    page.assertConnectedCriticalAlertVisible('No active stations detected');
+    page.assertAlertVisible(
+      'connection',
+      'critical',
+      'No active stations detected',
+    );
   });
 
   it('1.2.1 - go to stations page, hover a station, should contain counter', () => {
-    const stationName = 'mocked-station';
-    page.createStationMock(stationName, 4000, 'localhost');
+    page.createStationMock({
+      name: EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_1],
+    });
+
+    page.refresh();
 
     cy.triggerProbeAllInPocketBase();
 
     page.refresh();
 
     page.assertStationLinkValueExists(
-      stationName,
-      'localhost',
-      4000,
+      EXAMPLE_STATION_NAME,
+      STATION_LINK_1,
       'Counter',
       /[0-9]+/,
     );
   });
 
   it('1.2.2 - go to stations page, hover a station, should contain status', () => {
-    const stationName = 'mocked-station';
-    page.createStationMock(stationName);
+    page.createStationMock({
+      name: EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_1],
+    });
+
+    page.refresh();
 
     cy.triggerProbeAllInPocketBase();
 
     page.refresh();
 
     page.assertStationLinkValueExists(
-      stationName,
-      'localhost',
-      4000,
+      EXAMPLE_STATION_NAME,
+      STATION_LINK_1,
       'Status',
       /\bInactive\b/,
     );
   });
 
   it('1.2.3 - open stations page, create a station without preset, go to presets page, change the preset, make sure station synced', () => {
-    const stationName = 'mocked-station';
-    page.createStationMock(stationName);
+    page.createStationMock({
+      name: EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_1],
+    });
 
     presetPage.visit();
     presetPage.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
@@ -129,253 +150,240 @@ describe('Stations', () => {
     page.visit();
     cy.triggerProbeAllInPocketBase();
     page.assertStationLinkValueExists(
-      stationName,
-      'localhost',
-      4000,
+      EXAMPLE_STATION_NAME,
+      STATION_LINK_1,
       'Preset',
       new RegExp(`^${PRESETS_JSON_PRESET_NAME}`, 'i'),
     );
   });
 
   it('1.2.4 - open stations page, when connected to a station, Activating/Deactivating should update status correctly', () => {
-    const stationName = 'mocked-station';
-    page.createStationMock(stationName);
+    page.createStationMock({
+      name: EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_1],
+    });
 
-    page.activateStation(stationName);
+    page.activateStation(EXAMPLE_STATION_NAME);
     cy.triggerProbeAllInPocketBase();
     page.assertStationLinkValueExists(
-      stationName,
-      'localhost',
-      4000,
+      EXAMPLE_STATION_NAME,
+      STATION_LINK_1,
       'Status',
       /\bActive\b/,
     );
 
-    page.deactivateStation(stationName);
+    page.deactivateStation(EXAMPLE_STATION_NAME);
     cy.triggerProbeAllInPocketBase();
     page.assertStationLinkValueExists(
-      stationName,
-      'localhost',
-      4000,
+      EXAMPLE_STATION_NAME,
+      STATION_LINK_1,
       'Status',
       /\bInactive\b/,
     );
   });
 
   it('1.3.1 - when connected to two stations, when one activates and one not, when activating the second one the first one should deactivate and the second one should activate', () => {
-    const firstStationName = 'mocked-station-1';
-    const secondStationName = 'mocked-station-2';
-    page.createStationMock(firstStationName);
-    page.createStationMock(secondStationName, 4001);
+    page.createStationMock({
+      name: EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_1],
+    });
+
+    page.createStationMock({
+      name: SECOND_EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_2],
+    });
+
+    page.activateStation(EXAMPLE_STATION_NAME);
+    cy.triggerProbeAllInPocketBase();
+
+    page.activateStation(SECOND_EXAMPLE_STATION_NAME);
+    cy.triggerProbeAllInPocketBase();
+
     page.refresh();
 
-    page.activateStation(firstStationName);
-    cy.triggerProbeAllInPocketBase();
-
-    page.activateStation(secondStationName);
-    cy.triggerProbeAllInPocketBase();
-
     page.assertStationLinkValueExists(
-      secondStationName,
-      'localhost',
-      4001,
+      SECOND_EXAMPLE_STATION_NAME,
+      STATION_LINK_2,
       'Status',
       /\bActive\b/,
     );
     page.assertStationLinkValueExists(
-      firstStationName,
-      'localhost',
-      4000,
+      EXAMPLE_STATION_NAME,
+      STATION_LINK_1,
       'Status',
       /\bInactive\b/,
     );
   });
 
   it('1.3.2 - when connected to multiple stations, when probing (done by n8n) should refresh data of all stations', () => {
-    const firstStationName = 'mocked-station-1';
-    const secondStationName = 'mocked-station-2';
-    page.createStationMock(firstStationName);
+    page.createStationMock({
+      name: EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_1],
+    });
 
-    page.createStationMock(secondStationName, 4001);
+    page.createStationMock({
+      name: SECOND_EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_2],
+    });
 
     page.assertStationLinkValueExists(
-      secondStationName,
-      'localhost',
-      4001,
+      SECOND_EXAMPLE_STATION_NAME,
+      STATION_LINK_2,
       'status',
       /\bInactive\b/,
     );
     page.assertStationLinkValueExists(
-      firstStationName,
-      'localhost',
-      4000,
+      EXAMPLE_STATION_NAME,
+      STATION_LINK_1,
       'status',
       /\bInactive\b/,
     );
 
-    page.activateStation(firstStationName);
+    page.activateStation(EXAMPLE_STATION_NAME);
 
     cy.triggerProbeAllInPocketBase();
 
     page.assertStationLinkValueExists(
-      secondStationName,
-      'localhost',
-      4001,
+      SECOND_EXAMPLE_STATION_NAME,
+      STATION_LINK_2,
       'Status',
       /\bInactive\b/,
     );
     page.assertStationLinkValueExists(
-      firstStationName,
-      'localhost',
-      4000,
+      EXAMPLE_STATION_NAME,
+      STATION_LINK_1,
       'Status',
       /\bActive\b/,
     );
   });
 
   it('1.3.3 - when connected to two stations, when one activates and one not, then deactivating it, should alert critical connection error message', () => {
-    const firstStationName = 'mocked-station-1';
-    const secondStationName = 'mocked-station-2';
+    page.createStationMock({
+      name: EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_1],
+    });
 
-    page.createStationMock(firstStationName);
-    page.createStationMock(secondStationName, 4001);
+    page.createStationMock({
+      name: SECOND_EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_2],
+    });
+
     page.refresh();
 
-    page.activateStation(firstStationName);
+    page.activateStation(EXAMPLE_STATION_NAME);
     cy.triggerProbeAllInPocketBase();
 
-    page.deactivateStation(firstStationName);
+    page.deactivateStation(EXAMPLE_STATION_NAME);
     cy.triggerProbeAllInPocketBase();
 
-    page.assertConnectedCriticalAlertVisible('No active stations detected');
+    page.assertAlertVisible(
+      'connection',
+      'critical',
+      'No active stations detected',
+    );
   });
 
   it('1.3.4 - when connected to two stations, when one activates and one not, activating the second station not through the app, should alert', () => {
-    const firstStationName = 'mocked-station-1';
-    const secondStationName = 'mocked-station-2';
-    const secondStationPort = 4001;
-    const secondStationHost = 'localhost';
+    page.createStationMock({
+      name: EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_1],
+    });
 
-    page.createStationMock(firstStationName);
-    page.createStationMock(
-      secondStationName,
-      secondStationPort,
-      secondStationHost,
-    );
+    page.createStationMock({
+      name: SECOND_EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_2],
+    });
+
     page.refresh();
 
-    page.activateStation(firstStationName);
+    page.activateStation(EXAMPLE_STATION_NAME);
     cy.triggerProbeAllInPocketBase();
-
-    cy.request({
-      method: 'POST',
-      url: `http://${secondStationHost}:${secondStationPort}/api/setActive`,
-      body: {
-        active: true,
-      },
+    page.sendRequestToStationLink(STATION_LINK_2, '/api/setActive', 'POST', {
+      active: true,
     });
+
     cy.triggerProbeAllInPocketBase();
 
-    page.assertConnectedCriticalAlertVisible(
-      `criticalconnection${secondStationName}Station ${secondStationName} has active link while another station is active`,
+    page.assertAlertVisible(
+      'connection',
+      'critical',
+      `criticalconnection${SECOND_EXAMPLE_STATION_NAME}Station ${SECOND_EXAMPLE_STATION_NAME} has active link while another station is active`,
     );
   });
 
   it('1.3.5 - when connected to a station with two links, when one activates and one not, activating the second link not through the app, should alert', () => {
-    const stationName = 'mocked-station';
-
-    const firstLinkPort = 4000;
-    const firstLinkHost = 'localhost';
-    const firstLinkId = `${firstLinkHost}-${firstLinkPort}`;
-
-    const secondLinkPort = 4001;
-    const secondLinkHost = 'localhost';
-    const secondLinkId = `${secondLinkHost}-${secondLinkPort}`;
-
-    page.createStationMockWithMultipleLinks(stationName, [
-      { host: firstLinkHost, port: firstLinkPort, id: firstLinkId },
-      { host: secondLinkHost, port: secondLinkPort, id: secondLinkId },
-    ]);
+    page.createStationMock({
+      name: EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_1, STATION_LINK_2],
+    });
 
     page.refresh();
 
-    page.activateStationLink(stationName, firstLinkId);
+    page.activateStationLink(EXAMPLE_STATION_NAME, STATION_LINK_1);
     cy.triggerProbeAllInPocketBase();
-
-    cy.request({
-      method: 'POST',
-      url: `http://${secondLinkHost}:${secondLinkPort}/api/setActive`,
-      body: {
-        active: true,
-      },
+    page.sendRequestToStationLink(STATION_LINK_2, '/api/setActive', 'POST', {
+      active: true,
     });
     cy.triggerProbeAllInPocketBase();
 
-    page.assertConnectedCriticalAlertVisible(
-      `criticalconnection${stationName}Station ${stationName} has multiple active links (${firstLinkHost}:${firstLinkPort}, ${secondLinkHost}:${secondLinkPort})`,
+    page.assertAlertVisible(
+      'connection',
+      'critical',
+      `criticalconnection${EXAMPLE_STATION_NAME}Station ${EXAMPLE_STATION_NAME} has multiple active links (${STATION_LINK_1.host}:${STATION_LINK_1.port}, ${STATION_LINK_2.host}:${STATION_LINK_2.port})`,
     );
   });
 
   it('1.3.6 - when connected to a station, when activates,the station deactivating by its own, should alert', () => {
-    const stationName = 'mocked-station';
-
-    const stationPort = 4000;
-    const stationHost = 'localhost';
-    page.createStationMock(stationName, stationPort, stationHost);
-
-    page.activateStation(stationName);
-    cy.triggerProbeAllInPocketBase();
-
-    cy.request({
-      method: 'POST',
-      url: `http://${stationHost}:${stationPort}/api/setActive`,
-      body: {
-        active: false,
-      },
+    page.createStationMock({
+      name: EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_1],
     });
+
+    page.activateStation(EXAMPLE_STATION_NAME);
     cy.triggerProbeAllInPocketBase();
 
-    page.assertConnectedCriticalAlertVisible(
-      `criticalconnection${stationName}Active station ${stationName} has no active links`,
+    page.sendRequestToStationLink(STATION_LINK_1, '/api/setActive', 'POST', {
+      active: false,
+    });
+
+    cy.triggerProbeAllInPocketBase();
+
+    page.assertAlertVisible(
+      'connection',
+      'critical',
+      `criticalconnection${EXAMPLE_STATION_NAME}Active station ${EXAMPLE_STATION_NAME} has no active links`,
     );
-    page.assertConnectedCriticalAlertVisible('No active stations detected');
+    page.assertAlertVisible(
+      'connection',
+      'critical',
+      'No active stations detected',
+    );
   });
 
   it('1.3.7 - when connected to a station, when activates,and link gets disconnected, should alert', () => {
-    const stationName = 'mocked-station';
+    page.createStationMock({
+      name: EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_1],
+    });
 
-    const stationPort = 4000;
-    const stationHost = 'localhost';
-    page.createStationMock(stationName, stationPort, stationHost);
-
-    page.activateStation(stationName);
+    page.activateStation(EXAMPLE_STATION_NAME);
     cy.triggerProbeAllInPocketBase();
 
-    page.stopMockStationServer(stationName);
+    page.stopMockStationLinkServer(STATION_LINK_1.id);
     cy.triggerProbeAllInPocketBase();
 
-    page.assertStationIsUnreachableActive(stationName);
+    page.assertStationIsUnreachableActive(EXAMPLE_STATION_NAME);
   });
 
   it('1.3.8 - when connected to a station with two links, should be able to activate specific link', () => {
-    const stationName = 'mocked-station';
-
-    const firstLinkPort = 4000;
-    const firstLinkHost = 'localhost';
-    const firstLinkId = `${firstLinkHost}-${firstLinkPort}`;
-
-    const secondLinkPort = 4001;
-    const secondLinkHost = 'localhost';
-    const secondLinkId = `${secondLinkHost}-${secondLinkPort}`;
-
-    page.createStationMockWithMultipleLinks(stationName, [
-      { host: firstLinkHost, port: firstLinkPort, id: firstLinkId },
-      { host: secondLinkHost, port: secondLinkPort, id: secondLinkId },
-    ]);
+    page.createStationMock({
+      name: EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_1, STATION_LINK_2],
+    });
 
     page.refresh();
 
-    page.activateStationLink(stationName, firstLinkId);
+    page.activateStationLink(EXAMPLE_STATION_NAME, STATION_LINK_1);
     cy.triggerProbeAllInPocketBase();
   });
 });
