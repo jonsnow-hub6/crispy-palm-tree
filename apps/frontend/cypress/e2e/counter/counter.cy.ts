@@ -68,6 +68,8 @@ describe('Counter', () => {
 
     cy.triggerProbeAllInPocketBase();
 
+    page.refresh();
+
     page.sendRequestToStationLink(STATION_LINK_1, '/api/setCounter', 'POST', {
       setCounter: 999,
     });
@@ -97,6 +99,8 @@ describe('Counter', () => {
     });
 
     cy.triggerProbeAllInPocketBase();
+
+    page.refresh();
 
     page.sendRequestToStationLink(STATION_LINK_1, '/api/setCounter', 'POST', {
       setCounter: 999,
