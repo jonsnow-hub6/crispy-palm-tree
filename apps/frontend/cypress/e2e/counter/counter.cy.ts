@@ -78,6 +78,9 @@ describe('Counter', () => {
       setCounter: 1,
     });
 
+    page.assertStationVisible(EXAMPLE_STATION_NAME);
+    page.assertStationVisible(SECOND_EXAMPLE_STATION_NAME);
+
     cy.triggerProbeAllInPocketBase();
 
     page.assertAlertVisible(
@@ -99,7 +102,6 @@ describe('Counter', () => {
     });
 
     cy.triggerProbeAllInPocketBase();
-
     page.refresh();
 
     page.sendRequestToStationLink(STATION_LINK_1, '/api/setCounter', 'POST', {
@@ -109,6 +111,9 @@ describe('Counter', () => {
     page.sendRequestToStationLink(STATION_LINK_2, '/api/setCounter', 'POST', {
       setCounter: 1,
     });
+
+    page.assertStationVisible(EXAMPLE_STATION_NAME);
+    page.assertStationVisible(SECOND_EXAMPLE_STATION_NAME);
 
     cy.triggerProbeAllInPocketBase();
 
@@ -135,13 +140,14 @@ describe('Counter', () => {
     );
   });
 
-  it('3.2.3 - go to stations page, add station, get counter, decrease counter value, get notification ', () => {
+  it('3.2.3 - go to stations page, add station, get counter, decrease counter value, get notification counter decreased', () => {
     page.createStationMock({
       name: EXAMPLE_STATION_NAME,
       stationLinks: [STATION_LINK_1],
     });
 
     cy.triggerProbeAllInPocketBase();
+    page.refresh();
 
     page.sendRequestToStationLink(STATION_LINK_1, '/api/setCounter', 'POST', {
       setCounter: 999,
@@ -152,6 +158,8 @@ describe('Counter', () => {
     page.sendRequestToStationLink(STATION_LINK_1, '/api/setCounter', 'POST', {
       setCounter: 1,
     });
+
+    page.assertStationVisible(EXAMPLE_STATION_NAME);
 
     cy.triggerProbeAllInPocketBase();
 

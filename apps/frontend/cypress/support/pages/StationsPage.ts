@@ -167,7 +167,7 @@ export class StationsPage {
   clickConfirmActivationButton() {
     cy.get('[data-cy=station-activation-confirm-button]', {
       timeout: 3000,
-    }).click();
+    }).click({ force: true });
   }
 
   activateStation(stationName: string) {
@@ -180,6 +180,7 @@ export class StationsPage {
     cy.get(`[data-cy=station-link-btn-${stationName}-${id}]`).click({
       force: true,
     });
+    cy.wait(500);
     this.clickConfirmActivationButton();
   }
 
