@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import RaphaPllGraph from '@/components/RaphaPllGraph';
 import RaphaSnrGraph from '@/components/RaphaSnrGraph';
 import RaphaCarrierPhaseGraph from '@/components/RaphaCarrierPhaseGraph';
@@ -9,23 +9,28 @@ import { useRaphaRealtime } from '@/hooks/useRaphaRealtime';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { ChevronDown, Layers, Activity } from 'lucide-react';
+import { pb } from '@/lib/pocketbase';
 
 export default function RaphaPage() {
   useRaphaRealtime();
 
   const pllPoints = useSelector((s: RootState) => s.rapha?.pllPoints ?? []);
-  const snrPoints = useSelector((s: RootState) => s.rapha?.snrPoints ?? []);
-
+  const [decoders, setDecoders] = useState<string[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedDecoder, setSelectedDecoder] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  const decoders = useMemo(() => {
-    const set = new Set<string>();
-    for (const p of pllPoints) if (p.decoderId) set.add(p.decoderId);
-    for (const p of snrPoints) if (p.decoderId) set.add(p.decoderId);
-    return Array.from(set).sort();
-  }, [pllPoints, snrPoints]);
+  useEffect(() => {
+    const fetchDecoders = async () => {
+      const result = await pb.collection('decoders').getFullList({
+        fields: 'decoderId',
+      });
+      const decodersId = result.map((r) => r.decoderId);
+      setDecoders(decodersId);
+    };
+
+    fetchDecoders();
+  }, []);
 
   useEffect(() => {
     if (!selectedDecoder && decoders.length > 0)
