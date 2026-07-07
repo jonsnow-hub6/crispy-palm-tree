@@ -312,6 +312,7 @@ export default function LeoLogger({ decoderId }: Props) {
             <div className="relative">
               <Wand2 className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <Input
+                data-cy="schema-form-field-magic"
                 placeholder="Magic"
                 value={expectedMagic}
                 onChange={(e) => setExpectedMagic(e.target.value)}
@@ -448,6 +449,7 @@ export default function LeoLogger({ decoderId }: Props) {
                               ? `Incomplete Old Preset transition`
                               : `Project ID: ${item.projectId}`
                     }
+                    data-magic-mismatch={magicMismatch}
                     key={`${item.id}-${virtualRow.index}`}
                     style={{
                       position: 'absolute',

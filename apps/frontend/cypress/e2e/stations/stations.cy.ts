@@ -37,7 +37,7 @@ describe('Stations', () => {
     };
 
     page.openCreateStationDialog();
-    page.fillFields({
+    cy.fillSchemaFormFields({
       name: name,
       host: 'localhost',
       port: '9090',
@@ -231,13 +231,13 @@ describe('Stations', () => {
       SECOND_EXAMPLE_STATION_NAME,
       STATION_LINK_2,
       'status',
-      /\bInactive\b/,
+      createStringSearchRegex('Inactive'),
     );
     page.assertStationLinkValueExists(
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
       'status',
-      /\bInactive\b/,
+      createStringSearchRegex('Inactive'),
     );
 
     page.activateStation(EXAMPLE_STATION_NAME);

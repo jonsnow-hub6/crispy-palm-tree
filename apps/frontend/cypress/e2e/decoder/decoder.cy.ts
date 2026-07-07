@@ -112,4 +112,56 @@ describe('Decoder', () => {
         );
       });
   });
+
+  it.only('4.1.3 - create a station, add a preset, sync the preset to the station, activate station, set an magic number, inject packets to the logger with not matching magic ', () => {
+    stationsPage.visit();
+    stationsPage.createStationMock({
+      name: EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_1],
+    });
+    cy.triggerProbeAllInPocketBase();
+
+    const presetsPage = new PresetsPage();
+    presetsPage.visit();
+    presetsPage.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
+
+    const dashboardPage = new DashboardPage();
+    dashboardPage.visit();
+    dashboardPage.changeToPreset(PRESETS_JSON_PRESET_NAME);
+    cy.triggerProbeAllInPocketBase();
+
+    stationsPage.visit();
+
+    stationsPage.activateStationLink(EXAMPLE_STATION_NAME, STATION_LINK_1);
+
+    cy.triggerProbeAllInPocketBase();
+    page.visit();
+
+    cy.wait(1000);
+
+    cy.fillSchemaFormFields({
+      magic: '1234',
+    });
+
+    page
+      .injectLeoRecord({
+        projectId: 'firstCommand',
+        payload: '0x00000000000002',
+        decoderId: 'decoder1',
+        timeOfArrival: new Date().toISOString(),
+      })
+      .then((response) => {
+        expect(response.status).to.equal(200);
+
+        cy.wait(1000);
+
+        cy.contains('WAITING', { timeout: 10000 }).should('be.visible');
+
+        page.getLeoLogValue(
+          0,
+          'magic-mismatch',
+          createStringSearchRegex(`true`),
+        );
+      });
+  });
 });
