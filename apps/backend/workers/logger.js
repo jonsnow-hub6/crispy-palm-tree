@@ -61,7 +61,7 @@ async function runForever() {
         messageType: Math.floor(Math.random() * 10),
         management: Math.floor(Math.random() * 10),
         threshold: Math.floor(Math.random() * 10),
-        decoderId: `decoder${Math.floor(Math.random() * 2) + 1}`,
+        decoderId: `decoder2`,
       },
       {
         projectId: '1234',
@@ -73,7 +73,7 @@ async function runForever() {
         messageType: Math.floor(Math.random() * 10),
         management: Math.floor(Math.random() * 10),
         threshold: Math.floor(Math.random() * 10),
-        decoderId: `decoder${Math.floor(Math.random() * 2) + 1}`,
+        decoderId: `decoder2`,
       },
       {
         projectId: '1234',
@@ -85,7 +85,7 @@ async function runForever() {
         management: Math.floor(Math.random() * 10),
         threshold: Math.floor(Math.random() * 10),
         timeOfArrival: new Date().toISOString(),
-        decoderId: `decoder${Math.floor(Math.random() * 2) + 1}`,
+        decoderId: `decoder2`,
       },
       // {
       //   projectId: '1245',
