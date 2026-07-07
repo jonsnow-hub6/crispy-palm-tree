@@ -3,9 +3,9 @@ set -euo pipefail
 
 PB_URL="${VITE_POCKETBASE_URL:-http://127.0.0.1:8090}"
 
-ADMIN_EMAIL="${PB_ADMIN_EMAIL:-admin@test.com}"
-ADMIN_PASSWORD="${PB_ADMIN_PASSWORD:-password123456}"
-
+POCKETBASE_USERNAME="${SUPERUSER:-admin@test.com}"
+POCKETBASE_PASSWORD="${PB_SUPERUSER_PASSWORD:-password123456}"
+# POCKETBASE_USERNAME
 PB_BIN="./apps/backend/pocketbase"
 
 echo "Using PocketBase: $PB_URL"
@@ -21,15 +21,15 @@ echo "PocketBase is ready"
 
 echo "Creating/updating PocketBase superuser..."
 
-"$PB_BIN" superuser upsert "$ADMIN_EMAIL" "$ADMIN_PASSWORD" || true
+"$PB_BIN" superuser upsert "$POCKETBASE_USERNAME" "$POCKETBASE_PASSWORD" || true
 
 echo "Authenticating superuser..."
 
 TOKEN=$(curl -s -X POST "$PB_URL/api/collections/_superusers/auth-with-password" \
   -H "Content-Type: application/json" \
   -d "{
-    \"identity\": \"$ADMIN_EMAIL\",
-    \"password\": \"$ADMIN_PASSWORD\"
+    \"identity\": \"$POCKETBASE_USERNAME\",
+    \"password\": \"$POCKETBASE_PASSWORD\"
   }" | node -e "
     let d='';
     process.stdin.on('data', c => d += c);
