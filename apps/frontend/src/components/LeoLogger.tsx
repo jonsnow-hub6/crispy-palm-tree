@@ -144,6 +144,7 @@ export default function LeoLogger({ decoderId }: Props) {
 
     let isMounted = true;
     const fetchHistory = async () => {
+      console.log('Fetching history for', decoderId);
       try {
         const result = await pb.collection('leo').getList<LeoRecord>(1, 200, {
           filter: `decoderId = "${decoderId}"`,
@@ -197,6 +198,13 @@ export default function LeoLogger({ decoderId }: Props) {
           return merged;
         });
       } catch (err) {
+        console.error('Failed to subscribe to leo', {
+          err,
+          baseUrl: pb.baseURL,
+          auth: pb.authStore.isValid,
+          token: pb.authStore.token,
+        });
+
         console.error('Failed to fetch historical leo logs', err);
       }
     };
@@ -232,6 +240,10 @@ export default function LeoLogger({ decoderId }: Props) {
     },
     [decoderId],
   );
+
+  useEffect(() => {
+    console.log('decoderId changed:', decoderId);
+  }, [decoderId]);
 
   useLeoRealtime(appendRecords);
 

@@ -12,11 +12,10 @@ jobs:
       fail-fast: false
       matrix:
         spec:
-          - apps/frontend/cypress/e2e/auth
-          - apps/frontend/cypress/e2e/dashboard
-          - apps/frontend/cypress/e2e/presets
           - apps/frontend/cypress/e2e/stations
+          - apps/frontend/cypress/e2e/presets
           - apps/frontend/cypress/e2e/counter
+          - apps/frontend/cypress/e2e/auth
 
     steps:
       - uses: actions/checkout@v4

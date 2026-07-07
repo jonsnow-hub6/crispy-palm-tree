@@ -343,6 +343,8 @@ Cypress.Commands.add('resetDB', () => {
     'notifications',
     'alerts',
     'actions',
+    'leo',
+    'rapha',
   ];
   cy.resetCollection(collectionsToReset);
 });
