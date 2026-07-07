@@ -13,6 +13,7 @@ import {
   STATION_LINK_3,
 } from './consts';
 import { Station } from '../../support/types';
+import { createStringSearchRegex } from '../../support/utils/utils';
 
 describe('Stations', () => {
   const page = new StationsPage();
@@ -131,7 +132,7 @@ describe('Stations', () => {
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
       'Status',
-      /\bInactive\b/,
+      createStringSearchRegex('Inactive'),
     );
   });
 
@@ -153,7 +154,7 @@ describe('Stations', () => {
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
       'Preset',
-      new RegExp(`^${PRESETS_JSON_PRESET_NAME}`, 'i'),
+      createStringSearchRegex(PRESETS_JSON_PRESET_NAME),
     );
   });
 
@@ -169,7 +170,7 @@ describe('Stations', () => {
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
       'Status',
-      /\bActive\b/,
+      createStringSearchRegex('Active'),
     );
 
     page.deactivateStation(EXAMPLE_STATION_NAME);
@@ -178,7 +179,7 @@ describe('Stations', () => {
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
       'Status',
-      /\bInactive\b/,
+      createStringSearchRegex('Inactive'),
     );
   });
 
@@ -205,13 +206,13 @@ describe('Stations', () => {
       SECOND_EXAMPLE_STATION_NAME,
       STATION_LINK_2,
       'Status',
-      /\bActive\b/,
+      createStringSearchRegex('Active'),
     );
     page.assertStationLinkValueExists(
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
       'Status',
-      /\bInactive\b/,
+      createStringSearchRegex('Inactive'),
     );
   });
 
@@ -247,13 +248,13 @@ describe('Stations', () => {
       SECOND_EXAMPLE_STATION_NAME,
       STATION_LINK_2,
       'Status',
-      /\bInactive\b/,
+      createStringSearchRegex('Inactive'),
     );
     page.assertStationLinkValueExists(
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
       'Status',
-      /\bActive\b/,
+      createStringSearchRegex('Active'),
     );
   });
 

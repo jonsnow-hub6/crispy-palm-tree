@@ -46,8 +46,6 @@ services:
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       - SERVER_API_URL=http://host.docker.internal:8090/api
     volumes:
-      - n8n_data:/home/node/.n8n
+      - ./apps/n8n/data:/home/node/.n8n
+      - ./splinter_cron_flow.json:/home/node/splinter_cron_flow.json
     restart: unless-stopped
-
-volumes:
-  n8n_data:

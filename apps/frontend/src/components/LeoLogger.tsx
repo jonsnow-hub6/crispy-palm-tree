@@ -436,6 +436,18 @@ export default function LeoLogger({ decoderId }: Props) {
 
                 return (
                   <div
+                    data-cy="leo-log"
+                    data-status={
+                      item.presetStatus === 'valid'
+                        ? `Preset Action #${(item.presetIndex ?? 0) + 1} (Valid)`
+                        : item.presetStatus === 'incorrect_order'
+                          ? `Incorrect Order: Expected action #${(item.presetIndex ?? 0) + 1}`
+                          : item.presetStatus === 'unexpected_action'
+                            ? `Unexpected Action: Not in preset`
+                            : item.presetStatus === 'incomplete_old_preset'
+                              ? `Incomplete Old Preset transition`
+                              : `Project ID: ${item.projectId}`
+                    }
                     key={`${item.id}-${virtualRow.index}`}
                     style={{
                       position: 'absolute',

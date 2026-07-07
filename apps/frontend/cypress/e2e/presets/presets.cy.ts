@@ -5,6 +5,7 @@ import {
 import DashboardPage from '../../support/pages/DashboardPage';
 import PresetsPage from '../../support/pages/PresetsPage';
 import StationsPage from '../../support/pages/StationsPage';
+import { createStringSearchRegex } from '../../support/utils/utils';
 import {
   EXAMPLE_STATION_NAME,
   SECOND_EXAMPLE_STATION_NAME,
@@ -48,10 +49,8 @@ describe('Presets', () => {
     page.assertPresetValueExists(
       newName,
       'color',
-      new RegExp(`^${newColor}`, 'i'),
+      createStringSearchRegex(newColor),
     );
-    // page.submitForm();
-    // page.assertCreateRequestPayload(payload);
   });
 
   it('2.1.3 - set existing preset as activated preset in mainDashboard', () => {
