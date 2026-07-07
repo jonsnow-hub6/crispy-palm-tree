@@ -54,6 +54,6 @@ jobs:
           CYPRESS_BASE_URL: http://127.0.0.1:4200
           VITE_POCKETBASE_URL: http://127.0.0.1:8090
         run: |
-          npx cypress run \
+          npm run test:e2e-ci \
             --config-file apps/frontend/cypress/cypress.config.ts \
             --spec '${{ matrix.spec }}/*.cy.ts'

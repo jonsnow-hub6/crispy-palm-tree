@@ -19,9 +19,9 @@
     "spellcheck": "cspell lint \"apps/**/*.{ts,tsx,js,jsx,md}\" --no-progress",
     "ci:check": "npm run format:check && npm run lint && npm run spellcheck",
     "prepare": "husky",
-    "test:e2e-open": "npx cypress open --config-file apps/frontend/cypress/cypress.config.ts",
+    "test:e2e-open": "./apps/frontend/cypress/scripts/cypress-local.sh",
     "test:e2e": "npx cypress run --config-file apps/frontend/cypress/cypress.config.ts",
-    "test:e2e-ci": "npx cypress run --config-file apps/frontend/cypress/cypress.config.ts --headless"
+    "test:e2e-ci": "./apps/frontend/cypress/scripts/cypress-ci.sh"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

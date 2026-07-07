@@ -67,7 +67,7 @@ describe('Decoder', () => {
       });
   });
 
-  it.only('4.1.2 - create a station, add a preset, sync the preset to the station, activate station, inject packets to the logger so they wont match the transmitted preset. then the preset in the navbar should be red and so does the logs', () => {
+  it('4.1.2 - create a station, add a preset, sync the preset to the station, activate station, inject packets to the logger so they wont match the transmitted preset. then the preset in the navbar should be red and so does the logs', () => {
     stationsPage.visit();
     stationsPage.createStationMock({
       name: EXAMPLE_STATION_NAME,
