@@ -1,8 +1,4 @@
 describe('Auth - Protected Routes', () => {
-  beforeEach(() => {
-    cy.mockApi();
-  });
-
   it('redirects unauthenticated user to /login', () => {
     // Ensure no auth stored
     cy.visit('/');

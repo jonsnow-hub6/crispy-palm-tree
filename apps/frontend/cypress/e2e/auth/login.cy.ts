@@ -1,11 +1,20 @@
 import LoginPage from '../../support/pages/LoginPage';
+import {
+  INVALID_PASSWORD,
+  INVALID_USERNAME,
+  VALID_PASSWORD,
+  VALID_USERNAME,
+} from './consts';
 
 describe('Auth - Login', () => {
-  const page = new LoginPage();
+  const loginPage = new LoginPage();
 
   beforeEach(() => {
-    cy.mockApi();
-    page.visit();
+    loginPage.injectValidUsernameAndPasswordToPocketBase(
+      VALID_USERNAME,
+      VALID_PASSWORD,
+    );
+    loginPage.visit();
   });
 
   it('shows login form', () => {
@@ -15,21 +24,16 @@ describe('Auth - Login', () => {
   });
 
   it('shows error on invalid credentials (mocked)', () => {
-    // Override auth intercept to return 400
-    cy.intercept('POST', '**/api/collections/users/auth-with-password', {
-      statusCode: 400,
-      body: { message: 'Invalid credentials' },
-    });
-    page.fillUsername('bad');
-    page.fillPassword('bad');
-    page.submit();
+    loginPage.fillUsername(INVALID_USERNAME);
+    loginPage.fillPassword(INVALID_PASSWORD);
+    loginPage.submit();
     cy.get('[data-cy=login-error]').should('exist');
   });
 
   it('redirects on successful login (mocked)', () => {
-    page.fillUsername('testUser');
-    page.fillPassword('password');
-    page.submit();
+    loginPage.fillUsername(VALID_USERNAME);
+    loginPage.fillPassword(VALID_PASSWORD);
+    loginPage.submit();
     cy.location('pathname').should('eq', '/');
   });
 });
