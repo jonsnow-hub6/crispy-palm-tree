@@ -1,0 +1,8 @@
+{
+  "presetName": "test2",
+  "commands": [
+    { "id": "action1", "payload": "0x00000000000001" },
+    { "id": "action2", "payload": "0x00000000000002" },
+    { "id": "action3", "payload": "0x00000000000003" }
+  ]
+}

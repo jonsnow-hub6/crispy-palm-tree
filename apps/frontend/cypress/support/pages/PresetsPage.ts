@@ -1,4 +1,7 @@
-import { PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME } from '../consts';
+import {
+  PRESETS_JSON_NAME,
+  PRESETS_JSON_PRESET_NAME,
+} from '../../e2e/presets/consts';
 
 export class PresetsPage {
   visit() {
@@ -73,12 +76,6 @@ export class PresetsPage {
 
   assertPresetValueExists(name: string, label: string, regex?: RegExp) {
     const presetSelector = `[data-cy="preset-item-${name}"]`;
-    // data-cy={`preset-item-${preset.name}`}
-    //
-    // Read the data directly from DOM data-* attributes.
-    // No hover needed — link values are rendered as data-link-* attributes
-    // on the wrapper element by StationGraph, making this immune to
-    // tooltip timing, hover mechanics, and event delegation quirks.
     const attrName = `data-${label.toLowerCase()}`;
 
     cy.get(presetSelector, { timeout: 10000 }).should(($el) => {
@@ -91,7 +88,6 @@ export class PresetsPage {
       }
     });
   }
-  // data-color={`preset-${preset.name}-${preset.color}`}
 }
 
 export default PresetsPage;

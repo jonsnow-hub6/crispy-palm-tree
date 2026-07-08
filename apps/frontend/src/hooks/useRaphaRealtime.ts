@@ -59,6 +59,7 @@ async function loadInitialData() {
     const pll = await pb.collection('rapha').getFullList({
       filter: `name="pllLockState" && created >= "${since}"`,
       sort: 'created',
+      $autoCancel: false,
     });
 
     const pllPoints = pll
@@ -83,6 +84,7 @@ async function loadInitialData() {
     const carrier = await pb.collection('rapha').getFullList({
       filter: `name="carrierPhase" && created >= "${since}"`,
       sort: 'created',
+      $autoCancel: false,
     });
 
     const carrierPoints = carrier
@@ -112,6 +114,7 @@ async function loadInitialData() {
     const snr = await pb.collection('rapha').getFullList({
       filter: `name="snr" && created >= "${since}"`,
       sort: 'created',
+      $autoCancel: false,
     });
 
     const snrPoints = snr

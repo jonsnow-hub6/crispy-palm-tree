@@ -325,8 +325,9 @@ export default function LeoLogger({ decoderId }: Props) {
                 Δ
               </span>
               <Input
+                data-cy="schema-form-field-delta"
                 type="number"
-                placeholder="0"
+                // placeholder="0"
                 value={counterDelta}
                 onChange={(e) => setCounterDelta(e.target.value)}
                 className="w-[70px] h-8 pl-5 text-xs bg-background border-dashed focus-visible:border-solid"
@@ -450,6 +451,7 @@ export default function LeoLogger({ decoderId }: Props) {
                               : `Project ID: ${item.projectId}`
                     }
                     data-magic-mismatch={magicMismatch}
+                    data-preset-status={item.presetStatus}
                     key={`${item.id}-${virtualRow.index}`}
                     style={{
                       position: 'absolute',

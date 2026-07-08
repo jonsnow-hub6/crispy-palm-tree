@@ -1,4 +1,4 @@
 {
   "presetName": "test1",
-  "commands": [{ "id": "firstCommand", "payload": "0x00000000000001" }]
+  "commands": [{ "id": "testProjectId", "payload": "0x00000000000001" }]
 }

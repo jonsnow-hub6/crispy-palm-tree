@@ -1,7 +1,3 @@
-import {
-  PRESETS_JSON_NAME,
-  PRESETS_JSON_PRESET_NAME,
-} from '../../support/consts';
 import DashboardPage from '../../support/pages/DashboardPage';
 import PresetsPage from '../../support/pages/PresetsPage';
 import StationsPage from '../../support/pages/StationsPage';
@@ -12,6 +8,7 @@ import {
   STATION_LINK_1,
   STATION_LINK_2,
 } from '../stations/consts';
+import { PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME } from './consts';
 
 describe('Presets', () => {
   const page = new PresetsPage();

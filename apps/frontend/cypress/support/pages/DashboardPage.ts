@@ -1,4 +1,4 @@
-import { PRESET_CONFIRMATION_PASSWORD } from '../consts';
+import { PRESET_CONFIRMATION_PASSWORD } from '../../e2e/presets/consts';
 
 export class DashboardPage {
   visit() {

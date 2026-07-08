@@ -2,7 +2,7 @@
 /// <reference types="cypress" />
 
 import { AuthParameters } from '../types';
-import { POCKETBASE_URL } from './consts';
+import { pb } from './consts';
 import { CreateStationArgs } from './utils/mock-stations/mock-stations-manager';
 
 // Custom Cypress commands
@@ -56,6 +56,8 @@ declare global {
       stopMockStationServer(id: string): Chainable<void>;
       stopAllMockStationServers(): Chainable<void>;
       triggerProbeAllInPocketBase(): Chainable<void>;
+      createDecoderId(decoderId: string): Chainable<void>;
+      deleteDecoderId(decoderId: string): Chainable<void>;
     }
   }
 }
@@ -309,25 +311,23 @@ Cypress.Commands.add(
 );
 
 Cypress.Commands.add('truncateCollection', (collection: string) => {
-  const email = Cypress.env('POCKETBASE_USERNAME');
-  const password = Cypress.env('POCKETBASE_PASSWORD');
+  const truncatePromise = new Cypress.Promise((resolve, reject) => {
+    (async () => {
+      try {
+        const records = await pb.collection(collection).getFullList();
 
-  cy.request(
-    'POST',
-    'http://127.0.0.1:8090/api/collections/_superusers/auth-with-password',
-    {
-      identity: email,
-      password: password,
-    },
-  ).then(({ body }) => {
-    cy.request({
-      method: 'DELETE',
-      url: `http://127.0.0.1:8090/api/collections/${collection}/truncate`,
-      headers: {
-        Authorization: `Bearer ${body.token}`,
-      },
-    });
+        for (const record of records) {
+          await pb.collection(collection).delete(record.id);
+        }
+
+        resolve();
+      } catch (error) {
+        // Safely pass any errors back to Cypress
+        reject(error);
+      }
+    })();
   });
+  return cy.wrap(truncatePromise, { log: false });
 });
 
 Cypress.Commands.add('resetCollection', (collections: string[] = []) => {
@@ -341,6 +341,7 @@ Cypress.Commands.add('resetDB', () => {
     'stations',
     'presets',
     'notifications',
+    'decoders',
     'alerts',
     'actions',
     'leo',
@@ -362,12 +363,37 @@ Cypress.Commands.add('stopAllMockStationServers', () => {
 });
 
 Cypress.Commands.add('triggerProbeAllInPocketBase', () => {
-  cy.request({
-    method: 'POST',
-    url: `${POCKETBASE_URL}/api/cron/probe-all`,
-  })
-    .its('status')
-    .should('eq', 200);
+  pb.send('/api/cron/probe-all', { method: 'POST' }).then((res) => {
+    expect(res.success).to.eq(true);
+  });
+});
+
+Cypress.Commands.add('createDecoderId', (decoderId: string) => {
+  pb.collection('decoders').create({
+    decoderId: decoderId,
+  });
+});
+
+Cypress.Commands.add('deleteDecoderId', (decoderId: string) => {
+  const deletePromise = new Cypress.Promise((resolve, reject) => {
+    (async () => {
+      try {
+        const records = await pb.collection('decoders').getFullList({
+          filter: `decoderId = "${decoderId}"`,
+        });
+
+        for (const record of records) {
+          await pb.collection('decoders').delete(record.id);
+        }
+
+        resolve();
+      } catch (error) {
+        // Safely pass any errors back to Cypress
+        reject(error);
+      }
+    })();
+  });
+  return cy.wrap(deletePromise, { log: false });
 });
 
 export {};

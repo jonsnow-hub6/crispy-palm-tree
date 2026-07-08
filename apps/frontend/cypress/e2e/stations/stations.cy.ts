@@ -2,10 +2,6 @@ import DashboardPage from '../../support/pages/DashboardPage';
 import PresetsPage from '../../support/pages/PresetsPage';
 import StationsPage from '../../support/pages/StationsPage';
 import {
-  PRESETS_JSON_NAME,
-  PRESETS_JSON_PRESET_NAME,
-} from '../../support/consts';
-import {
   EXAMPLE_STATION_NAME,
   SECOND_EXAMPLE_STATION_NAME,
   STATION_LINK_1,
@@ -14,6 +10,7 @@ import {
 } from './consts';
 import { Station } from '../../support/types';
 import { createStringSearchRegex } from '../../support/utils/utils';
+import { PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME } from '../presets/consts';
 
 describe('Stations', () => {
   const page = new StationsPage();

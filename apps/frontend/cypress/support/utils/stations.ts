@@ -1,3 +1,4 @@
+import { pb } from '../consts';
 import { Station } from '../types';
 
 export const interceptStationCreate = () => {
@@ -7,36 +8,9 @@ export const interceptStationCreate = () => {
 };
 
 export const seedStationsInPocketBase = (stations: Station[]) => {
-  cy.request({
-    method: 'POST',
-    url: 'http://127.0.0.1:8090/api/collections/_superusers/auth-with-password',
-    body: {
-      identity: Cypress.env('POCKETBASE_USERNAME'),
-      password: Cypress.env('POCKETBASE_PASSWORD'),
-    },
-  }).then(({ body }) => {
-    const token = body.token;
-
-    stations.forEach((station) => {
-      cy.request({
-        method: 'POST',
-        url: 'http://127.0.0.1:8090/api/collections/stations/records',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: station,
-      });
-    });
+  stations.forEach((station) => {
+    pb.collection('stations').create<Station>(station);
   });
-};
-
-export const triggerProbeAllInPocketBase = () => {
-  cy.request({
-    method: 'POST',
-    url: 'http://127.0.0.1:8090/api/cron/probe-all ',
-  })
-    .its('status')
-    .should('eq', 200);
 };
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>

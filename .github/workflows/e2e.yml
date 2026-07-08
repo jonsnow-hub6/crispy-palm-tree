@@ -53,8 +53,8 @@ jobs:
         env:
           CYPRESS_BASE_URL: http://127.0.0.1:4200
           VITE_POCKETBASE_URL: http://127.0.0.1:8090
-          PB_SUPERUSER_EMAIL: admin@gmail.com
-          PB_SUPERUSER_PASSWORD: Password1!
+          # PB_SUPERUSER_EMAIL: admin@gmail.com
+          # PB_SUPERUSER_PASSWORD: Password1!
         run: |
           npm run test:e2e-ci -- \
             --config-file apps/frontend/cypress/cypress.config.ts \

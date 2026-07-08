@@ -66,10 +66,6 @@ describe('Counter', () => {
       stationLinks: [STATION_LINK_2],
     });
 
-    cy.triggerProbeAllInPocketBase();
-
-    page.refresh();
-
     page.sendRequestToStationLink(STATION_LINK_1, '/api/setCounter', 'POST', {
       setCounter: 999,
     });
@@ -77,6 +73,9 @@ describe('Counter', () => {
     page.sendRequestToStationLink(STATION_LINK_2, '/api/setCounter', 'POST', {
       setCounter: 1,
     });
+
+    cy.triggerProbeAllInPocketBase();
+    page.refresh();
 
     page.assertStationVisible(EXAMPLE_STATION_NAME);
     page.assertStationVisible(SECOND_EXAMPLE_STATION_NAME);
@@ -101,9 +100,6 @@ describe('Counter', () => {
       stationLinks: [STATION_LINK_2],
     });
 
-    cy.triggerProbeAllInPocketBase();
-    page.refresh();
-
     page.sendRequestToStationLink(STATION_LINK_1, '/api/setCounter', 'POST', {
       setCounter: 999,
     });
@@ -111,6 +107,9 @@ describe('Counter', () => {
     page.sendRequestToStationLink(STATION_LINK_2, '/api/setCounter', 'POST', {
       setCounter: 1,
     });
+
+    cy.triggerProbeAllInPocketBase();
+    page.refresh();
 
     page.assertStationVisible(EXAMPLE_STATION_NAME);
     page.assertStationVisible(SECOND_EXAMPLE_STATION_NAME);
