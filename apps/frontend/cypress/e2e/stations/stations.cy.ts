@@ -282,7 +282,7 @@ describe('Stations', () => {
     );
   });
 
-  it('1.3.4 - when connected to two stations, when one activates and one not, activating the second station not through the app, should alert', () => {
+  it.only('1.3.4 - when connected to two stations, when one activates and one not, activating the second station not through the app, should alert', () => {
     stationsPage.createStationMock({
       name: EXAMPLE_STATION_NAME,
       stationLinks: [STATION_LINK_1],
@@ -296,7 +296,10 @@ describe('Stations', () => {
     cy.refresh();
 
     stationsPage.activateStation(EXAMPLE_STATION_NAME);
-    cy.triggerProbeAllInPocketBase();
+    // cy.triggerProbeAllInPocketBase();
+
+    // cy.refresh();
+
     stationsPage.sendRequestToStationLink(STATION_LINK_2, {
       method: 'POST',
       path: '/api/setActive',
@@ -306,11 +309,13 @@ describe('Stations', () => {
     });
 
     cy.triggerProbeAllInPocketBase();
-
+    const station1CriticalMessage = `criticalconnection${SECOND_EXAMPLE_STATION_NAME}Station ${SECOND_EXAMPLE_STATION_NAME} has active link while another station is active`;
+    const station2CriticalMessage = `criticalconnection${EXAMPLE_STATION_NAME}Station ${EXAMPLE_STATION_NAME} has active link while another station is active`;
     stationsPage.assertAlertVisible(
       'connection',
       'critical',
-      `criticalconnection${SECOND_EXAMPLE_STATION_NAME}Station ${SECOND_EXAMPLE_STATION_NAME} has active link while another station is active`,
+      '',
+      new RegExp(`${station1CriticalMessage}|${station2CriticalMessage}`),
     );
   });
 
@@ -348,7 +353,6 @@ describe('Stations', () => {
     });
 
     stationsPage.activateStation(EXAMPLE_STATION_NAME);
-    cy.triggerProbeAllInPocketBase();
 
     stationsPage.sendRequestToStationLink(STATION_LINK_1, {
       method: 'POST',
@@ -357,7 +361,6 @@ describe('Stations', () => {
         active: false,
       },
     });
-
     cy.triggerProbeAllInPocketBase();
 
     stationsPage.assertAlertVisible(

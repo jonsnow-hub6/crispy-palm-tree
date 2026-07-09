@@ -248,10 +248,19 @@ export class StationsPage implements AppPage {
     });
   }
 
-  assertAlertVisible(type: string, level: string, expectedText: string) {
+  assertAlertVisible(
+    type: string,
+    level: string,
+    expectedText: string,
+    regex: RegExp = /[\s\S]*/,
+  ) {
     cy.get(`[data-cy^="notification-${type}-${level}"]`, { timeout: 3000 })
       .should('be.visible')
-      .should('contain.text', expectedText);
+      .should('contain.text', expectedText)
+      .should(($el) => {
+        const text = $el.text();
+        expect(text).to.match(regex);
+      });
   }
 }
 

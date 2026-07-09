@@ -135,14 +135,6 @@ async function loadInitialData() {
       store.dispatch(addSnrPoints(snrPoints as Point[]));
     }
   } catch (err) {
-    console.error('Failed to subscribe to rapha', {
-      err,
-      baseUrl: pb.baseURL,
-      auth: pb.authStore.isValid,
-      token: pb.authStore.token,
-    });
-    console.log(err);
-
     console.error('Failed loading initial rapha data', err);
   }
 }
