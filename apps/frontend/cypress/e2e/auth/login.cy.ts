@@ -13,20 +13,22 @@ describe('Auth - Login', () => {
     loginPage.visit();
   });
 
-  it('shows login form', () => {
+  it('5.1.1 - when opening the app, should open log in page', () => {
+    cy.visit('/');
+    cy.location('pathname').should('eq', '/login');
     cy.get('[data-cy=username-input]').should('exist');
     cy.get('[data-cy=password-input]').should('exist');
     cy.get('[data-cy=login-btn]').should('exist');
   });
 
-  it('shows error on invalid credentials (mocked)', () => {
+  it('5.1.2 - when trying to login with invalid credentials, should not login and give error message', () => {
     loginPage.fillUsername(INVALID_USERNAME);
     loginPage.fillPassword(INVALID_PASSWORD);
     loginPage.submit();
-    cy.get('[data-cy=login-error]').should('exist');
+    loginPage.getErrorMessage().should('exist');
   });
 
-  it('redirects on successful login (mocked)', () => {
+  it('5.1.3 - when trying to login with valid credentials, should login and redirect into the main dashboard', () => {
     cy.injectUsernameAndPasswordIntoPocketBase({
       username: VALID_USERNAME,
       password: VALID_PASSWORD,

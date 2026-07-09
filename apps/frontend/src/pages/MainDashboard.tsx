@@ -114,7 +114,13 @@ export function MainDashboard() {
                             style={{ backgroundColor: ap.color }}
                           />
                           <div>
-                            <div className="text-xl font-bold">{ap.name}</div>
+                            <div
+                              className="text-xl font-bold"
+                              data-cy="active-preset"
+                              data-active-preset={ap.name}
+                            >
+                              {ap.name}
+                            </div>
                             <div className="text-sm text-muted-foreground">
                               Active preset • {ap.expand?.actions?.length || 0}{' '}
                               action(s)
@@ -154,7 +160,7 @@ export function MainDashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {presets.map((preset) => (
                     <div
-                      data-cy={`preset-item-${JSON.stringify(preset)}`}
+                      data-cy={`preset-item-${preset.name}`}
                       key={preset.id}
                       className="flex items-center justify-between p-3 border rounded-md"
                       style={{ borderColor: preset.color }}

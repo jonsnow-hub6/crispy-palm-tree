@@ -1,8 +1,9 @@
+import { AppPage } from '../abstract/page';
 import { pb } from '../consts';
 import { LeoRecord, RaphaRecord } from '../types';
 import { areTimesClose } from '../utils/utils';
 
-export class DecoderPage {
+export class DecoderPage implements AppPage {
   visit() {
     cy.visit('/decoder');
   }
@@ -11,16 +12,9 @@ export class DecoderPage {
     return new Cypress.Promise((resolve, reject) => {
       try {
         pb.collection('rapha')
-          .create(
-            {
-              name: record.name,
-              parameters: record.parameters,
-              decoderId: record.decoderId ?? 'decoder2',
-            },
-            {
-              $autoCancel: false,
-            },
-          )
+          .create(record, {
+            $autoCancel: false,
+          })
           .then(resolve)
           .catch(reject);
       } catch (err) {
@@ -86,7 +80,7 @@ export class DecoderPage {
 
   getLeoLogValue(
     index: number,
-    label: string,
+    label: 'status' | 'magic-mismatch',
     regex?: RegExp,
   ): Cypress.Chainable<string> {
     const linkSelector = `[data-cy="leo-log"]`;
@@ -108,7 +102,7 @@ export class DecoderPage {
       });
   }
 
-  insertLoggerValue(label: 'magic' | 'delta', input: number) {
+  changeLeoLoggerSettings(label: 'magic' | 'delta', input: number) {
     const inputSelector = `[data-cy=schema-form-field-${label}]`;
     cy.get(inputSelector, { timeout: 5000 }).should('exist');
     cy.wait(1000);
@@ -140,8 +134,8 @@ export class DecoderPage {
     });
   }
 
-  assertLastLockedValueAndDateAreClose(
-    date: Date,
+  assertLastLockedValueAndExpectedTimeAreClose(
+    expectedTime: Date,
     lastLocked: string,
     differenceInSecond: number,
   ) {
@@ -150,8 +144,8 @@ export class DecoderPage {
     const [hours, minutes, seconds] = lastLocked.split(':').map(Number);
 
     lastLockedDate.setHours(hours, minutes, seconds, 0);
-    expect(areTimesClose(date, lastLockedDate, differenceInSecond)).to.equal(
-      true,
-    );
+    expect(
+      areTimesClose(expectedTime, lastLockedDate, differenceInSecond),
+    ).to.equal(true);
   }
 }

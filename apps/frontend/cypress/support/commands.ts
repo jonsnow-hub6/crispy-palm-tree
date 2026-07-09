@@ -14,6 +14,7 @@ declare global {
       env(key: 'POCKETBASE_PASSWORD'): string;
     }
     interface Chainable {
+      refresh(): Chainable<void>;
       login(
         username?: string,
         password?: string,
@@ -61,9 +62,9 @@ declare global {
       truncateCollection(collection: string): Chainable<void>;
       resetCollection(collections?: string[]): Chainable<void>;
       resetDB(): Chainable<void>;
-      createMockStationServer(args: CreateStationArgs): Chainable<void>;
-      stopMockStationServer(id: string): Chainable<void>;
-      stopAllMockStationServers(): Chainable<void>;
+      createMockStationsLinkTcpServer(args: CreateStationArgs): Chainable<void>;
+      killMockStationsLinkTcpServer(id: string): Chainable<void>;
+      killAllMockStationsLinkTcpServers(): Chainable<void>;
       triggerProbeAllInPocketBase(): Chainable<void>;
       createDecoderId(decoderId: string): Chainable<void>;
       deleteDecoderId(decoderId: string): Chainable<void>;
@@ -165,6 +166,10 @@ const resolveSchemaFormField = (
     return cy.wrap(getFallbackField($form));
   });
 };
+
+Cypress.Commands.add('refresh', () => {
+  cy.reload(true);
+});
 
 Cypress.Commands.add(
   'injectUsernameAndPasswordIntoPocketBase',
@@ -394,15 +399,15 @@ Cypress.Commands.add('resetDB', () => {
   cy.resetCollection(collectionsToReset);
 });
 
-Cypress.Commands.add('createMockStationServer', (args) => {
+Cypress.Commands.add('createMockStationsLinkTcpServer', (args) => {
   cy.task('startMockStationServer', args);
 });
 
-Cypress.Commands.add('stopMockStationServer', (id: string) => {
+Cypress.Commands.add('killMockStationsLinkTcpServer', (id: string) => {
   cy.task('stopMockStationServer', { id });
 });
 
-Cypress.Commands.add('stopAllMockStationServers', () => {
+Cypress.Commands.add('killAllMockStationsLinkTcpServers', () => {
   cy.task('stopAllMockStationServers');
 });
 

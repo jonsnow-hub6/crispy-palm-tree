@@ -1,4 +1,6 @@
-export class LoginPage {
+import { AppPage } from '../abstract/page';
+
+export class LoginPage implements AppPage {
   visit() {
     cy.visit('/login');
   }
@@ -15,7 +17,7 @@ export class LoginPage {
     cy.get('[data-cy=login-btn]').click();
   }
 
-  getError() {
+  getErrorMessage() {
     return cy.get('[data-cy=login-error]');
   }
 }

@@ -11,6 +11,7 @@ import {
 import { Station } from '../../support/types';
 import { createStringSearchRegex } from '../../support/utils/utils';
 import { PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME } from '../presets/consts';
+import { seedStationsInPocketBase } from '../../support/utils/stations';
 
 describe('Stations', () => {
   const stationsPage = new StationsPage();
@@ -19,12 +20,12 @@ describe('Stations', () => {
 
   beforeEach(() => {
     cy.resetDB();
-    cy.stopAllMockStationServers();
+    cy.killAllMockStationsLinkTcpServers();
     cy.login();
     stationsPage.visit();
   });
 
-  it('1.1.1 - open stations page, create a new station', () => {
+  it('1.1.1 - when creating a new station, should send correct fields to the backend', () => {
     stationsPage.interceptCreateRequest();
 
     const name = 'newStation';
@@ -44,7 +45,7 @@ describe('Stations', () => {
     stationsPage.assertCreateRequestPayload(payload);
   });
 
-  it('1.1.2 - on opening app, open stations page, make sure loads stations from PocketBase into the stations page', () => {
+  it('1.1.2 - when opening the stations page, should show all stations with correct status', () => {
     const seededStations: Station[] = [
       {
         name: 'pb-seeded-station-1',
@@ -60,13 +61,13 @@ describe('Stations', () => {
       },
     ];
 
-    stationsPage.seedStationsInPocketBase(seededStations);
+    seedStationsInPocketBase(seededStations);
     dashboardPage.visit();
     stationsPage.visit();
 
-    stationsPage.getList().should('be.visible');
+    stationsPage.getStationsList().should('be.visible');
     stationsPage
-      .getList()
+      .getStationsList()
       .find('[data-cy^="station-item-"]')
       .should('have.length', seededStations.length);
 
@@ -75,7 +76,7 @@ describe('Stations', () => {
     });
   });
 
-  it.skip('1.1.3 - go to stations page, connect to a mocked station, go to a different page, kill station not through app, should show a disconnect alert', () => {
+  it.skip('1.1.3 - when connected to a station, if the station tcp connection is killed, should alert', () => {
     stationsPage.createStationMock({
       name: EXAMPLE_STATION_NAME,
       stationLinks: [STATION_LINK_1],
@@ -83,7 +84,7 @@ describe('Stations', () => {
     cy.triggerProbeAllInPocketBase();
     dashboardPage.visit();
 
-    stationsPage.stopMockStationLinkServer(EXAMPLE_STATION_NAME);
+    cy.killMockStationsLinkTcpServer(EXAMPLE_STATION_NAME);
     cy.triggerProbeAllInPocketBase();
 
     stationsPage.assertAlertVisible(
@@ -93,17 +94,17 @@ describe('Stations', () => {
     );
   });
 
-  it('1.2.1 - go to stations page, hover a station, should contain counter', () => {
+  it('1.2.1 - when creating a station, should have counter field', () => {
     stationsPage.createStationMock({
       name: EXAMPLE_STATION_NAME,
       stationLinks: [STATION_LINK_1],
     });
 
-    stationsPage.refresh();
+    cy.refresh();
 
     cy.triggerProbeAllInPocketBase();
 
-    stationsPage.refresh();
+    cy.refresh();
     cy.wait(1000);
     stationsPage.assertStationLinkValueExists(
       EXAMPLE_STATION_NAME,
@@ -113,17 +114,17 @@ describe('Stations', () => {
     );
   });
 
-  it('1.2.2 - go to stations page, hover a station, should contain status', () => {
+  it('1.2.2 - when creating a station, should have status field', () => {
     stationsPage.createStationMock({
       name: EXAMPLE_STATION_NAME,
       stationLinks: [STATION_LINK_1],
     });
 
-    stationsPage.refresh();
+    cy.refresh();
 
     cy.triggerProbeAllInPocketBase();
 
-    stationsPage.refresh();
+    cy.refresh();
     cy.wait(1000);
     stationsPage.assertStationLinkValueExists(
       EXAMPLE_STATION_NAME,
@@ -133,7 +134,7 @@ describe('Stations', () => {
     );
   });
 
-  it('1.2.3 - open stations page, create a station without preset, go to presets page, change the preset, make sure station synced', () => {
+  it('1.2.3 - when creating a station, then importing and setting a preset active, should update the station preset to the correct one', () => {
     stationsPage.createStationMock({
       name: EXAMPLE_STATION_NAME,
       stationLinks: [STATION_LINK_1],
@@ -143,7 +144,7 @@ describe('Stations', () => {
     presetPage.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
 
     dashboardPage.visit();
-    dashboardPage.changeToPreset(PRESETS_JSON_PRESET_NAME);
+    dashboardPage.changeActivePreset(PRESETS_JSON_PRESET_NAME);
 
     stationsPage.visit();
     cy.triggerProbeAllInPocketBase();
@@ -155,7 +156,7 @@ describe('Stations', () => {
     );
   });
 
-  it('1.2.4 - open stations page, when connected to a station, Activating/Deactivating should update status correctly', () => {
+  it('1.2.4 - when creating a station, then activating the station, should show the station activated, and when deactivated, should show the station deactivated', () => {
     stationsPage.createStationMock({
       name: EXAMPLE_STATION_NAME,
       stationLinks: [STATION_LINK_1],
@@ -197,7 +198,7 @@ describe('Stations', () => {
     stationsPage.activateStation(SECOND_EXAMPLE_STATION_NAME);
     cy.triggerProbeAllInPocketBase();
 
-    stationsPage.refresh();
+    cy.refresh();
 
     stationsPage.assertStationLinkValueExists(
       SECOND_EXAMPLE_STATION_NAME,
@@ -266,7 +267,7 @@ describe('Stations', () => {
       stationLinks: [STATION_LINK_2],
     });
 
-    stationsPage.refresh();
+    cy.refresh();
 
     stationsPage.activateStation(EXAMPLE_STATION_NAME);
     cy.triggerProbeAllInPocketBase();
@@ -292,7 +293,7 @@ describe('Stations', () => {
       stationLinks: [STATION_LINK_2],
     });
 
-    stationsPage.refresh();
+    cy.refresh();
 
     stationsPage.activateStation(EXAMPLE_STATION_NAME);
     cy.triggerProbeAllInPocketBase();
@@ -319,7 +320,7 @@ describe('Stations', () => {
       stationLinks: [STATION_LINK_1, STATION_LINK_2],
     });
 
-    stationsPage.refresh();
+    cy.refresh();
 
     stationsPage.activateStationLink(EXAMPLE_STATION_NAME, STATION_LINK_1);
     cy.triggerProbeAllInPocketBase();
@@ -340,7 +341,7 @@ describe('Stations', () => {
     );
   });
 
-  it('1.3.6 - when connected to a station, when activates,the station deactivating by its own, should alert', () => {
+  it('1.3.6 - when connected to a station, when activates, the station deactivating by its own, should alert', () => {
     stationsPage.createStationMock({
       name: EXAMPLE_STATION_NAME,
       stationLinks: [STATION_LINK_1],
@@ -371,7 +372,7 @@ describe('Stations', () => {
     );
   });
 
-  it('1.3.7 - when connected to a station, when activates,and link gets disconnected, should alert', () => {
+  it('1.3.7 - when connected to a station, when activates, and link gets disconnected, should alert', () => {
     stationsPage.createStationMock({
       name: EXAMPLE_STATION_NAME,
       stationLinks: [STATION_LINK_1],
@@ -380,7 +381,7 @@ describe('Stations', () => {
     stationsPage.activateStation(EXAMPLE_STATION_NAME);
     cy.triggerProbeAllInPocketBase();
 
-    stationsPage.stopMockStationLinkServer(STATION_LINK_1.id);
+    cy.killMockStationsLinkTcpServer(STATION_LINK_1.id);
     cy.triggerProbeAllInPocketBase();
 
     stationsPage.assertStationIsUnreachableActive(EXAMPLE_STATION_NAME);
@@ -392,7 +393,7 @@ describe('Stations', () => {
       stationLinks: [STATION_LINK_1, STATION_LINK_2],
     });
 
-    stationsPage.refresh();
+    cy.refresh();
 
     stationsPage.activateStationLink(EXAMPLE_STATION_NAME, STATION_LINK_1);
     cy.triggerProbeAllInPocketBase();

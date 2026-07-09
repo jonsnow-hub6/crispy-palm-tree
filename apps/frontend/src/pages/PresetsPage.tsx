@@ -398,6 +398,7 @@ export function PresetsPage() {
                 key={preset.id}
                 data-cy={`preset-item-${preset.name}`}
                 data-color={preset.color}
+                data-active={preset.active}
                 className="group flex flex-col h-full transition-all duration-300 hover:shadow-lg"
                 style={{ borderLeft: `4px solid ${preset.color}` }}
               >

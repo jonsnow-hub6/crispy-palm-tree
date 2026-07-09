@@ -1,17 +1,36 @@
 import { PRESET_CONFIRMATION_PASSWORD } from '../../e2e/presets/consts';
+import { AppPage } from '../abstract/page';
+import { createStringSearchRegex } from '../utils/utils';
 
-export class DashboardPage {
+export class DashboardPage implements AppPage {
   visit() {
     cy.visit('/');
   }
 
-  getPresetItem(name: string, timeout: number = 3000) {
-    return cy.get(`[data-cy=preset-item-${name}]`, { timeout });
+  getPresetItem(presetName: string, timeout: number = 3000) {
+    return cy.get(`[data-cy=preset-item-${presetName}]`, { timeout });
   }
 
-  clickPresetItemChange(name: string, timeout: number = 3000) {
-    cy.get(`[data-cy=preset-change-button-${name}]`, { timeout }).click({
+  clickPresetItemChange(presetName: string, timeout: number = 3000) {
+    cy.get(`[data-cy=preset-change-button-${presetName}]`, { timeout }).click({
       force: true,
+    });
+  }
+
+  assertPresetIsActive(presetName: string) {
+    // const label = 'active'
+    // // data-active-preset
+    const presetSelector = `[data-cy="active-preset"]`;
+    const attrName = `data-active-preset`;
+
+    cy.get(presetSelector, { timeout: 10000 }).should(($el) => {
+      const value = $el.attr(attrName);
+
+      expect(value, `${attrName} attribute`).to.not.equal(undefined);
+
+      expect(value!, `${attrName} value`).to.match(
+        createStringSearchRegex(presetName),
+      );
     });
   }
 
@@ -23,11 +42,11 @@ export class DashboardPage {
     cy.get('[data-cy=submit-apply-preset]').click();
   }
 
-  changeToPreset(
-    name: string,
+  changeActivePreset(
+    presetName: string,
     password: string = PRESET_CONFIRMATION_PASSWORD,
   ) {
-    this.clickPresetItemChange(name);
+    this.clickPresetItemChange(presetName);
     this.insertPasswordIntoChangePresetDialog(password);
     this.clickApplyPresetButton();
   }

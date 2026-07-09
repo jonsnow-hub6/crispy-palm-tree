@@ -1,3 +1,4 @@
+import { AppPage } from '../abstract/page';
 import { Station, StationLink, StationLinkRequest } from '../types';
 import {
   assertStationCreatePayload,
@@ -5,16 +6,12 @@ import {
   seedStationsInPocketBase,
 } from '../utils/stations';
 
-export class StationsPage {
+export class StationsPage implements AppPage {
   visit() {
     cy.visit('/stations');
   }
 
-  refresh() {
-    cy.reload(true);
-  }
-
-  getList() {
+  getStationsList() {
     return cy.get('[data-cy=stations-list]');
   }
 
@@ -22,13 +19,9 @@ export class StationsPage {
     return cy.get(`[data-cy=station-item-${id}]`);
   }
 
-  getForm() {
-    return cy.get('[data-cy=schema-form]');
-  }
-
   openCreateStationDialog() {
     cy.get('[data-cy=add-station-button]').click({ force: true });
-    this.getForm().should('be.visible');
+    cy.get('[data-cy=schema-form]').should('be.visible');
   }
 
   interceptCreateRequest() {
@@ -37,22 +30,6 @@ export class StationsPage {
 
   assertCreateRequestPayload(expectedValues: Record<string, unknown>) {
     assertStationCreatePayload(expectedValues);
-  }
-
-  seedStationsInPocketBase(stations: Station[]) {
-    seedStationsInPocketBase(stations);
-  }
-
-  fillFields(parameters: Record<string, string | number>) {
-    cy.fillSchemaFormFields(parameters);
-  }
-
-  fillFormField(fieldName: string, value: string | number) {
-    this.fillFields({ [fieldName]: value });
-  }
-
-  assertFieldValue(fieldName: string, value: string | number) {
-    cy.assertSchemaFormFieldValue(fieldName, value);
   }
 
   assertStationVisible(name: string) {
@@ -125,19 +102,15 @@ export class StationsPage {
 
   createStationMock({ name, stationLinks }: Station) {
     stationLinks.forEach(({ host, id, port }) => {
-      cy.createMockStationServer({ port, host, id });
+      cy.createMockStationsLinkTcpServer({ port, host, id });
     });
-    this.seedStationsInPocketBase([
+    seedStationsInPocketBase([
       {
         name,
         stationLinks,
       },
     ]);
     this.assertStationVisible(name);
-  }
-
-  stopMockStationLinkServer(stationName: string) {
-    cy.stopMockStationServer(stationName);
   }
 
   openStationMenu(stationName: string) {

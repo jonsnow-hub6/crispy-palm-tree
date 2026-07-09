@@ -26,7 +26,7 @@ describe('Decoder - Leo', () => {
     cy.resetDB();
     cy.deleteDecoderId(VALID_DECODER_ID);
     cy.createDecoderId(VALID_DECODER_ID);
-    cy.stopAllMockStationServers();
+    cy.killAllMockStationsLinkTcpServers();
     cy.login();
     decoderPage.visit();
   });
@@ -43,7 +43,7 @@ describe('Decoder - Leo', () => {
     presetsPage.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
 
     dashboardPage.visit();
-    dashboardPage.changeToPreset(PRESETS_JSON_PRESET_NAME);
+    dashboardPage.changeActivePreset(PRESETS_JSON_PRESET_NAME);
     cy.triggerProbeAllInPocketBase();
 
     stationsPage.visit();
@@ -61,7 +61,7 @@ describe('Decoder - Leo', () => {
 
     cy.triggerProbeAllInPocketBase();
     decoderPage.visit();
-    decoderPage.insertLoggerValue('delta', 10);
+    decoderPage.changeLeoLoggerSettings('delta', 10);
 
     decoderPage.injectLeoRecords([
       {
@@ -95,7 +95,7 @@ describe('Decoder - Leo', () => {
     presetsPage.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
 
     dashboardPage.visit();
-    dashboardPage.changeToPreset(PRESETS_JSON_PRESET_NAME);
+    dashboardPage.changeActivePreset(PRESETS_JSON_PRESET_NAME);
     cy.triggerProbeAllInPocketBase();
 
     stationsPage.visit();
@@ -104,7 +104,7 @@ describe('Decoder - Leo', () => {
 
     cy.triggerProbeAllInPocketBase();
     decoderPage.visit();
-    decoderPage.insertLoggerValue('delta', 1);
+    decoderPage.changeLeoLoggerSettings('delta', 1);
 
     decoderPage.injectLeoRecords([
       {
@@ -140,7 +140,7 @@ describe('Decoder - Leo', () => {
     presetsPage.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
 
     dashboardPage.visit();
-    dashboardPage.changeToPreset(PRESETS_JSON_PRESET_NAME);
+    dashboardPage.changeActivePreset(PRESETS_JSON_PRESET_NAME);
     cy.triggerProbeAllInPocketBase();
 
     stationsPage.visit();
@@ -149,7 +149,7 @@ describe('Decoder - Leo', () => {
 
     cy.triggerProbeAllInPocketBase();
     decoderPage.visit();
-    decoderPage.insertLoggerValue('magic', validMagic);
+    decoderPage.changeLeoLoggerSettings('magic', validMagic);
 
     decoderPage.injectLeoRecords([
       {
@@ -186,7 +186,7 @@ describe('Decoder - Leo', () => {
     presetsPage.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
 
     dashboardPage.visit();
-    dashboardPage.changeToPreset(PRESETS_JSON_PRESET_NAME);
+    dashboardPage.changeActivePreset(PRESETS_JSON_PRESET_NAME);
     cy.triggerProbeAllInPocketBase();
 
     stationsPage.visit();
@@ -195,8 +195,8 @@ describe('Decoder - Leo', () => {
 
     cy.triggerProbeAllInPocketBase();
     decoderPage.visit();
-    decoderPage.insertLoggerValue('magic', validMagic);
-    decoderPage.insertLoggerValue('delta', 10);
+    decoderPage.changeLeoLoggerSettings('magic', validMagic);
+    decoderPage.changeLeoLoggerSettings('delta', 10);
 
     decoderPage.injectLeoRecords([
       {
@@ -283,7 +283,7 @@ describe('Decoder - Leo', () => {
     );
 
     dashboardPage.visit();
-    dashboardPage.changeToPreset(MULTIPLE_ACTIONS_PRESET_NAME);
+    dashboardPage.changeActivePreset(MULTIPLE_ACTIONS_PRESET_NAME);
     cy.triggerProbeAllInPocketBase();
 
     stationsPage.visit();
@@ -292,8 +292,8 @@ describe('Decoder - Leo', () => {
 
     cy.triggerProbeAllInPocketBase();
     decoderPage.visit();
-    decoderPage.insertLoggerValue('magic', validMagic);
-    decoderPage.insertLoggerValue('delta', 10);
+    decoderPage.changeLeoLoggerSettings('magic', validMagic);
+    decoderPage.changeLeoLoggerSettings('delta', 10);
 
     decoderPage.injectLeoRecords([
       {
@@ -364,7 +364,7 @@ describe('Decoder - Leo', () => {
     );
 
     dashboardPage.visit();
-    dashboardPage.changeToPreset(MULTIPLE_ACTIONS_PRESET_NAME);
+    dashboardPage.changeActivePreset(MULTIPLE_ACTIONS_PRESET_NAME);
     cy.triggerProbeAllInPocketBase();
 
     stationsPage.visit();
@@ -373,8 +373,8 @@ describe('Decoder - Leo', () => {
 
     cy.triggerProbeAllInPocketBase();
     decoderPage.visit();
-    decoderPage.insertLoggerValue('magic', 12345678);
-    decoderPage.insertLoggerValue('delta', 10);
+    decoderPage.changeLeoLoggerSettings('magic', 12345678);
+    decoderPage.changeLeoLoggerSettings('delta', 10);
 
     decoderPage.injectLeoRecords([
       {

@@ -11,12 +11,12 @@ describe('Counter', () => {
 
   beforeEach(() => {
     cy.resetDB();
-    cy.stopAllMockStationServers();
+    cy.killAllMockStationsLinkTcpServers();
     cy.login();
     stationsPage.visit();
   });
 
-  it('3.1.1 - go to stations page, make sure counter gets updated with time', () => {
+  it('3.1.1 - when connected to a station, counter should increase over time', () => {
     stationsPage.createStationMock({
       name: EXAMPLE_STATION_NAME,
       stationLinks: [STATION_LINK_1],
@@ -34,12 +34,12 @@ describe('Counter', () => {
 
     cy.triggerProbeAllInPocketBase();
 
-    stationsPage.refresh();
+    cy.refresh();
 
     stationsPage.assertCounterIncreasing(EXAMPLE_STATION_NAME, STATION_LINK_1);
   });
 
-  it('3.1.2 - go to stations page, activate station, make sure counter attribute exist on station and updates correctly', () => {
+  it('3.1.2 - when connected to a station, the activating the station, the station counter should be the same as the link counter', () => {
     stationsPage.createStationMock({
       name: EXAMPLE_STATION_NAME,
       stationLinks: [STATION_LINK_1],
@@ -48,7 +48,7 @@ describe('Counter', () => {
     cy.triggerProbeAllInPocketBase();
 
     stationsPage.activateStationLink(EXAMPLE_STATION_NAME, STATION_LINK_1);
-
+    cy.wait(1000);
     stationsPage.assertCounterIncreasing(EXAMPLE_STATION_NAME, STATION_LINK_1);
     stationsPage
       .getStationLinkValue(EXAMPLE_STATION_NAME, STATION_LINK_1, 'Counter')
@@ -59,7 +59,7 @@ describe('Counter', () => {
       });
   });
 
-  it('3.2.1 - go to stations page, add two stations, make counters mismatch, get notification of not matching counters', () => {
+  it('3.2.1 - when connected to two stations, and their counters do not match, should receive a warning alert', () => {
     stationsPage.createStationMock({
       name: EXAMPLE_STATION_NAME,
       stationLinks: [STATION_LINK_1],
@@ -87,7 +87,7 @@ describe('Counter', () => {
     });
 
     cy.triggerProbeAllInPocketBase();
-    stationsPage.refresh();
+    cy.refresh();
 
     stationsPage.assertStationVisible(EXAMPLE_STATION_NAME);
     stationsPage.assertStationVisible(SECOND_EXAMPLE_STATION_NAME);
@@ -101,7 +101,7 @@ describe('Counter', () => {
     );
   });
 
-  it('3.2.2 - go to stations page, add two stations, make counters mismatch, get notification of not matching counters, sync counters, get notification they match', () => {
+  it('3.2.2 - when connected to two stations, and their counters do not match, should receive a warning alert, then if the stations sync, should receive notification that the stations are synced', () => {
     stationsPage.createStationMock({
       name: EXAMPLE_STATION_NAME,
       stationLinks: [STATION_LINK_1],
@@ -129,7 +129,7 @@ describe('Counter', () => {
     });
 
     cy.triggerProbeAllInPocketBase();
-    stationsPage.refresh();
+    cy.refresh();
     cy.wait(1000);
 
     stationsPage.assertStationVisible(EXAMPLE_STATION_NAME);
@@ -168,14 +168,14 @@ describe('Counter', () => {
     );
   });
 
-  it('3.2.3 - go to stations page, add station, get counter, decrease counter value, get notification counter decreased', () => {
+  it('3.2.3 - when connected to a station, if the counter has decreased instead of increase, should get error alert', () => {
     stationsPage.createStationMock({
       name: EXAMPLE_STATION_NAME,
       stationLinks: [STATION_LINK_1],
     });
 
     cy.triggerProbeAllInPocketBase();
-    stationsPage.refresh();
+    cy.refresh();
 
     stationsPage.sendRequestToStationLink(STATION_LINK_1, {
       path: '/api/setCounter',

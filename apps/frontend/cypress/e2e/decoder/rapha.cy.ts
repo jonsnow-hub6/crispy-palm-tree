@@ -8,7 +8,6 @@ describe('Decoder - Rapha', () => {
     cy.resetDB();
     cy.deleteDecoderId(VALID_DECODER_ID);
     cy.createDecoderId(VALID_DECODER_ID);
-    cy.stopAllMockStationServers();
     cy.login();
     decoderPage.visit();
   });
@@ -66,7 +65,7 @@ describe('Decoder - Rapha', () => {
         cy.wait(1000).then(() => {
           decoderPage.getLockedValues('last-locked').then((value) => {
             expect(
-              decoderPage.assertLastLockedValueAndDateAreClose(
+              decoderPage.assertLastLockedValueAndExpectedTimeAreClose(
                 timeWhenInjecting,
                 value,
                 20,
@@ -115,7 +114,7 @@ describe('Decoder - Rapha', () => {
         cy.wait(1000).then(() => {
           decoderPage.getLockedValues('last-locked').then((value) => {
             expect(
-              decoderPage.assertLastLockedValueAndDateAreClose(
+              decoderPage.assertLastLockedValueAndExpectedTimeAreClose(
                 timeWhenInjecting,
                 value,
                 20,

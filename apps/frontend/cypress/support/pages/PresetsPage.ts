@@ -1,4 +1,6 @@
-export class PresetsPage {
+import { AppPage } from '../abstract/page';
+
+export class PresetsPage implements AppPage {
   visit() {
     cy.visit('/presets');
   }
@@ -7,18 +9,18 @@ export class PresetsPage {
     return cy.get(`[data-cy=preset-item-${presetName}]`, { timeout: 3000 });
   }
 
-  openImport() {
+  openImportNewPresetDialog() {
     cy.get('[data-cy=import-json-btn]').click({ force: true });
   }
 
-  importPresetIntoInput(fixtureName: string) {
+  importJsonPresetIntoInput(fixtureName: string) {
     cy.get('[data-cy=open-preset-import-input]').selectFile(
       `apps/frontend/cypress/fixtures/${fixtureName}`,
       { force: true },
     );
   }
 
-  submitImportPresetButton() {
+  clickSubmitImportPresetButton() {
     cy.get('[data-cy=submit-json-import]').click({ force: true });
   }
 
@@ -26,40 +28,24 @@ export class PresetsPage {
     this.getPresetItem(presetName).should('be.visible');
   }
 
-  importPreset(fixtureName: string, stationName: string) {
-    this.openImport();
-    this.importPresetIntoInput(fixtureName);
-    this.submitImportPresetButton();
-    this.validatePresetExists(stationName);
+  importPreset(fixtureName: string, presetName: string) {
+    this.openImportNewPresetDialog();
+    this.importJsonPresetIntoInput(fixtureName);
+    this.clickSubmitImportPresetButton();
+    this.validatePresetExists(presetName);
   }
 
   openPresetMenu(presetName: string) {
     cy.get(`[data-cy=preset-menu-btn-${presetName}]`).click();
   }
 
-  pressEditMenuButton(presetName: string) {
+  pressPresetsEditMenuButton(presetName: string) {
     cy.get(`[data-cy=edit-preset-btn-${presetName}]`).click();
   }
 
   openEditPresetDialog(presetName: string) {
     this.openPresetMenu(presetName);
-    this.pressEditMenuButton(presetName);
-  }
-
-  fillFields(parameters: Record<string, string | number>) {
-    cy.fillSchemaFormFields(parameters);
-  }
-
-  fillFormField(fieldName: string, value: string | number) {
-    this.fillFields({ [fieldName]: value });
-  }
-
-  assertFieldValue(fieldName: string, value: string | number) {
-    cy.assertSchemaFormFieldValue(fieldName, value);
-  }
-
-  submitForm() {
-    cy.submitSchemaForm();
+    this.pressPresetsEditMenuButton(presetName);
   }
 
   assertPresetValueExists(presetName: string, label: string, regex?: RegExp) {

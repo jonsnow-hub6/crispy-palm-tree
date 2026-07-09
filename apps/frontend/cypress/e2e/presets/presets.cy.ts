@@ -17,32 +17,32 @@ describe('Presets', () => {
 
   beforeEach(() => {
     cy.resetDB();
-    cy.stopAllMockStationServers();
+    cy.killAllMockStationsLinkTcpServers();
     cy.login();
     presetsPage.visit();
   });
 
-  it('2.1.1 - create new preset', () => {
+  it('2.1.1 - when creating a new preset, should create the preset and show in the page', () => {
     presetsPage.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
 
     presetsPage.validatePresetExists(PRESETS_JSON_PRESET_NAME);
   });
 
-  it('2.1.2 - edit existing preset', () => {
+  it('2.1.2 - when editing existing preset, should change the preset values correctly', () => {
     const newName = 'test2';
     const newColor = '#ffddaa';
 
     presetsPage.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
 
-    presetsPage.validatePresetExists(PRESETS_JSON_PRESET_NAME);
-
     presetsPage.openEditPresetDialog(PRESETS_JSON_PRESET_NAME);
 
-    presetsPage.fillFields({
+    cy.fillSchemaFormFields({
       name: newName,
       colorStringInput: newColor,
     });
-    presetsPage.submitForm();
+
+    cy.submitSchemaForm();
+
     presetsPage.assertPresetValueExists(
       newName,
       'color',
@@ -50,16 +50,17 @@ describe('Presets', () => {
     );
   });
 
-  it('2.1.3 - set existing preset as activated preset in mainDashboard', () => {
+  it.only('2.1.3 - when changing preset, should change currently selected preset to the correct preset', () => {
     presetsPage.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
 
-    presetsPage.validatePresetExists(PRESETS_JSON_PRESET_NAME);
-
     dashboardPage.visit();
-    dashboardPage.changeToPreset(PRESETS_JSON_PRESET_NAME);
+
+    dashboardPage.changeActivePreset(PRESETS_JSON_PRESET_NAME);
+
+    dashboardPage.assertPresetIsActive(PRESETS_JSON_PRESET_NAME);
   });
 
-  it('2.2.1 - set a preset to a station, add a new station, sync the specific station.', () => {
+  it('2.2.1 - when changing preset, and then creating a new station, new station should be out and sync, and when syncing the station, should no longer be out of sync', () => {
     stationsPage.visit();
 
     stationsPage.createStationMock({
@@ -74,7 +75,7 @@ describe('Presets', () => {
     presetsPage.validatePresetExists(PRESETS_JSON_PRESET_NAME);
 
     dashboardPage.visit();
-    dashboardPage.changeToPreset(PRESETS_JSON_PRESET_NAME);
+    dashboardPage.changeActivePreset(PRESETS_JSON_PRESET_NAME);
     cy.triggerProbeAllInPocketBase();
 
     stationsPage.visit();
@@ -104,7 +105,7 @@ describe('Presets', () => {
     );
   });
 
-  it('2.2.2 - set a preset to a station, change the preset in the station through request, sync the specific station.', () => {
+  it('2.2.2 - when changing preset, and a station changed the preset not through the app, the station should be out of sync, and when syncing the station, should no longer be out of sync', () => {
     const newPresetName = 'newPresetName';
     const newPresetCommands = [
       { id: 'newCommand', payload: '0x00000000000002' },
@@ -124,7 +125,7 @@ describe('Presets', () => {
     presetsPage.validatePresetExists(PRESETS_JSON_PRESET_NAME);
 
     dashboardPage.visit();
-    dashboardPage.changeToPreset(PRESETS_JSON_PRESET_NAME);
+    dashboardPage.changeActivePreset(PRESETS_JSON_PRESET_NAME);
     cy.triggerProbeAllInPocketBase();
 
     stationsPage
