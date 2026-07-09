@@ -5,10 +5,6 @@ export class DashboardPage {
     cy.visit('/');
   }
 
-  getKeyWidget(selector = '[data-cy=dashboard-widget]') {
-    return cy.get(selector);
-  }
-
   getPresetItem(name: string, timeout: number = 3000) {
     return cy.get(`[data-cy=preset-item-${name}]`, { timeout });
   }

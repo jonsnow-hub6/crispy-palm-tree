@@ -1,4 +1,4 @@
-import { Station, StationLink } from '../types';
+import { Station, StationLink, StationLinkRequest } from '../types';
 import {
   assertStationCreatePayload,
   interceptStationCreate,
@@ -74,12 +74,6 @@ export class StationsPage {
       'port',
       new RegExp(`^${stationLink.port}`, 'i'),
     );
-
-    // IP:localhost
-    // Port:4000
-    // Status:Inactive
-    // Counter:49
-    // Preset:unknown
   }
 
   assertStationLinkValueExists(
@@ -255,14 +249,12 @@ export class StationsPage {
 
   sendRequestToStationLink(
     { host, port }: StationLink,
-    path: string,
-    method: string,
-    body: object,
+    { method, parameters, path }: StationLinkRequest,
   ) {
     return cy.request({
       method: method,
       url: `http://${host}:${port}${path}`,
-      body: body,
+      body: parameters,
     });
   }
 

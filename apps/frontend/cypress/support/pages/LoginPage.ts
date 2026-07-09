@@ -34,12 +34,12 @@ export class LoginPage {
     );
   }
 
-  fillUsername(value: string) {
-    cy.get('[data-cy=username-input]').clear().type(value);
+  fillUsername(username: string) {
+    cy.get('[data-cy=username-input]').clear().type(username);
   }
 
-  fillPassword(value: string) {
-    cy.get('[data-cy=password-input]').clear().type(value);
+  fillPassword(password: string) {
+    cy.get('[data-cy=password-input]').clear().type(password);
   }
 
   submit() {

@@ -51,16 +51,13 @@ describe('Decoder - Leo', () => {
     stationsPage.activateStationLink(EXAMPLE_STATION_NAME, STATION_LINK_1);
 
     const validCounter = 1;
-    stationsPage.sendRequestToStationLink(
-      STATION_LINK_1,
-      '/api/setCounter',
-      'POST',
-      {
+    stationsPage.sendRequestToStationLink(STATION_LINK_1, {
+      path: '/api/setCounter',
+      method: 'POST',
+      parameters: {
         setCounter: validCounter,
       },
-    );
-
-    // stationsPage.assertStationVisible(EXAMPLE_STATION_NAME);
+    });
 
     cy.triggerProbeAllInPocketBase();
     decoderPage.visit();

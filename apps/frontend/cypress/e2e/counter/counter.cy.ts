@@ -24,14 +24,13 @@ describe('Counter', () => {
 
     cy.triggerProbeAllInPocketBase();
 
-    stationsPage.sendRequestToStationLink(
-      STATION_LINK_1,
-      '/api/setCounter',
-      'POST',
-      {
+    stationsPage.sendRequestToStationLink(STATION_LINK_1, {
+      path: '/api/setCounter',
+      method: 'POST',
+      parameters: {
         setCounter: 1,
       },
-    );
+    });
 
     cy.triggerProbeAllInPocketBase();
 
@@ -71,23 +70,21 @@ describe('Counter', () => {
       stationLinks: [STATION_LINK_2],
     });
 
-    stationsPage.sendRequestToStationLink(
-      STATION_LINK_1,
-      '/api/setCounter',
-      'POST',
-      {
+    stationsPage.sendRequestToStationLink(STATION_LINK_1, {
+      path: '/api/setCounter',
+      method: 'POST',
+      parameters: {
         setCounter: 999,
       },
-    );
+    });
 
-    stationsPage.sendRequestToStationLink(
-      STATION_LINK_2,
-      '/api/setCounter',
-      'POST',
-      {
+    stationsPage.sendRequestToStationLink(STATION_LINK_2, {
+      path: '/api/setCounter',
+      method: 'POST',
+      parameters: {
         setCounter: 1,
       },
-    );
+    });
 
     cy.triggerProbeAllInPocketBase();
     stationsPage.refresh();
@@ -115,23 +112,21 @@ describe('Counter', () => {
       stationLinks: [STATION_LINK_2],
     });
 
-    stationsPage.sendRequestToStationLink(
-      STATION_LINK_1,
-      '/api/setCounter',
-      'POST',
-      {
+    stationsPage.sendRequestToStationLink(STATION_LINK_1, {
+      path: '/api/setCounter',
+      method: 'POST',
+      parameters: {
         setCounter: 999,
       },
-    );
+    });
 
-    stationsPage.sendRequestToStationLink(
-      STATION_LINK_2,
-      '/api/setCounter',
-      'POST',
-      {
+    stationsPage.sendRequestToStationLink(STATION_LINK_2, {
+      path: '/api/setCounter',
+      method: 'POST',
+      parameters: {
         setCounter: 1,
       },
-    );
+    });
 
     cy.triggerProbeAllInPocketBase();
     stationsPage.refresh();
@@ -147,23 +142,21 @@ describe('Counter', () => {
       'Global counter mismatch detected across stations',
     );
 
-    stationsPage.sendRequestToStationLink(
-      STATION_LINK_1,
-      '/api/setCounter',
-      'POST',
-      {
+    stationsPage.sendRequestToStationLink(STATION_LINK_1, {
+      path: '/api/setCounter',
+      method: 'POST',
+      parameters: {
         setCounter: 1,
       },
-    );
+    });
 
-    stationsPage.sendRequestToStationLink(
-      STATION_LINK_2,
-      '/api/setCounter',
-      'POST',
-      {
+    stationsPage.sendRequestToStationLink(STATION_LINK_2, {
+      path: '/api/setCounter',
+      method: 'POST',
+      parameters: {
         setCounter: 1,
       },
-    );
+    });
 
     cy.triggerProbeAllInPocketBase();
 
@@ -183,25 +176,23 @@ describe('Counter', () => {
     cy.triggerProbeAllInPocketBase();
     stationsPage.refresh();
 
-    stationsPage.sendRequestToStationLink(
-      STATION_LINK_1,
-      '/api/setCounter',
-      'POST',
-      {
+    stationsPage.sendRequestToStationLink(STATION_LINK_1, {
+      path: '/api/setCounter',
+      method: 'POST',
+      parameters: {
         setCounter: 999,
       },
-    );
+    });
 
     cy.triggerProbeAllInPocketBase();
 
-    stationsPage.sendRequestToStationLink(
-      STATION_LINK_1,
-      '/api/setCounter',
-      'POST',
-      {
+    stationsPage.sendRequestToStationLink(STATION_LINK_1, {
+      path: '/api/setCounter',
+      method: 'POST',
+      parameters: {
         setCounter: 1,
       },
-    );
+    });
 
     stationsPage.assertStationVisible(EXAMPLE_STATION_NAME);
 

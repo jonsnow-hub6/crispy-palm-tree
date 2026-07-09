@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 /// <reference types="cypress" />
 
+import { RecordModel } from 'pocketbase';
 import { AuthParameters } from '../types';
-import { pb } from './consts';
+import { CREATE_USER_ARGS, pb } from './consts';
 import { CreateStationArgs } from './utils/mock-stations/mock-stations-manager';
-
-// Custom Cypress commands
+import { CreateUserArgs, Page } from './types/pages';
 
 declare global {
   namespace Cypress {
@@ -14,10 +14,19 @@ declare global {
       env(key: 'POCKETBASE_PASSWORD'): string;
     }
     interface Chainable {
-      login(username?: string, password?: string): Chainable<Element>;
+      login(
+        username?: string,
+        password?: string,
+        permission?: Page[],
+      ): Chainable<Element>;
       logout(): Chainable<Element>;
       mockApi(): Chainable<void>;
-      setPocketBaseAuth(auth: AuthParameters): Chainable<void>;
+      setPocketBaseAuth(
+        auth: AuthParameters,
+        username?: string,
+        password?: string,
+        permission?: Page[],
+      ): Chainable<void>;
       getByAttribute(
         value: string,
         options?: { attribute?: string; extra?: string; isGlobal?: boolean },
@@ -58,6 +67,9 @@ declare global {
       triggerProbeAllInPocketBase(): Chainable<void>;
       createDecoderId(decoderId: string): Chainable<void>;
       deleteDecoderId(decoderId: string): Chainable<void>;
+      injectUsernameAndPasswordIntoPocketBase(
+        userArgs: CreateUserArgs,
+      ): Chainable<RecordModel>;
     }
   }
 }
@@ -154,49 +166,75 @@ const resolveSchemaFormField = (
   });
 };
 
-Cypress.Commands.add('mockApi', () => {
-  // Load fixtures and set up common intercepts for PocketBase endpoints
-  cy.fixture('auth.json').then((auth) => {
-    // Auth endpoint
-    cy.intercept(
-      'POST',
-      '**/api/collections/users/auth-with-password',
-      (req) => {
-        req.reply({ statusCode: 200, body: auth });
-      },
+Cypress.Commands.add(
+  'injectUsernameAndPasswordIntoPocketBase',
+  ({ username, password, permission }: CreateUserArgs) => {
+    return cy.wrap(
+      new Cypress.Promise(async (resolve, reject) => {
+        try {
+          await pb
+            .collection('users')
+            .getFirstListItem(`username="${username}"`)
+            .then((existingUser) => {
+              console.log('User already exists. Skipping POST.');
+              resolve(existingUser);
+            });
+        } catch (error: any) {
+          if (error.status === 404) {
+            console.log('User not found. Creating new user...');
+            pb.collection('users')
+              .create({
+                username,
+                password,
+                passwordConfirm: password,
+                permission,
+              })
+              .then((newUser) => {
+                resolve(newUser);
+              })
+              .catch(reject);
+          } else {
+            console.error('An error occurred:', error);
+          }
+        }
+      }),
     );
-    // user record fetches
-    cy.intercept('GET', '**/api/collections/users/*', (req) => {
-      req.reply({ statusCode: 200, body: auth.record });
-    });
-  });
+  },
+);
 
-  cy.fixture('presets.json').then((presets) => {
-    cy.intercept('GET', '**/api/collections/presets/records*', (req) => {
-      req.reply({ statusCode: 200, body: presets });
-    });
-  });
-
-  cy.intercept('GET', '**/api/collections/**/subscribe*', {
-    statusCode: 200,
-    body: {},
-  });
-});
-
-Cypress.Commands.add('setPocketBaseAuth', (auth) => {
-  cy.window().then((win) => {
-    const authStoreValue = {
-      token: auth.token,
-      record: auth.record,
+Cypress.Commands.add(
+  'setPocketBaseAuth',
+  (auth, username, password, permission) => {
+    const userArgs: CreateUserArgs = {
+      username: username ?? CREATE_USER_ARGS.username,
+      password: password ?? CREATE_USER_ARGS.password,
+      permission: permission ?? CREATE_USER_ARGS.permission,
     };
-    win.localStorage.setItem('pocketbase_auth', JSON.stringify(authStoreValue));
-  });
-});
+    cy.injectUsernameAndPasswordIntoPocketBase(userArgs).then((record) => {
+      cy.window().then((win) => {
+        const authStoreValue = {
+          token: auth.token,
+          record: {
+            id: record.id,
+            username: record.username,
+            avatar: record.avatar,
+            permission: record.permission,
+            collectionId: record.collectionId,
+            collectionName: record.collectionName,
+          },
+        };
+        win.localStorage.setItem(
+          'pocketbase_auth',
+          JSON.stringify(authStoreValue),
+        );
+      });
+    });
+  },
+);
 
-Cypress.Commands.add('login', () => {
-  // Directly seed the PocketBase auth store for stable authenticated tests
+Cypress.Commands.add('login', (username, password, permission) => {
   cy.fixture('auth.json').then((auth: AuthParameters) => {
-    cy.setPocketBaseAuth(auth);
+    cy.setPocketBaseAuth(auth, username, password, permission);
   });
 });
 
@@ -204,9 +242,7 @@ Cypress.Commands.add('logout', () => {
   cy.window().then((win) => {
     try {
       win.localStorage.clear();
-    } catch {
-      // ignore
-    }
+    } catch {}
   });
   cy.visit('/login');
 });
@@ -322,7 +358,6 @@ Cypress.Commands.add('truncateCollection', (collection: string) => {
 
         resolve();
       } catch (error) {
-        // Safely pass any errors back to Cypress
         reject(error);
       }
     })();
@@ -388,7 +423,6 @@ Cypress.Commands.add('deleteDecoderId', (decoderId: string) => {
 
         resolve();
       } catch (error) {
-        // Safely pass any errors back to Cypress
         reject(error);
       }
     })();

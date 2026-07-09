@@ -1,19 +1,10 @@
-import {
-  PRESETS_JSON_NAME,
-  PRESETS_JSON_PRESET_NAME,
-} from '../../e2e/presets/consts';
-
 export class PresetsPage {
   visit() {
     cy.visit('/presets');
   }
 
-  getList() {
-    return cy.get('[data-cy=presets-list]');
-  }
-
-  getPresetItem(name: string, timeout: number = 3000) {
-    return cy.get(`[data-cy=preset-item-${name}]`, { timeout });
+  getPresetItem(presetName: string) {
+    return cy.get(`[data-cy=preset-item-${presetName}]`, { timeout: 3000 });
   }
 
   openImport() {
@@ -23,7 +14,7 @@ export class PresetsPage {
   importPresetIntoInput(fixtureName: string) {
     cy.get('[data-cy=open-preset-import-input]').selectFile(
       `apps/frontend/cypress/fixtures/${fixtureName}`,
-      { force: true }, // because the input is hidden
+      { force: true },
     );
   }
 
@@ -31,31 +22,28 @@ export class PresetsPage {
     cy.get('[data-cy=submit-json-import]').click({ force: true });
   }
 
-  validatePresetExists(name: string) {
-    this.getPresetItem(name).should('be.visible');
+  validatePresetExists(presetName: string) {
+    this.getPresetItem(presetName).should('be.visible');
   }
 
-  importPreset(
-    fixtureName: string = PRESETS_JSON_NAME,
-    stationName: string = PRESETS_JSON_PRESET_NAME,
-  ) {
+  importPreset(fixtureName: string, stationName: string) {
     this.openImport();
     this.importPresetIntoInput(fixtureName);
     this.submitImportPresetButton();
     this.validatePresetExists(stationName);
   }
 
-  openPresetsMenu(name: string) {
-    cy.get(`[data-cy=preset-menu-btn-${name}]`).click();
+  openPresetMenu(presetName: string) {
+    cy.get(`[data-cy=preset-menu-btn-${presetName}]`).click();
   }
 
-  pressEditMenuButton(name: string) {
-    cy.get(`[data-cy=edit-preset-btn-${name}]`).click();
+  pressEditMenuButton(presetName: string) {
+    cy.get(`[data-cy=edit-preset-btn-${presetName}]`).click();
   }
 
-  openEditPresetDialog(name: string) {
-    this.openPresetsMenu(name);
-    this.pressEditMenuButton(name);
+  openEditPresetDialog(presetName: string) {
+    this.openPresetMenu(presetName);
+    this.pressEditMenuButton(presetName);
   }
 
   fillFields(parameters: Record<string, string | number>) {
@@ -74,8 +62,8 @@ export class PresetsPage {
     cy.submitSchemaForm();
   }
 
-  assertPresetValueExists(name: string, label: string, regex?: RegExp) {
-    const presetSelector = `[data-cy="preset-item-${name}"]`;
+  assertPresetValueExists(presetName: string, label: string, regex?: RegExp) {
+    const presetSelector = `[data-cy="preset-item-${presetName}"]`;
     const attrName = `data-${label.toLowerCase()}`;
 
     cy.get(presetSelector, { timeout: 10000 }).should(($el) => {

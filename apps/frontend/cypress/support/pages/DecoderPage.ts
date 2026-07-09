@@ -86,8 +86,6 @@ export class DecoderPage {
 
   getLeoLogValue(
     index: number,
-    // stationName: string,
-    // { host, port }: StationLink,
     label: string,
     regex?: RegExp,
   ): Cypress.Chainable<string> {
@@ -125,7 +123,6 @@ export class DecoderPage {
     return cy.get('[data-cy=pll-graph]');
   }
 
-  // data-locked-percentage={percentage}              data-last-locked={lastOneLabel}
   getLockedValues(label: 'locked-percentage' | 'last-locked', regex?: RegExp) {
     const selector = `[data-cy=${label}]`;
     const attrName = `data-${label.toLowerCase()}`;
@@ -150,10 +147,8 @@ export class DecoderPage {
   ) {
     const lastLockedDate = new Date();
 
-    // 2. Split the time string into [hours, minutes, seconds]
     const [hours, minutes, seconds] = lastLocked.split(':').map(Number);
 
-    // 3. Update today's date object with the new time
     lastLockedDate.setHours(hours, minutes, seconds, 0);
     expect(areTimesClose(date, lastLockedDate, differenceInSecond)).to.equal(
       true,

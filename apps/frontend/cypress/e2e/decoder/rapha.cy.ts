@@ -15,10 +15,8 @@ describe('Decoder - Rapha', () => {
 
   it('4.2.1 - when receiving pll packets, should show change in graph', () => {
     decoderPage.getPllGraphElement().then(($parent) => {
-      // 1. Capture the initial snapshot of the entire inner DOM tree
       const originalGraph = $parent.html();
 
-      // 2. Perform the action that triggers the deep change
       for (let i: number = 0; i < 10; i++) {
         decoderPage.injectRaphaRecords([
           {
@@ -31,7 +29,6 @@ describe('Decoder - Rapha', () => {
         ]);
       }
 
-      // 3. Assert that the current DOM tree no longer matches the snapshot
       decoderPage.getPllGraphElement().should(($updatedParent) => {
         expect($updatedParent.html()).not.to.eq(originalGraph);
       });
