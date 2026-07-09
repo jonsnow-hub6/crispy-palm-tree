@@ -27,10 +27,11 @@ describe('Auth - Login', () => {
   });
 
   it('redirects on successful login (mocked)', () => {
-    loginPage.injectValidUsernameAndPasswordToPocketBase(
-      VALID_USERNAME,
-      VALID_PASSWORD,
-    );
+    cy.injectUsernameAndPasswordIntoPocketBase({
+      username: VALID_USERNAME,
+      password: VALID_PASSWORD,
+      permission: [],
+    });
 
     loginPage.fillUsername(VALID_USERNAME);
     loginPage.fillPassword(VALID_PASSWORD);

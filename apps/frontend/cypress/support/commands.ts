@@ -181,18 +181,27 @@ Cypress.Commands.add(
             });
         } catch (error: any) {
           if (error.status === 404) {
-            console.log('User not found. Creating new user...');
-            pb.collection('users')
-              .create({
-                username,
-                password,
-                passwordConfirm: password,
-                permission,
-              })
-              .then((newUser) => {
-                resolve(newUser);
-              })
-              .catch(reject);
+            try {
+              console.log('User not found. Creating new user...');
+              pb.collection('users')
+                .create(
+                  {
+                    username,
+                    password,
+                    passwordConfirm: password,
+                    permission,
+                  },
+                  {
+                    $autoCancel: false,
+                  },
+                )
+                .then((newUser) => {
+                  resolve(newUser);
+                })
+                .catch(reject);
+            } catch (err) {
+              console.log(err);
+            }
           } else {
             console.error('An error occurred:', error);
           }

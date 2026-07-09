@@ -5,10 +5,7 @@ describe('Auth - Protected Routes', () => {
   const loginPage = new LoginPage();
 
   beforeEach(() => {
-    loginPage.injectValidUsernameAndPasswordToPocketBase(
-      VALID_USERNAME,
-      VALID_PASSWORD,
-    );
+    loginPage.visit();
   });
 
   it('when not logged in, should redirect unauthenticated user to /login', () => {
@@ -23,8 +20,14 @@ describe('Auth - Protected Routes', () => {
   });
 
   it('when user has permission for some of the pages, should allows authenticated user to access only allowed routes', () => {
-    cy.login(VALID_USERNAME, VALID_PASSWORD, ['dashboard']);
-    cy.visit('/stations');
-    cy.location('pathname').should('eq', '/');
+    cy.injectUsernameAndPasswordIntoPocketBase({
+      username: VALID_USERNAME,
+      password: VALID_PASSWORD,
+      permission: ['dashboard'],
+    }).then(() => {
+      cy.login(VALID_USERNAME, VALID_PASSWORD, ['dashboard']);
+      cy.visit('/stations');
+      cy.location('pathname').should('eq', '/');
+    });
   });
 });
