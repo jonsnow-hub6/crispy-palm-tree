@@ -50,7 +50,7 @@ describe('Presets', () => {
     );
   });
 
-  it.only('2.1.3 - when changing preset, should change currently selected preset to the correct preset', () => {
+  it('2.1.3 - when changing preset, should change currently selected preset to the correct preset', () => {
     presetsPage.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
 
     dashboardPage.visit();
