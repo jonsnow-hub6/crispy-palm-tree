@@ -10,10 +10,6 @@ describe('Auth - Login', () => {
   const loginPage = new LoginPage();
 
   beforeEach(() => {
-    loginPage.injectValidUsernameAndPasswordToPocketBase(
-      VALID_USERNAME,
-      VALID_PASSWORD,
-    );
     loginPage.visit();
   });
 
@@ -31,6 +27,11 @@ describe('Auth - Login', () => {
   });
 
   it('redirects on successful login (mocked)', () => {
+    loginPage.injectValidUsernameAndPasswordToPocketBase(
+      VALID_USERNAME,
+      VALID_PASSWORD,
+    );
+
     loginPage.fillUsername(VALID_USERNAME);
     loginPage.fillPassword(VALID_PASSWORD);
     loginPage.submit();

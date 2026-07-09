@@ -216,7 +216,7 @@ export class StationsPage {
       (initial) => {
         const start = Date.now();
         cy.triggerProbeAllInPocketBase();
-        const initialValue = Number(initial);
+        const initialValue = Number(initial ?? 0);
 
         const check = (): Cypress.Chainable<void> => {
           cy.triggerProbeAllInPocketBase();

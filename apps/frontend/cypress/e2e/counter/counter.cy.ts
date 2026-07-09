@@ -130,6 +130,7 @@ describe('Counter', () => {
 
     cy.triggerProbeAllInPocketBase();
     stationsPage.refresh();
+    cy.wait(1000);
 
     stationsPage.assertStationVisible(EXAMPLE_STATION_NAME);
     stationsPage.assertStationVisible(SECOND_EXAMPLE_STATION_NAME);

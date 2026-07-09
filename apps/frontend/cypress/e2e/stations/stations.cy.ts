@@ -104,7 +104,7 @@ describe('Stations', () => {
     cy.triggerProbeAllInPocketBase();
 
     stationsPage.refresh();
-
+    cy.wait(1000);
     stationsPage.assertStationLinkValueExists(
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
@@ -124,7 +124,7 @@ describe('Stations', () => {
     cy.triggerProbeAllInPocketBase();
 
     stationsPage.refresh();
-
+    cy.wait(1000);
     stationsPage.assertStationLinkValueExists(
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
@@ -330,8 +330,9 @@ describe('Stations', () => {
         active: true,
       },
     });
+    cy.wait(1000);
     cy.triggerProbeAllInPocketBase();
-
+    cy.wait(1000);
     stationsPage.assertAlertVisible(
       'connection',
       'critical',

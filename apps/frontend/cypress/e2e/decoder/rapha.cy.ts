@@ -63,7 +63,7 @@ describe('Decoder - Rapha', () => {
         },
       ])
       .then(() => {
-        cy.wait(2000).then(() => {
+        cy.wait(1000).then(() => {
           decoderPage.getLockedValues('last-locked').then((value) => {
             expect(
               decoderPage.assertLastLockedValueAndDateAreClose(
@@ -94,7 +94,7 @@ describe('Decoder - Rapha', () => {
         },
       ])
       .then(() => {
-        cy.wait(2000).then(() => {
+        cy.wait(1000).then(() => {
           decoderPage.getLockedValues('locked-percentage').then((value) => {
             expect(value).to.equal('0');
           });
@@ -112,7 +112,7 @@ describe('Decoder - Rapha', () => {
         },
       ])
       .then(() => {
-        cy.wait(2000).then(() => {
+        cy.wait(1000).then(() => {
           decoderPage.getLockedValues('last-locked').then((value) => {
             expect(
               decoderPage.assertLastLockedValueAndDateAreClose(
