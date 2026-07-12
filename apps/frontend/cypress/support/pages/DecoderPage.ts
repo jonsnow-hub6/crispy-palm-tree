@@ -2,6 +2,7 @@ import { AppPage } from '../abstract/page';
 import { pb } from '../consts';
 import { LeoRecord, RaphaRecord } from '../types';
 import { areTimesClose } from '../utils/utils';
+import { DEFAULT_LEO_RECORD_VALUES } from './consts';
 
 export class DecoderPage implements AppPage {
   visit() {
@@ -27,16 +28,8 @@ export class DecoderPage implements AppPage {
       try {
         pb.collection('leo')
           .create({
-            projectId: record.projectId || '1234',
-            counter: record.counter ?? 0,
-            magic: record.magic ?? 12345678,
-            payload: record.payload ?? '0x00000000000001',
-            timeOfArrival: record.timeOfArrival || new Date().toISOString(),
-            reserved: record.reserved ?? '0x00000000000001',
-            messageType: record.messageType ?? 1,
-            management: record.management ?? 1,
-            threshold: record.threshold ?? 1,
-            decoderId: record.decoderId ?? 'decoder2',
+            ...DEFAULT_LEO_RECORD_VALUES,
+            ...record,
           })
           .then(resolve)
           .catch(reject);
@@ -78,24 +71,24 @@ export class DecoderPage implements AppPage {
     );
   }
 
-  getLeoLogValue(
+  getLeoLogFieldValue(
     index: number,
-    label: 'status' | 'magic-mismatch',
+    field: 'status' | 'magic-mismatch',
     regex?: RegExp,
   ): Cypress.Chainable<string> {
-    const linkSelector = `[data-cy="leo-log"]`;
-    const attrName = `data-${label.toLowerCase()}`;
+    const logSelector = `[data-cy="leo-log"]`;
+    const attrName = `data-${field.toLowerCase()}`;
 
     return cy
-      .get(linkSelector, { timeout: 10000 })
+      .get(logSelector, { timeout: 10000 })
       .eq(index)
       .then(($el) => {
         const value = $el.attr(attrName);
 
-        expect(value, `${label} attribute`).to.not.equal(undefined);
+        expect(value, `${field} attribute`).to.not.equal(undefined);
 
         if (regex) {
-          expect(value!, `${label} value`).to.match(regex);
+          expect(value!, `${field} value`).to.match(regex);
         }
 
         return value!;
@@ -117,7 +110,10 @@ export class DecoderPage implements AppPage {
     return cy.get('[data-cy=pll-graph]');
   }
 
-  getLockedValues(label: 'locked-percentage' | 'last-locked', regex?: RegExp) {
+  getDecoderPllLockStateValues(
+    label: 'locked-percentage' | 'last-locked',
+    regex?: RegExp,
+  ) {
     const selector = `[data-cy=${label}]`;
     const attrName = `data-${label.toLowerCase()}`;
 

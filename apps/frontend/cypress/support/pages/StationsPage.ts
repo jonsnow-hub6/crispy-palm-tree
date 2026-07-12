@@ -201,7 +201,6 @@ export class StationsPage implements AppPage {
             const currentValue = Number(current);
 
             if (currentValue > initialValue) {
-              expect(currentValue).to.be.greaterThan(initialValue);
               return;
             }
 

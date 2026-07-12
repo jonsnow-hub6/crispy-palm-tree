@@ -18,8 +18,6 @@ export class DashboardPage implements AppPage {
   }
 
   assertPresetIsActive(presetName: string) {
-    // const label = 'active'
-    // // data-active-preset
     const presetSelector = `[data-cy="active-preset"]`;
     const attrName = `data-active-preset`;
 

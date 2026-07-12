@@ -36,7 +36,7 @@ describe('Decoder - Rapha', () => {
 
   it('4.2.2 - when injecting into the pll 1 then 0, should show 100% locked then slightly reduce with time, last locked time should match', () => {
     const timeWhenInjecting = new Date();
-    cy.wait(2000).then(() => {
+    cy.wait(1500).then(() => {
       decoderPage
         .injectRaphaRecords([
           {
@@ -55,19 +55,23 @@ describe('Decoder - Rapha', () => {
           },
         ])
         .then(() => {
-          cy.wait(2000).then(() => {
-            decoderPage.getLockedValues('last-locked').then((value) => {
-              expect(
-                decoderPage.assertLastLockedValueAndExpectedTimeAreClose(
-                  timeWhenInjecting,
-                  value,
-                  20,
-                ),
-              );
-            });
-            decoderPage.getLockedValues('locked-percentage').then((value) => {
-              expect(value).to.equal('100');
-            });
+          cy.wait(1500).then(() => {
+            decoderPage
+              .getDecoderPllLockStateValues('last-locked')
+              .then((value) => {
+                expect(
+                  decoderPage.assertLastLockedValueAndExpectedTimeAreClose(
+                    timeWhenInjecting,
+                    value,
+                    20,
+                  ),
+                );
+              });
+            decoderPage
+              .getDecoderPllLockStateValues('locked-percentage')
+              .then((value) => {
+                expect(value).to.equal('100');
+              });
           });
         });
 
@@ -90,18 +94,22 @@ describe('Decoder - Rapha', () => {
         ])
         .then(() => {
           cy.wait(1500).then(() => {
-            decoderPage.getLockedValues('last-locked').then((value) => {
-              expect(
-                decoderPage.assertLastLockedValueAndExpectedTimeAreClose(
-                  timeWhenInjecting,
-                  value,
-                  20,
-                ),
-              );
-            });
-            decoderPage.getLockedValues('locked-percentage').then((value) => {
-              expect(value).to.equal('50');
-            });
+            decoderPage
+              .getDecoderPllLockStateValues('last-locked')
+              .then((value) => {
+                expect(
+                  decoderPage.assertLastLockedValueAndExpectedTimeAreClose(
+                    timeWhenInjecting,
+                    value,
+                    20,
+                  ),
+                );
+              });
+            decoderPage
+              .getDecoderPllLockStateValues('locked-percentage')
+              .then((value) => {
+                expect(value).to.equal('50');
+              });
           });
         });
     });
@@ -109,7 +117,7 @@ describe('Decoder - Rapha', () => {
 
   it('4.2.3 - when injecting into the pll 0 then 1, should show 0 locked then jump to 50, last locked time should match', () => {
     const timeWhenInjecting = new Date();
-    cy.wait(2000).then(() => {
+    cy.wait(1500).then(() => {
       decoderPage
         .injectRaphaRecords([
           {
@@ -122,9 +130,11 @@ describe('Decoder - Rapha', () => {
         ])
         .then(() => {
           cy.wait(1500).then(() => {
-            decoderPage.getLockedValues('locked-percentage').then((value) => {
-              expect(value).to.equal('0');
-            });
+            decoderPage
+              .getDecoderPllLockStateValues('locked-percentage')
+              .then((value) => {
+                expect(value).to.equal('0');
+              });
           });
         });
 
@@ -140,18 +150,22 @@ describe('Decoder - Rapha', () => {
         ])
         .then(() => {
           cy.wait(1500).then(() => {
-            decoderPage.getLockedValues('last-locked').then((value) => {
-              expect(
-                decoderPage.assertLastLockedValueAndExpectedTimeAreClose(
-                  timeWhenInjecting,
-                  value,
-                  20,
-                ),
-              );
-            });
-            decoderPage.getLockedValues('locked-percentage').then((value) => {
-              expect(value).to.equal('50');
-            });
+            decoderPage
+              .getDecoderPllLockStateValues('last-locked')
+              .then((value) => {
+                expect(
+                  decoderPage.assertLastLockedValueAndExpectedTimeAreClose(
+                    timeWhenInjecting,
+                    value,
+                    20,
+                  ),
+                );
+              });
+            decoderPage
+              .getDecoderPllLockStateValues('locked-percentage')
+              .then((value) => {
+                expect(value).to.equal('50');
+              });
           });
         });
     });

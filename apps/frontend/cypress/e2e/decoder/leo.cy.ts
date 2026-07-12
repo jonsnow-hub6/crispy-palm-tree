@@ -76,7 +76,7 @@ describe('Decoder - Leo', () => {
 
     cy.contains('VERIFIED', { timeout: 10000 }).should('be.visible');
 
-    decoderPage.getLeoLogValue(
+    decoderPage.getLeoLogFieldValue(
       0,
       'status',
       createStringSearchRegex(`Preset Action #1 (Valid)`),
@@ -118,7 +118,7 @@ describe('Decoder - Leo', () => {
 
     cy.contains('WAITING', { timeout: 10000 }).should('be.visible');
 
-    decoderPage.getLeoLogValue(
+    decoderPage.getLeoLogFieldValue(
       0,
       'status',
       createStringSearchRegex(`Unexpected Action: Not in preset`),
@@ -165,7 +165,7 @@ describe('Decoder - Leo', () => {
 
     cy.contains('WAITING', { timeout: 10000 }).should('be.visible');
 
-    decoderPage.getLeoLogValue(
+    decoderPage.getLeoLogFieldValue(
       0,
       'magic-mismatch',
       createStringSearchRegex(`true`),
@@ -238,25 +238,25 @@ describe('Decoder - Leo', () => {
     ]);
 
     cy.wait(1000).then(() => {
-      decoderPage.getLeoLogValue(
+      decoderPage.getLeoLogFieldValue(
         0,
         'status',
         createStringSearchRegex(`Unexpected Action: Not in preset`),
       );
 
-      decoderPage.getLeoLogValue(
+      decoderPage.getLeoLogFieldValue(
         1,
         'status',
         createStringSearchRegex(`Preset Action #1 (Valid)`),
       );
 
-      decoderPage.getLeoLogValue(
+      decoderPage.getLeoLogFieldValue(
         2,
         'status',
         createStringSearchRegex(`Preset Action #1 (Valid)`),
       );
 
-      decoderPage.getLeoLogValue(
+      decoderPage.getLeoLogFieldValue(
         3,
         'status',
         createStringSearchRegex(`Unexpected Action: Not in preset`),
@@ -326,19 +326,19 @@ describe('Decoder - Leo', () => {
     ]);
 
     cy.wait(1000).then(() => {
-      decoderPage.getLeoLogValue(
+      decoderPage.getLeoLogFieldValue(
         0,
         'status',
         createStringSearchRegex(`Preset Action #1 (Valid)`),
       );
 
-      decoderPage.getLeoLogValue(
+      decoderPage.getLeoLogFieldValue(
         1,
         'status',
         createStringSearchRegex(`Incorrect Order: Expected action #2`),
       );
 
-      decoderPage.getLeoLogValue(
+      decoderPage.getLeoLogFieldValue(
         2,
         'status',
         createStringSearchRegex(`Incorrect Order: Expected action #1`),
@@ -407,19 +407,19 @@ describe('Decoder - Leo', () => {
     ]);
 
     cy.wait(1000).then(() => {
-      decoderPage.getLeoLogValue(
+      decoderPage.getLeoLogFieldValue(
         0,
         'status',
         createStringSearchRegex(`Preset Action #1 (Valid)`),
       );
 
-      decoderPage.getLeoLogValue(
+      decoderPage.getLeoLogFieldValue(
         1,
         'status',
         createStringSearchRegex(`Preset Action #2 (Valid)`),
       );
 
-      decoderPage.getLeoLogValue(
+      decoderPage.getLeoLogFieldValue(
         2,
         'status',
         createStringSearchRegex(`Preset Action #3 (Valid)`),

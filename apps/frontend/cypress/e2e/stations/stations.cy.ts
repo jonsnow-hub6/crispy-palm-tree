@@ -104,8 +104,6 @@ describe('Stations', () => {
 
     cy.triggerProbeAllInPocketBase();
 
-    cy.refresh();
-    cy.wait(1000);
     stationsPage.assertStationLinkValueExists(
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
@@ -124,8 +122,6 @@ describe('Stations', () => {
 
     cy.triggerProbeAllInPocketBase();
 
-    cy.refresh();
-    cy.wait(1000);
     stationsPage.assertStationLinkValueExists(
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
@@ -267,10 +263,10 @@ describe('Stations', () => {
       stationLinks: [STATION_LINK_2],
     });
 
-    cy.refresh();
-
     stationsPage.activateStation(EXAMPLE_STATION_NAME);
     cy.triggerProbeAllInPocketBase();
+
+    cy.refresh();
 
     stationsPage.deactivateStation(EXAMPLE_STATION_NAME);
     cy.triggerProbeAllInPocketBase();
@@ -293,12 +289,10 @@ describe('Stations', () => {
       stationLinks: [STATION_LINK_2],
     });
 
-    cy.refresh();
-
     stationsPage.activateStation(EXAMPLE_STATION_NAME);
-    // cy.triggerProbeAllInPocketBase();
+    cy.triggerProbeAllInPocketBase();
 
-    // cy.refresh();
+    cy.refresh();
 
     stationsPage.sendRequestToStationLink(STATION_LINK_2, {
       method: 'POST',
@@ -307,6 +301,7 @@ describe('Stations', () => {
         active: true,
       },
     });
+    cy.wait(1000);
 
     cy.triggerProbeAllInPocketBase();
     const station1CriticalMessage = `criticalconnection${SECOND_EXAMPLE_STATION_NAME}Station ${SECOND_EXAMPLE_STATION_NAME} has active link while another station is active`;
@@ -325,10 +320,10 @@ describe('Stations', () => {
       stationLinks: [STATION_LINK_1, STATION_LINK_2],
     });
 
-    cy.refresh();
-
     stationsPage.activateStationLink(EXAMPLE_STATION_NAME, STATION_LINK_1);
     cy.triggerProbeAllInPocketBase();
+    cy.refresh();
+
     stationsPage.sendRequestToStationLink(STATION_LINK_2, {
       method: 'POST',
       path: '/api/setActive',
@@ -338,7 +333,6 @@ describe('Stations', () => {
     });
     cy.wait(1000);
     cy.triggerProbeAllInPocketBase();
-    cy.wait(1000);
     stationsPage.assertAlertVisible(
       'connection',
       'critical',
