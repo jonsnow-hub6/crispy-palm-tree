@@ -36,95 +36,124 @@ describe('Decoder - Rapha', () => {
 
   it('4.2.2 - when injecting into the pll 1 then 0, should show 100% locked then slightly reduce with time, last locked time should match', () => {
     const timeWhenInjecting = new Date();
-
-    decoderPage
-      .injectRaphaRecords([
-        {
-          name: 'pllLockState',
-          parameters: {
-            pllLockState: 1,
+    cy.wait(2000).then(() => {
+      decoderPage
+        .injectRaphaRecords([
+          {
+            name: 'pllLockState',
+            parameters: {
+              pllLockState: 1,
+            },
+            decoderId: VALID_DECODER_ID,
           },
-          decoderId: VALID_DECODER_ID,
-        },
-        {
-          name: 'pllLockState',
-          parameters: {
-            pllLockState: 1,
+          {
+            name: 'pllLockState',
+            parameters: {
+              pllLockState: 1,
+            },
+            decoderId: VALID_DECODER_ID,
           },
-          decoderId: VALID_DECODER_ID,
-        },
-        {
-          name: 'pllLockState',
-          parameters: {
-            pllLockState: 1,
-          },
-          decoderId: VALID_DECODER_ID,
-        },
-      ])
-      .then(() => {
-        cy.wait(1000).then(() => {
-          decoderPage.getLockedValues('last-locked').then((value) => {
-            expect(
-              decoderPage.assertLastLockedValueAndExpectedTimeAreClose(
-                timeWhenInjecting,
-                value,
-                20,
-              ),
-            );
-          });
-          decoderPage.getLockedValues('locked-percentage').then((value) => {
-            expect(value).to.equal('100');
+        ])
+        .then(() => {
+          cy.wait(2000).then(() => {
+            decoderPage.getLockedValues('last-locked').then((value) => {
+              expect(
+                decoderPage.assertLastLockedValueAndExpectedTimeAreClose(
+                  timeWhenInjecting,
+                  value,
+                  20,
+                ),
+              );
+            });
+            decoderPage.getLockedValues('locked-percentage').then((value) => {
+              expect(value).to.equal('100');
+            });
           });
         });
-      });
+
+      decoderPage
+        .injectRaphaRecords([
+          {
+            name: 'pllLockState',
+            parameters: {
+              pllLockState: 0,
+            },
+            decoderId: VALID_DECODER_ID,
+          },
+          {
+            name: 'pllLockState',
+            parameters: {
+              pllLockState: 0,
+            },
+            decoderId: VALID_DECODER_ID,
+          },
+        ])
+        .then(() => {
+          cy.wait(1500).then(() => {
+            decoderPage.getLockedValues('last-locked').then((value) => {
+              expect(
+                decoderPage.assertLastLockedValueAndExpectedTimeAreClose(
+                  timeWhenInjecting,
+                  value,
+                  20,
+                ),
+              );
+            });
+            decoderPage.getLockedValues('locked-percentage').then((value) => {
+              expect(value).to.equal('50');
+            });
+          });
+        });
+    });
   });
 
-  it('4.2.3 - when injecting into the pll 0 then 1, should show 0 locked then jump to 100, last locked time should match', () => {
+  it('4.2.3 - when injecting into the pll 0 then 1, should show 0 locked then jump to 50, last locked time should match', () => {
     const timeWhenInjecting = new Date();
-
-    decoderPage
-      .injectRaphaRecords([
-        {
-          name: 'pllLockState',
-          parameters: {
-            pllLockState: 0,
+    cy.wait(2000).then(() => {
+      decoderPage
+        .injectRaphaRecords([
+          {
+            name: 'pllLockState',
+            parameters: {
+              pllLockState: 0,
+            },
+            decoderId: VALID_DECODER_ID,
           },
-          decoderId: VALID_DECODER_ID,
-        },
-      ])
-      .then(() => {
-        cy.wait(1000).then(() => {
-          decoderPage.getLockedValues('locked-percentage').then((value) => {
-            expect(value).to.equal('0');
+        ])
+        .then(() => {
+          cy.wait(1500).then(() => {
+            decoderPage.getLockedValues('locked-percentage').then((value) => {
+              expect(value).to.equal('0');
+            });
           });
         });
-      });
 
-    decoderPage
-      .injectRaphaRecords([
-        {
-          name: 'pllLockState',
-          parameters: {
-            pllLockState: 1,
+      decoderPage
+        .injectRaphaRecords([
+          {
+            name: 'pllLockState',
+            parameters: {
+              pllLockState: 1,
+            },
+            decoderId: VALID_DECODER_ID,
           },
-          decoderId: VALID_DECODER_ID,
-        },
-      ])
-      .then(() => {
-        cy.wait(1000).then(() => {
-          decoderPage.getLockedValues('last-locked').then((value) => {
-            expect(
-              decoderPage.assertLastLockedValueAndExpectedTimeAreClose(
-                timeWhenInjecting,
-                value,
-                20,
-              ),
-            );
-          });
-          decoderPage.getLockedValues('locked-percentage').then((value) => {
-            expect(value).to.equal('100');
+        ])
+        .then(() => {
+          cy.wait(1500).then(() => {
+            decoderPage.getLockedValues('last-locked').then((value) => {
+              expect(
+                decoderPage.assertLastLockedValueAndExpectedTimeAreClose(
+                  timeWhenInjecting,
+                  value,
+                  20,
+                ),
+              );
+            });
+            decoderPage.getLockedValues('locked-percentage').then((value) => {
+              expect(value).to.equal('50');
+            });
           });
         });
-      });
+    });
   });
 });

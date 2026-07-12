@@ -45,9 +45,12 @@ describe('Counter', () => {
       stationLinks: [STATION_LINK_1],
     });
 
+    stationsPage.activateStationLink(EXAMPLE_STATION_NAME, STATION_LINK_1);
+
     cy.triggerProbeAllInPocketBase();
 
-    stationsPage.activateStationLink(EXAMPLE_STATION_NAME, STATION_LINK_1);
+    cy.refresh();
+
     cy.wait(1000);
     stationsPage.assertCounterIncreasing(EXAMPLE_STATION_NAME, STATION_LINK_1);
     stationsPage
@@ -143,6 +146,9 @@ describe('Counter', () => {
       'Global counter mismatch detected across stations',
     );
 
+    cy.refresh();
+    cy.wait(1000);
+
     stationsPage.sendRequestToStationLink(STATION_LINK_1, {
       path: '/api/setCounter',
       method: 'POST',
@@ -174,9 +180,6 @@ describe('Counter', () => {
       stationLinks: [STATION_LINK_1],
     });
 
-    cy.triggerProbeAllInPocketBase();
-    cy.refresh();
-
     stationsPage.sendRequestToStationLink(STATION_LINK_1, {
       path: '/api/setCounter',
       method: 'POST',
@@ -186,6 +189,8 @@ describe('Counter', () => {
     });
 
     cy.triggerProbeAllInPocketBase();
+    cy.refresh();
+    stationsPage.assertStationVisible(EXAMPLE_STATION_NAME);
 
     stationsPage.sendRequestToStationLink(STATION_LINK_1, {
       path: '/api/setCounter',
@@ -194,8 +199,6 @@ describe('Counter', () => {
         setCounter: 1,
       },
     });
-
-    stationsPage.assertStationVisible(EXAMPLE_STATION_NAME);
 
     cy.triggerProbeAllInPocketBase();
 

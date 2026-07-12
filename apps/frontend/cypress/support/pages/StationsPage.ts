@@ -189,7 +189,7 @@ export class StationsPage implements AppPage {
       (initial) => {
         const start = Date.now();
         cy.triggerProbeAllInPocketBase();
-        const initialValue = Number(initial ?? 0);
+        const initialValue = isNaN(Number(initial)) ? 0 : Number(initial);
 
         const check = (): Cypress.Chainable<void> => {
           cy.triggerProbeAllInPocketBase();

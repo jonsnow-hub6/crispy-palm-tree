@@ -282,7 +282,7 @@ describe('Stations', () => {
     );
   });
 
-  it.only('1.3.4 - when connected to two stations, when one activates and one not, activating the second station not through the app, should alert', () => {
+  it('1.3.4 - when connected to two stations, when one activates and one not, activating the second station not through the app, should alert', () => {
     stationsPage.createStationMock({
       name: EXAMPLE_STATION_NAME,
       stationLinks: [STATION_LINK_1],
