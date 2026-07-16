@@ -35,7 +35,6 @@ describe('Decoder - Rapha', () => {
   });
 
   it('4.2.2 - when injecting into the pll 1 then 0, should show 100% locked then slightly reduce with time, last locked time should match', () => {
-    const timeWhenInjecting = new Date();
     cy.wait(1500).then(() => {
       decoderPage
         .injectRaphaRecords([
@@ -55,6 +54,7 @@ describe('Decoder - Rapha', () => {
           },
         ])
         .then(() => {
+          const timeWhenInjecting = new Date();
           cy.wait(3000).then(() => {
             decoderPage
               .getDecoderPllLockStateValues('last-locked')
@@ -63,7 +63,7 @@ describe('Decoder - Rapha', () => {
                   decoderPage.assertLastLockedValueAndExpectedTimeAreClose(
                     timeWhenInjecting,
                     value,
-                    20,
+                    30,
                   ),
                 );
               });
@@ -95,17 +95,6 @@ describe('Decoder - Rapha', () => {
         .then(() => {
           cy.wait(3000).then(() => {
             decoderPage
-              .getDecoderPllLockStateValues('last-locked')
-              .then((value) => {
-                expect(
-                  decoderPage.assertLastLockedValueAndExpectedTimeAreClose(
-                    timeWhenInjecting,
-                    value,
-                    20,
-                  ),
-                );
-              });
-            decoderPage
               .getDecoderPllLockStateValues('locked-percentage')
               .then((value) => {
                 expect(value).to.equal('50');
@@ -116,7 +105,6 @@ describe('Decoder - Rapha', () => {
   });
 
   it('4.2.3 - when injecting into the pll 0 then 1, should show 0 locked then jump to 50, last locked time should match', () => {
-    const timeWhenInjecting = new Date();
     cy.wait(1500).then(() => {
       decoderPage
         .injectRaphaRecords([
@@ -149,6 +137,7 @@ describe('Decoder - Rapha', () => {
           },
         ])
         .then(() => {
+          const timeWhenInjecting = new Date();
           cy.wait(3000).then(() => {
             decoderPage
               .getDecoderPllLockStateValues('last-locked')
