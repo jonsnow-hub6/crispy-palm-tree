@@ -55,7 +55,7 @@ describe('Decoder - Rapha', () => {
           },
         ])
         .then(() => {
-          cy.wait(1500).then(() => {
+          cy.wait(3000).then(() => {
             decoderPage
               .getDecoderPllLockStateValues('last-locked')
               .then((value) => {
@@ -93,7 +93,7 @@ describe('Decoder - Rapha', () => {
           },
         ])
         .then(() => {
-          cy.wait(1500).then(() => {
+          cy.wait(3000).then(() => {
             decoderPage
               .getDecoderPllLockStateValues('last-locked')
               .then((value) => {
@@ -129,7 +129,7 @@ describe('Decoder - Rapha', () => {
           },
         ])
         .then(() => {
-          cy.wait(1500).then(() => {
+          cy.wait(3000).then(() => {
             decoderPage
               .getDecoderPllLockStateValues('locked-percentage')
               .then((value) => {
@@ -149,7 +149,7 @@ describe('Decoder - Rapha', () => {
           },
         ])
         .then(() => {
-          cy.wait(1500).then(() => {
+          cy.wait(3000).then(() => {
             decoderPage
               .getDecoderPllLockStateValues('last-locked')
               .then((value) => {
