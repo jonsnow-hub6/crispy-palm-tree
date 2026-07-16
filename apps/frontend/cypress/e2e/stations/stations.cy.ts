@@ -99,6 +99,9 @@ describe('Stations', () => {
       name: EXAMPLE_STATION_NAME,
       stationLinks: [STATION_LINK_1],
     });
+    cy.wait(2000);
+
+    cy.triggerProbeAllInPocketBase();
 
     cy.refresh();
 
@@ -117,6 +120,9 @@ describe('Stations', () => {
       name: EXAMPLE_STATION_NAME,
       stationLinks: [STATION_LINK_1],
     });
+    cy.wait(2000);
+
+    cy.triggerProbeAllInPocketBase();
 
     cy.refresh();
 
@@ -323,6 +329,7 @@ describe('Stations', () => {
     stationsPage.activateStationLink(EXAMPLE_STATION_NAME, STATION_LINK_1);
     cy.triggerProbeAllInPocketBase();
     cy.refresh();
+    cy.wait(2000);
 
     stationsPage.sendRequestToStationLink(STATION_LINK_2, {
       method: 'POST',
@@ -331,7 +338,7 @@ describe('Stations', () => {
         active: true,
       },
     });
-    cy.wait(1000);
+    cy.wait(2000);
     cy.triggerProbeAllInPocketBase();
     stationsPage.assertAlertVisible(
       'connection',

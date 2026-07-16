@@ -19,7 +19,8 @@
     "**/*.md",
     "**/backend/**",
     "**/splinter_cron_flow.json",
-    "**/frontend/cypress/fixtures/**"
+    "**/frontend/cypress/fixtures/**",
+    "**/.gitignore"
   ],
   "words": [
     "PocketBase",
