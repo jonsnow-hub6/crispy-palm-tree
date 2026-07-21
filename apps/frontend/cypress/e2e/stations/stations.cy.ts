@@ -300,13 +300,7 @@ describe('Stations', () => {
 
     cy.refresh();
 
-    stationsPage.sendRequestToStationLink(STATION_LINK_2, {
-      method: 'POST',
-      path: '/api/setActive',
-      parameters: {
-        active: true,
-      },
-    });
+    stationsPage.sendSetActiveRequestToStationLink(STATION_LINK_2, true);
     cy.wait(1000);
 
     cy.triggerProbeAllInPocketBase();
@@ -331,13 +325,7 @@ describe('Stations', () => {
     cy.refresh();
     cy.wait(2000);
 
-    stationsPage.sendRequestToStationLink(STATION_LINK_2, {
-      method: 'POST',
-      path: '/api/setActive',
-      parameters: {
-        active: true,
-      },
-    });
+    stationsPage.sendSetActiveRequestToStationLink(STATION_LINK_2, true);
     cy.wait(2000);
     cy.triggerProbeAllInPocketBase();
     stationsPage.assertAlertVisible(
@@ -355,13 +343,7 @@ describe('Stations', () => {
 
     stationsPage.activateStation(EXAMPLE_STATION_NAME);
 
-    stationsPage.sendRequestToStationLink(STATION_LINK_1, {
-      method: 'POST',
-      path: '/api/setActive',
-      parameters: {
-        active: false,
-      },
-    });
+    stationsPage.sendSetActiveRequestToStationLink(STATION_LINK_1, false);
     cy.triggerProbeAllInPocketBase();
 
     stationsPage.assertAlertVisible(

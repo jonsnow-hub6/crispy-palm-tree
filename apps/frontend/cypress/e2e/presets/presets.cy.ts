@@ -129,14 +129,11 @@ describe('Presets', () => {
     cy.triggerProbeAllInPocketBase();
 
     stationsPage
-      .sendRequestToStationLink(STATION_LINK_1, {
-        method: 'POST',
-        path: '/api/setPreset',
-        parameters: {
-          presetName: newPresetName,
-          commands: newPresetCommands,
-        },
-      })
+      .sendSetPresetRequestToStationLink(
+        STATION_LINK_1,
+        newPresetName,
+        newPresetCommands,
+      )
       .then(() => {
         stationsPage.visit();
 

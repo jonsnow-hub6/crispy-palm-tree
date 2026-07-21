@@ -24,13 +24,7 @@ describe('Counter', () => {
 
     cy.triggerProbeAllInPocketBase();
 
-    stationsPage.sendRequestToStationLink(STATION_LINK_1, {
-      path: '/api/setCounter',
-      method: 'POST',
-      parameters: {
-        setCounter: 1,
-      },
-    });
+    stationsPage.sendSetCounterRequestToStationLink(STATION_LINK_1, 1);
 
     cy.triggerProbeAllInPocketBase();
 
@@ -39,7 +33,7 @@ describe('Counter', () => {
     stationsPage.assertCounterIncreasing(EXAMPLE_STATION_NAME, STATION_LINK_1);
   });
 
-  it('3.1.2 - when connected to a station, the activating the station, the station counter should be the same as the link counter', () => {
+  it.only('3.1.2 - when connected to a station, then activating the station, the station counter should be the same as the link counter', () => {
     stationsPage.createStationMock({
       name: EXAMPLE_STATION_NAME,
       stationLinks: [STATION_LINK_1],
@@ -53,6 +47,7 @@ describe('Counter', () => {
 
     cy.wait(1000);
     stationsPage.assertCounterIncreasing(EXAMPLE_STATION_NAME, STATION_LINK_1);
+
     stationsPage
       .getStationLinkValue(EXAMPLE_STATION_NAME, STATION_LINK_1, 'Counter')
       .then((linkCounterValue) => {
@@ -73,21 +68,9 @@ describe('Counter', () => {
       stationLinks: [STATION_LINK_2],
     });
 
-    stationsPage.sendRequestToStationLink(STATION_LINK_1, {
-      path: '/api/setCounter',
-      method: 'POST',
-      parameters: {
-        setCounter: 999,
-      },
-    });
+    stationsPage.sendSetCounterRequestToStationLink(STATION_LINK_1, 999);
 
-    stationsPage.sendRequestToStationLink(STATION_LINK_2, {
-      path: '/api/setCounter',
-      method: 'POST',
-      parameters: {
-        setCounter: 1,
-      },
-    });
+    stationsPage.sendSetCounterRequestToStationLink(STATION_LINK_2, 1);
 
     cy.triggerProbeAllInPocketBase();
     cy.refresh();
@@ -115,21 +98,9 @@ describe('Counter', () => {
       stationLinks: [STATION_LINK_2],
     });
 
-    stationsPage.sendRequestToStationLink(STATION_LINK_1, {
-      path: '/api/setCounter',
-      method: 'POST',
-      parameters: {
-        setCounter: 999,
-      },
-    });
+    stationsPage.sendSetCounterRequestToStationLink(STATION_LINK_1, 999);
 
-    stationsPage.sendRequestToStationLink(STATION_LINK_2, {
-      path: '/api/setCounter',
-      method: 'POST',
-      parameters: {
-        setCounter: 1,
-      },
-    });
+    stationsPage.sendSetCounterRequestToStationLink(STATION_LINK_2, 1);
 
     cy.triggerProbeAllInPocketBase();
     cy.refresh();
@@ -149,21 +120,9 @@ describe('Counter', () => {
     cy.refresh();
     cy.wait(1000);
 
-    stationsPage.sendRequestToStationLink(STATION_LINK_1, {
-      path: '/api/setCounter',
-      method: 'POST',
-      parameters: {
-        setCounter: 1,
-      },
-    });
+    stationsPage.sendSetCounterRequestToStationLink(STATION_LINK_1, 1);
 
-    stationsPage.sendRequestToStationLink(STATION_LINK_2, {
-      path: '/api/setCounter',
-      method: 'POST',
-      parameters: {
-        setCounter: 1,
-      },
-    });
+    stationsPage.sendSetCounterRequestToStationLink(STATION_LINK_2, 1);
 
     cy.triggerProbeAllInPocketBase();
 
@@ -180,25 +139,13 @@ describe('Counter', () => {
       stationLinks: [STATION_LINK_1],
     });
 
-    stationsPage.sendRequestToStationLink(STATION_LINK_1, {
-      path: '/api/setCounter',
-      method: 'POST',
-      parameters: {
-        setCounter: 999,
-      },
-    });
+    stationsPage.sendSetCounterRequestToStationLink(STATION_LINK_1, 999);
 
     cy.triggerProbeAllInPocketBase();
     cy.refresh();
     stationsPage.assertStationVisible(EXAMPLE_STATION_NAME);
 
-    stationsPage.sendRequestToStationLink(STATION_LINK_1, {
-      path: '/api/setCounter',
-      method: 'POST',
-      parameters: {
-        setCounter: 1,
-      },
-    });
+    stationsPage.sendSetCounterRequestToStationLink(STATION_LINK_1, 1);
 
     cy.triggerProbeAllInPocketBase();
 

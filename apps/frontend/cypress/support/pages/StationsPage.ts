@@ -1,5 +1,10 @@
 import { AppPage } from '../abstract/page';
-import { Station, StationLink, StationLinkRequest } from '../types';
+import {
+  PresetCommand,
+  Station,
+  StationLink,
+  StationLinkRequest,
+} from '../types';
 import {
   assertStationCreatePayload,
   interceptStationCreate,
@@ -227,6 +232,44 @@ export class StationsPage implements AppPage {
       method: method,
       url: `http://${host}:${port}${path}`,
       body: parameters,
+    });
+  }
+
+  sendSetCounterRequestToStationLink(
+    stationLink: StationLink,
+    counter: number,
+  ) {
+    return this.sendRequestToStationLink(stationLink, {
+      method: 'POST',
+      path: '/api/setCounter',
+      parameters: {
+        setCounter: counter,
+      },
+    });
+  }
+
+  sendSetPresetRequestToStationLink(
+    stationLink: StationLink,
+    newPresetName: string,
+    newPresetCommands: PresetCommand[],
+  ) {
+    return this.sendRequestToStationLink(stationLink, {
+      method: 'POST',
+      path: '/api/setPreset',
+      parameters: {
+        presetName: newPresetName,
+        commands: newPresetCommands,
+      },
+    });
+  }
+
+  sendSetActiveRequestToStationLink(stationLink: StationLink, active: boolean) {
+    this.sendRequestToStationLink(stationLink, {
+      method: 'POST',
+      path: '/api/setActive',
+      parameters: {
+        active,
+      },
     });
   }
 

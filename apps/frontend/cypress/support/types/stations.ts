@@ -16,7 +16,7 @@ export interface StationLink {
   host: string;
 }
 
-type PresetCommand = {
+export type PresetCommand = {
   id: string;
   payload: string;
 };
