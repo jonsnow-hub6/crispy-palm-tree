@@ -20,6 +20,13 @@ export class LoginPage implements AppPage {
   getErrorMessage() {
     return cy.get('[data-cy=login-error]');
   }
+
+  login(username: string, password: string) {
+    this.fillUsername(username);
+    this.fillPassword(password);
+    this.submit();
+    this.getErrorMessage().should('exist');
+  }
 }
 
 export default LoginPage;

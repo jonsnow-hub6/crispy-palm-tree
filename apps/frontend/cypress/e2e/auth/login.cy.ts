@@ -22,9 +22,7 @@ describe('Auth - Login', () => {
   });
 
   it('5.1.2 - when trying to login with invalid credentials, should not login and give error message', () => {
-    loginPage.fillUsername(INVALID_USERNAME);
-    loginPage.fillPassword(INVALID_PASSWORD);
-    loginPage.submit();
+    loginPage.login(INVALID_USERNAME, INVALID_PASSWORD);
     loginPage.getErrorMessage().should('exist');
   });
 
@@ -34,10 +32,7 @@ describe('Auth - Login', () => {
       password: VALID_PASSWORD,
       permission: [],
     });
-
-    loginPage.fillUsername(VALID_USERNAME);
-    loginPage.fillPassword(VALID_PASSWORD);
-    loginPage.submit();
+    loginPage.login(VALID_USERNAME, VALID_PASSWORD);
     cy.location('pathname').should('eq', '/');
   });
 });

@@ -60,7 +60,7 @@ describe('Presets', () => {
     dashboardPage.assertPresetIsActive(PRESETS_JSON_PRESET_NAME);
   });
 
-  it('2.2.1 - when changing preset, and then creating a new station, new station should be out and sync, and when syncing the station, should no longer be out of sync', () => {
+  it('2.2.1 - when changing preset, and then creating a new station, new station should be out of sync, and when syncing the station, should no longer be out of sync', () => {
     stationsPage.visit();
 
     stationsPage.createStationMock({

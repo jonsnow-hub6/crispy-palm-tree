@@ -19,7 +19,7 @@ describe('Auth - Protected Routes', () => {
     cy.location('pathname').should('eq', '/stations');
   });
 
-  it('5.2.3 - when user has permission for some of the pages, should allows authenticated user to access only allowed routes', () => {
+  it('5.2.3 - when user has permission for some of the pages, should not allow user to access routes that he does not have permissions too', () => {
     cy.injectUsernameAndPasswordIntoPocketBase({
       username: VALID_USERNAME,
       password: VALID_PASSWORD,
