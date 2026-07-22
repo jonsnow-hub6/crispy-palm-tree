@@ -2,12 +2,7 @@ import DashboardPage from '../../support/pages/DashboardPage';
 import PresetsPage from '../../support/pages/PresetsPage';
 import StationsPage from '../../support/pages/StationsPage';
 import { createStringSearchRegex } from '../../support/utils/utils';
-import {
-  EXAMPLE_STATION_NAME,
-  SECOND_EXAMPLE_STATION_NAME,
-  STATION_LINK_1,
-  STATION_LINK_2,
-} from '../stations/consts';
+import { EXAMPLE_STATION_NAME, STATION_LINK_1 } from '../stations/consts';
 import { PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME } from './consts';
 
 describe('Presets', () => {
@@ -61,14 +56,6 @@ describe('Presets', () => {
   });
 
   it('2.2.1 - when changing preset, and then creating a new station, new station should be out of sync, and when syncing the station, should no longer be out of sync', () => {
-    stationsPage.visit();
-
-    stationsPage.createStationMock({
-      name: EXAMPLE_STATION_NAME,
-      stationLinks: [STATION_LINK_1],
-    });
-    cy.triggerProbeAllInPocketBase();
-
     presetsPage.visit();
     presetsPage.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
 
@@ -79,27 +66,28 @@ describe('Presets', () => {
     cy.triggerProbeAllInPocketBase();
 
     stationsPage.visit();
+
     stationsPage.createStationMock({
-      name: SECOND_EXAMPLE_STATION_NAME,
-      stationLinks: [STATION_LINK_2],
+      name: EXAMPLE_STATION_NAME,
+      stationLinks: [STATION_LINK_1],
     });
     cy.triggerProbeAllInPocketBase();
 
     stationsPage.assertStationLinkValueExists(
-      SECOND_EXAMPLE_STATION_NAME,
-      STATION_LINK_2,
+      EXAMPLE_STATION_NAME,
+      STATION_LINK_1,
       'out-of-sync',
       new RegExp(`^${true}`, 'i'),
     );
     stationsPage.pressStationLinkSyncButton(
-      SECOND_EXAMPLE_STATION_NAME,
-      STATION_LINK_2,
+      EXAMPLE_STATION_NAME,
+      STATION_LINK_1,
     );
 
     cy.triggerProbeAllInPocketBase();
     stationsPage.assertStationLinkValueExists(
-      SECOND_EXAMPLE_STATION_NAME,
-      STATION_LINK_2,
+      EXAMPLE_STATION_NAME,
+      STATION_LINK_1,
       'out-of-sync',
       new RegExp(`^${false}`, 'i'),
     );

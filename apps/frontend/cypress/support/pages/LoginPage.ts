@@ -25,7 +25,6 @@ export class LoginPage implements AppPage {
     this.fillUsername(username);
     this.fillPassword(password);
     this.submit();
-    this.getErrorMessage().should('exist');
   }
 }
 

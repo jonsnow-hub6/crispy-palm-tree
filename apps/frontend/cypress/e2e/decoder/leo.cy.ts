@@ -1,26 +1,32 @@
 import { DecoderPage } from '../../support/pages/DecoderPage';
 import StationsPage from '../../support/pages/StationsPage';
-import PresetsPage from '../../support/pages/PresetsPage';
-import DashboardPage from '../../support/pages/DashboardPage';
-import { EXAMPLE_STATION_NAME, STATION_LINK_1 } from '../stations/consts';
+import { STATION_LINK_1 } from '../stations/consts';
 import { createStringSearchRegex } from '../../support/utils/utils';
-import { VALID_DECODER_ID } from './consts';
+import {
+  INVALID_ACTION_PAYLOAD,
+  INVALID_MAGIC,
+  VALID_ACTION_PAYLOAD,
+  VALID_DECODER_ID,
+  VALID_FIRST_ACTION_PAYLOAD,
+  VALID_MAGIC,
+  VALID_SECOND_ACTION_PAYLOAD,
+  VALID_THIRD_ACTION_PAYLOAD,
+} from './consts';
 import {
   FIRST_PRESET_JSON_PROJECT_ID,
-  MULTIPLE_ACTIONS_PRESET_JSON_NAME,
-  MULTIPLE_ACTIONS_PRESET_NAME,
   PRESET_JSON_PROJECT_ID,
-  PRESETS_JSON_NAME,
-  PRESETS_JSON_PRESET_NAME,
   SECOND_PRESET_JSON_PROJECT_ID,
   THIRD_PRESET_JSON_PROJECT_ID,
 } from '../presets/consts';
+import {
+  createLeoLog,
+  createStationWithMultipleActionPresetSetup,
+  createStationWithSingleActionPresetSetup,
+} from './utils';
 
 describe('Decoder - Leo', () => {
   const decoderPage = new DecoderPage();
   const stationsPage = new StationsPage();
-  const presetsPage = new PresetsPage();
-  const dashboardPage = new DashboardPage();
 
   beforeEach(() => {
     cy.resetDB();
@@ -31,24 +37,8 @@ describe('Decoder - Leo', () => {
     decoderPage.visit();
   });
 
-  it('4.1.1 - create a station, add a preset, sync the preset to the station, activate station, inject packets to the logger so they will match the transmitted preset. then the preset in the navbar should be green and so does the logs', () => {
-    stationsPage.visit();
-    stationsPage.createStationMock({
-      name: EXAMPLE_STATION_NAME,
-      stationLinks: [STATION_LINK_1],
-    });
-    cy.triggerProbeAllInPocketBase();
-
-    presetsPage.visit();
-    presetsPage.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
-
-    dashboardPage.visit();
-    dashboardPage.changeActivePreset(PRESETS_JSON_PRESET_NAME);
-    cy.triggerProbeAllInPocketBase();
-
-    stationsPage.visit();
-
-    stationsPage.activateStationLink(EXAMPLE_STATION_NAME, STATION_LINK_1);
+  it('4.1.1 - when creating a station, add a preset, sync the preset to the station, activate station, inject packets to the logger so they will match the transmitted preset. then the preset in the navbar should be valid and so does the logs', () => {
+    createStationWithSingleActionPresetSetup();
 
     const validCounter = 1;
     stationsPage.sendSetCounterRequestToStationLink(
@@ -59,16 +49,16 @@ describe('Decoder - Leo', () => {
     cy.triggerProbeAllInPocketBase();
     decoderPage.visit();
     decoderPage.changeLeoLoggerSettings('delta', 10);
+    decoderPage.changeLeoLoggerSettings('magic', VALID_MAGIC);
 
     decoderPage.injectLeoRecords([
-      {
-        projectId: PRESET_JSON_PROJECT_ID,
-        payload: '0x00000000000001',
-        reserved: '0x00000000000001',
-        counter: validCounter,
-        decoderId: VALID_DECODER_ID,
-        timeOfArrival: new Date().toISOString(),
-      },
+      createLeoLog(
+        PRESET_JSON_PROJECT_ID,
+        VALID_ACTION_PAYLOAD,
+        VALID_ACTION_PAYLOAD,
+        VALID_MAGIC,
+        validCounter,
+      ),
     ]);
 
     cy.contains('VERIFIED', { timeout: 10000 }).should('be.visible');
@@ -80,36 +70,21 @@ describe('Decoder - Leo', () => {
     );
   });
 
-  it('4.1.2 - create a station, add a preset, sync the preset to the station, activate station, inject packets to the logger so they wont match the transmitted preset. then the preset in the navbar should be red and so does the logs', () => {
-    stationsPage.visit();
-    stationsPage.createStationMock({
-      name: EXAMPLE_STATION_NAME,
-      stationLinks: [STATION_LINK_1],
-    });
-    cy.triggerProbeAllInPocketBase();
+  it('4.1.2 - when creating a station, add a preset, sync the preset to the station, activate station, inject packets to the logger so they wont match the transmitted preset. then the preset in the navbar should be red and so does the logs', () => {
+    createStationWithSingleActionPresetSetup();
 
-    presetsPage.visit();
-    presetsPage.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
-
-    dashboardPage.visit();
-    dashboardPage.changeActivePreset(PRESETS_JSON_PRESET_NAME);
-    cy.triggerProbeAllInPocketBase();
-
-    stationsPage.visit();
-
-    stationsPage.activateStationLink(EXAMPLE_STATION_NAME, STATION_LINK_1);
-
-    cy.triggerProbeAllInPocketBase();
     decoderPage.visit();
-    decoderPage.changeLeoLoggerSettings('delta', 1);
+    decoderPage.changeLeoLoggerSettings('delta', 10);
+    decoderPage.changeLeoLoggerSettings('magic', VALID_MAGIC);
 
     decoderPage.injectLeoRecords([
-      {
-        projectId: PRESET_JSON_PROJECT_ID,
-        payload: '0x00000000000002',
-        decoderId: VALID_DECODER_ID,
-        timeOfArrival: new Date().toISOString(),
-      },
+      createLeoLog(
+        PRESET_JSON_PROJECT_ID,
+        INVALID_ACTION_PAYLOAD,
+        INVALID_ACTION_PAYLOAD,
+        VALID_MAGIC,
+        0,
+      ),
     ]);
     cy.wait(1000);
 
@@ -122,42 +97,20 @@ describe('Decoder - Leo', () => {
     );
   });
 
-  it('4.1.3 - create a station, add a preset, sync the preset to the station, activate station, set an magic number, inject packets to the logger with not matching magic ', () => {
-    const validMagic = 1234;
-    const invalidMagic = 4321;
+  it('4.1.3 - when creating a station, add a preset, sync the preset to the station, activate station, set an magic number, inject packets to the logger with not matching magic ', () => {
+    createStationWithSingleActionPresetSetup();
 
-    stationsPage.visit();
-    stationsPage.createStationMock({
-      name: EXAMPLE_STATION_NAME,
-      stationLinks: [STATION_LINK_1],
-    });
-    cy.triggerProbeAllInPocketBase();
-
-    presetsPage.visit();
-    presetsPage.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
-
-    dashboardPage.visit();
-    dashboardPage.changeActivePreset(PRESETS_JSON_PRESET_NAME);
-    cy.triggerProbeAllInPocketBase();
-
-    stationsPage.visit();
-
-    stationsPage.activateStationLink(EXAMPLE_STATION_NAME, STATION_LINK_1);
-
-    cy.triggerProbeAllInPocketBase();
     decoderPage.visit();
-    decoderPage.changeLeoLoggerSettings('magic', validMagic);
+    decoderPage.changeLeoLoggerSettings('magic', VALID_MAGIC);
 
     decoderPage.injectLeoRecords([
-      {
-        projectId: PRESET_JSON_PROJECT_ID,
-        magic: invalidMagic,
-        counter: 4,
-        payload: '0x00000000000001',
-        timeOfArrival: new Date().toISOString(),
-        reserved: '0x00000000000001',
-        decoderId: VALID_DECODER_ID,
-      },
+      createLeoLog(
+        PRESET_JSON_PROJECT_ID,
+        VALID_ACTION_PAYLOAD,
+        VALID_ACTION_PAYLOAD,
+        INVALID_MAGIC,
+        1,
+      ),
     ]);
 
     cy.contains('WAITING', { timeout: 10000 }).should('be.visible');
@@ -169,69 +122,42 @@ describe('Decoder - Leo', () => {
     );
   });
 
-  it('4.1.4 - create a station, add a preset, sync the preset to the station, activate station, inject packets to the logger so some match and some wont match the transmitted preset. then the preset in the navbar should be red and so does the logs', () => {
-    const validMagic = 1234;
+  it('4.1.4 - when creating a station, add a preset, sync the preset to the station, activate station, inject packets to the logger so some match and some wont match the transmitted preset. then the preset in the navbar should be red and so does the logs', () => {
+    createStationWithSingleActionPresetSetup();
 
-    stationsPage.visit();
-    stationsPage.createStationMock({
-      name: EXAMPLE_STATION_NAME,
-      stationLinks: [STATION_LINK_1],
-    });
-    cy.triggerProbeAllInPocketBase();
-
-    presetsPage.visit();
-    presetsPage.importPreset(PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME);
-
-    dashboardPage.visit();
-    dashboardPage.changeActivePreset(PRESETS_JSON_PRESET_NAME);
-    cy.triggerProbeAllInPocketBase();
-
-    stationsPage.visit();
-
-    stationsPage.activateStationLink(EXAMPLE_STATION_NAME, STATION_LINK_1);
-
-    cy.triggerProbeAllInPocketBase();
     decoderPage.visit();
-    decoderPage.changeLeoLoggerSettings('magic', validMagic);
+    decoderPage.changeLeoLoggerSettings('magic', VALID_MAGIC);
     decoderPage.changeLeoLoggerSettings('delta', 10);
 
     decoderPage.injectLeoRecords([
-      {
-        projectId: PRESET_JSON_PROJECT_ID,
-        magic: validMagic,
-        payload: '0x00000000000002',
-        reserved: '0x00000000000002',
-        decoderId: VALID_DECODER_ID,
-        counter: 1,
-        timeOfArrival: new Date().toISOString(),
-      },
-      {
-        projectId: PRESET_JSON_PROJECT_ID,
-        magic: validMagic,
-        payload: '0x00000000000001',
-        reserved: '0x00000000000001',
-        decoderId: VALID_DECODER_ID,
-        counter: 2,
-        timeOfArrival: new Date().toISOString(),
-      },
-      {
-        projectId: PRESET_JSON_PROJECT_ID,
-        magic: validMagic,
-        payload: '0x00000000000001',
-        reserved: '0x00000000000001',
-        decoderId: VALID_DECODER_ID,
-        counter: 3,
-        timeOfArrival: new Date().toISOString(),
-      },
-      {
-        projectId: PRESET_JSON_PROJECT_ID,
-        magic: validMagic,
-        payload: '0x00000000000002',
-        reserved: '0x00000000000002',
-        decoderId: VALID_DECODER_ID,
-        counter: 4,
-        timeOfArrival: new Date().toISOString(),
-      },
+      createLeoLog(
+        PRESET_JSON_PROJECT_ID,
+        INVALID_ACTION_PAYLOAD,
+        INVALID_ACTION_PAYLOAD,
+        VALID_MAGIC,
+        1,
+      ),
+      createLeoLog(
+        PRESET_JSON_PROJECT_ID,
+        VALID_ACTION_PAYLOAD,
+        VALID_ACTION_PAYLOAD,
+        VALID_MAGIC,
+        2,
+      ),
+      createLeoLog(
+        PRESET_JSON_PROJECT_ID,
+        VALID_ACTION_PAYLOAD,
+        VALID_ACTION_PAYLOAD,
+        VALID_MAGIC,
+        3,
+      ),
+      createLeoLog(
+        PRESET_JSON_PROJECT_ID,
+        INVALID_ACTION_PAYLOAD,
+        INVALID_ACTION_PAYLOAD,
+        VALID_MAGIC,
+        4,
+      ),
     ]);
 
     cy.wait(1000).then(() => {
@@ -265,61 +191,31 @@ describe('Decoder - Leo', () => {
 
   it('4.1.5 - when receiving logs of preset with multiple actions, if the order is wrong, should color the incorrect logs red, and still have verified status', () => {
     const validMagic = 1234;
+    createStationWithMultipleActionPresetSetup();
 
-    stationsPage.visit();
-    stationsPage.createStationMock({
-      name: EXAMPLE_STATION_NAME,
-      stationLinks: [STATION_LINK_1],
-    });
-    cy.triggerProbeAllInPocketBase();
-
-    presetsPage.visit();
-    presetsPage.importPreset(
-      MULTIPLE_ACTIONS_PRESET_JSON_NAME,
-      MULTIPLE_ACTIONS_PRESET_NAME,
-    );
-
-    dashboardPage.visit();
-    dashboardPage.changeActivePreset(MULTIPLE_ACTIONS_PRESET_NAME);
-    cy.triggerProbeAllInPocketBase();
-
-    stationsPage.visit();
-
-    stationsPage.activateStationLink(EXAMPLE_STATION_NAME, STATION_LINK_1);
-
-    cy.triggerProbeAllInPocketBase();
     decoderPage.visit();
     decoderPage.changeLeoLoggerSettings('magic', validMagic);
     decoderPage.changeLeoLoggerSettings('delta', 10);
 
     decoderPage.injectLeoRecords([
-      {
-        projectId: FIRST_PRESET_JSON_PROJECT_ID,
-        magic: validMagic,
-        payload: '0x00000000000001',
-        reserved: '0x00000000000001',
-        decoderId: VALID_DECODER_ID,
-        counter: 2,
-        timeOfArrival: new Date().toISOString(),
-      },
-      {
-        projectId: THIRD_PRESET_JSON_PROJECT_ID,
-        magic: validMagic,
-        payload: '0x00000000000003',
-        reserved: '0x00000000000003',
-        decoderId: VALID_DECODER_ID,
-        counter: 3,
-        timeOfArrival: new Date().toISOString(),
-      },
-      {
-        projectId: SECOND_PRESET_JSON_PROJECT_ID,
-        magic: validMagic,
-        payload: '0x00000000000002',
-        reserved: '0x00000000000002',
-        decoderId: VALID_DECODER_ID,
-        counter: 4,
-        timeOfArrival: new Date().toISOString(),
-      },
+      createLeoLog(
+        FIRST_PRESET_JSON_PROJECT_ID,
+        VALID_FIRST_ACTION_PAYLOAD,
+        VALID_FIRST_ACTION_PAYLOAD,
+        VALID_MAGIC,
+      ),
+      createLeoLog(
+        THIRD_PRESET_JSON_PROJECT_ID,
+        VALID_THIRD_ACTION_PAYLOAD,
+        VALID_THIRD_ACTION_PAYLOAD,
+        VALID_MAGIC,
+      ),
+      createLeoLog(
+        SECOND_PRESET_JSON_PROJECT_ID,
+        VALID_SECOND_ACTION_PAYLOAD,
+        VALID_SECOND_ACTION_PAYLOAD,
+        VALID_MAGIC,
+      ),
     ]);
 
     cy.wait(1000).then(() => {
@@ -344,63 +240,34 @@ describe('Decoder - Leo', () => {
     });
   });
 
-  it('4.1.6 -  when receiving logs of preset with multiple actions, if the order is right, should color the the logs green, and have verified status', () => {
-    const validMagic = 1234;
-
-    stationsPage.visit();
-    stationsPage.createStationMock({
-      name: EXAMPLE_STATION_NAME,
-      stationLinks: [STATION_LINK_1],
-    });
-    cy.triggerProbeAllInPocketBase();
-
-    presetsPage.visit();
-    presetsPage.importPreset(
-      MULTIPLE_ACTIONS_PRESET_JSON_NAME,
-      MULTIPLE_ACTIONS_PRESET_NAME,
-    );
-
-    dashboardPage.visit();
-    dashboardPage.changeActivePreset(MULTIPLE_ACTIONS_PRESET_NAME);
-    cy.triggerProbeAllInPocketBase();
-
-    stationsPage.visit();
-
-    stationsPage.activateStationLink(EXAMPLE_STATION_NAME, STATION_LINK_1);
-
-    cy.triggerProbeAllInPocketBase();
+  it('4.1.6 -  when receiving logs of preset with multiple actions, if the order is right, should color the the logs valid, and have verified status', () => {
+    createStationWithMultipleActionPresetSetup();
     decoderPage.visit();
-    decoderPage.changeLeoLoggerSettings('magic', 12345678);
+    decoderPage.changeLeoLoggerSettings('magic', VALID_MAGIC);
     decoderPage.changeLeoLoggerSettings('delta', 10);
 
     decoderPage.injectLeoRecords([
-      {
-        projectId: FIRST_PRESET_JSON_PROJECT_ID,
-        magic: validMagic,
-        payload: '0x00000000000001',
-        reserved: '0x00000000000001',
-        decoderId: VALID_DECODER_ID,
-        counter: 2,
-        timeOfArrival: new Date().toISOString(),
-      },
-      {
-        projectId: SECOND_PRESET_JSON_PROJECT_ID,
-        magic: validMagic,
-        payload: '0x00000000000002',
-        reserved: '0x00000000000002',
-        decoderId: VALID_DECODER_ID,
-        counter: 4,
-        timeOfArrival: new Date().toISOString(),
-      },
-      {
-        projectId: THIRD_PRESET_JSON_PROJECT_ID,
-        magic: validMagic,
-        payload: '0x00000000000003',
-        reserved: '0x00000000000003',
-        decoderId: VALID_DECODER_ID,
-        counter: 3,
-        timeOfArrival: new Date().toISOString(),
-      },
+      createLeoLog(
+        FIRST_PRESET_JSON_PROJECT_ID,
+        VALID_FIRST_ACTION_PAYLOAD,
+        VALID_FIRST_ACTION_PAYLOAD,
+        VALID_MAGIC,
+        2,
+      ),
+      createLeoLog(
+        SECOND_PRESET_JSON_PROJECT_ID,
+        VALID_SECOND_ACTION_PAYLOAD,
+        VALID_SECOND_ACTION_PAYLOAD,
+        VALID_MAGIC,
+        3,
+      ),
+      createLeoLog(
+        THIRD_PRESET_JSON_PROJECT_ID,
+        VALID_THIRD_ACTION_PAYLOAD,
+        VALID_THIRD_ACTION_PAYLOAD,
+        VALID_MAGIC,
+        4,
+      ),
     ]);
 
     cy.wait(1000).then(() => {
