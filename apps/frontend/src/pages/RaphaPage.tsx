@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import RaphaPllGraph from '@/components/RaphaPllGraph';
 import RaphaSnrGraph from '@/components/RaphaSnrGraph';
 import RaphaCarrierPhaseGraph from '@/components/RaphaCarrierPhaseGraph';
@@ -11,32 +11,118 @@ import { RootState } from '@/store';
 import { ChevronDown, Layers, Activity } from 'lucide-react';
 import { pb } from '@/lib/pocketbase';
 
+type DecoderRecord = { id: string; decoderId: string; currentDecoder: boolean };
+
 export default function RaphaPage() {
   useRaphaRealtime();
 
   const pllPoints = useSelector((s: RootState) => s.rapha?.pllPoints ?? []);
-  const [decoders, setDecoders] = useState<string[]>([]);
+  const [decoderRecords, setDecoderRecords] = useState<DecoderRecord[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedDecoder, setSelectedDecoder] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  // Guard to skip realtime echo of our own update
+  const skipRealtimeRef = useRef(false);
 
+  // Fetch all decoder records (with currentDecoder flag)
   useEffect(() => {
     const fetchDecoders = async () => {
       const result = await pb.collection('decoders').getFullList({
-        fields: 'decoderId',
+        fields: 'id,decoderId,currentDecoder',
       });
-      const decodersId = result.map((r) => r.decoderId);
-      setDecoders(decodersId);
+      const records: DecoderRecord[] = result.map((r) => ({
+        id: r.id,
+        decoderId: r.decoderId as string,
+        currentDecoder: !!r.currentDecoder,
+      }));
+      setDecoderRecords(records);
+
+      // Initialise selection from the record flagged as current
+      const current = records.find((r) => r.currentDecoder);
+      if (current) {
+        setSelectedDecoder(current.decoderId);
+      } else if (records.length > 0) {
+        setSelectedDecoder(records[0].decoderId);
+      }
     };
 
     fetchDecoders();
   }, []);
 
+  // Realtime subscription — keeps selection in sync across tabs/computers
   useEffect(() => {
-    if (!selectedDecoder && decoders.length > 0)
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSelectedDecoder(decoders[0]);
-  }, [decoders, selectedDecoder]);
+    let unsubscribe: (() => void) | null = null;
+
+    pb.collection('decoders').subscribe('*', (e) => {
+      if (skipRealtimeRef.current) return;
+
+      const updated = e.record;
+      setDecoderRecords((prev) =>
+        prev.map((d) =>
+          d.id === updated.id
+            ? { ...d, currentDecoder: !!updated.currentDecoder }
+            : d,
+        ),
+      );
+
+      // If this record was just marked as current, switch selection
+      if (updated.currentDecoder) {
+        setSelectedDecoder(updated.decoderId as string);
+      }
+    }).then((unsub) => {
+      unsubscribe = unsub;
+    });
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, []);
+
+  // When user picks a decoder, persist to PocketBase
+  const handleSelectDecoder = useCallback(
+    async (decoderId: string) => {
+      setSelectedDecoder(decoderId);
+      setMenuOpen(false);
+
+      // Optimistic local update
+      setDecoderRecords((prev) =>
+        prev.map((d) => ({
+          ...d,
+          currentDecoder: d.decoderId === decoderId,
+        })),
+      );
+
+      // Persist: unset old, set new
+      skipRealtimeRef.current = true;
+      try {
+        const oldCurrent = decoderRecords.find(
+          (d) => d.currentDecoder && d.decoderId !== decoderId,
+        );
+        const newCurrent = decoderRecords.find(
+          (d) => d.decoderId === decoderId,
+        );
+
+        if (oldCurrent) {
+          await pb
+            .collection('decoders')
+            .update(oldCurrent.id, { currentDecoder: false });
+        }
+        if (newCurrent && !newCurrent.currentDecoder) {
+          await pb
+            .collection('decoders')
+            .update(newCurrent.id, { currentDecoder: true });
+        }
+      } catch (err) {
+        console.error('Failed to persist currentDecoder:', err);
+      } finally {
+        // Small delay so the realtime echo from our own PATCH is ignored
+        setTimeout(() => {
+          skipRealtimeRef.current = false;
+        }, 500);
+      }
+    },
+    [decoderRecords],
+  );
 
   // click outside handler for menu
   useEffect(() => {
@@ -66,6 +152,8 @@ export default function RaphaPage() {
   const lastOneLabel = lastOne
     ? new Date(lastOne.ts).toLocaleTimeString()
     : '—';
+
+  const decoderIds = decoderRecords.map((d) => d.decoderId);
 
   return (
     <div className="flex-1 flex flex-col lg:flex-row gap-6 p-4 bg-background overflow-auto">
@@ -106,14 +194,11 @@ export default function RaphaPage() {
               {menuOpen && (
                 <div className="absolute right-0 mt-2 w-full sm:w-56 bg-card border rounded-md shadow-lg z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
                   <div className="py-1 max-h-64 overflow-auto">
-                    {decoders.map((d) => (
+                    {decoderIds.map((d) => (
                       <button
                         key={d}
                         className={`block w-full text-left px-4 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground ${selectedDecoder === d ? 'bg-accent/50 font-medium' : ''}`}
-                        onClick={() => {
-                          setSelectedDecoder(d);
-                          setMenuOpen(false);
-                        }}
+                        onClick={() => handleSelectDecoder(d)}
                       >
                         <span className="truncate">{d}</span>
                       </button>
