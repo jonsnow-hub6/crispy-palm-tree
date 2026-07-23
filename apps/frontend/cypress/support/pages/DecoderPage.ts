@@ -4,6 +4,12 @@ import { LeoRecord, RaphaRecord } from '../types';
 import { areTimesClose } from '../utils/utils';
 import { DEFAULT_LEO_RECORD_VALUES } from './consts';
 
+interface GetLeoLogParams {
+  index: number;
+  field: 'status' | 'magic-mismatch';
+  regex?: RegExp;
+}
+
 export class DecoderPage implements AppPage {
   visit() {
     cy.visit('/decoder');
@@ -71,11 +77,11 @@ export class DecoderPage implements AppPage {
     );
   }
 
-  getLeoLogFieldValue(
-    index: number,
-    field: 'status' | 'magic-mismatch',
-    regex?: RegExp,
-  ): Cypress.Chainable<string> {
+  getLeoLogFieldValue({
+    index,
+    field,
+    regex,
+  }: GetLeoLogParams): Cypress.Chainable<string> {
     const logSelector = `[data-cy="leo-log"]`;
     const attrName = `data-${field.toLowerCase()}`;
 

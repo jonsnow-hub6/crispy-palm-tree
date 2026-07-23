@@ -73,11 +73,10 @@ describe('Presets', () => {
     });
     cy.triggerProbeAllInPocketBase();
 
-    stationsPage.assertStationLinkValueExists(
+    stationsPage.assertStationLinkOutOfSyncValue(
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
-      'out-of-sync',
-      new RegExp(`^${true}`, 'i'),
+      true,
     );
     stationsPage.pressStationLinkSyncButton(
       EXAMPLE_STATION_NAME,
@@ -85,11 +84,10 @@ describe('Presets', () => {
     );
 
     cy.triggerProbeAllInPocketBase();
-    stationsPage.assertStationLinkValueExists(
+    stationsPage.assertStationLinkOutOfSyncValue(
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
-      'out-of-sync',
-      new RegExp(`^${false}`, 'i'),
+      false,
     );
   });
 
@@ -127,11 +125,10 @@ describe('Presets', () => {
 
         cy.triggerProbeAllInPocketBase();
 
-        stationsPage.assertStationLinkValueExists(
+        stationsPage.assertStationLinkOutOfSyncValue(
           EXAMPLE_STATION_NAME,
           STATION_LINK_1,
-          'out-of-sync',
-          new RegExp(`^${true}`, 'i'),
+          true,
         );
         stationsPage.pressStationLinkSyncButton(
           EXAMPLE_STATION_NAME,
@@ -139,11 +136,10 @@ describe('Presets', () => {
         );
 
         cy.triggerProbeAllInPocketBase();
-        stationsPage.assertStationLinkValueExists(
+        stationsPage.assertStationLinkOutOfSyncValue(
           EXAMPLE_STATION_NAME,
           STATION_LINK_1,
-          'out-of-sync',
-          new RegExp(`^${false}`, 'i'),
+          false,
         );
       });
   });

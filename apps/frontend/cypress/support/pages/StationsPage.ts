@@ -10,6 +10,7 @@ import {
   interceptStationCreate,
   seedStationsInPocketBase,
 } from '../utils/stations';
+import { createStringSearchRegex } from '../utils/utils';
 
 export class StationsPage implements AppPage {
   visit() {
@@ -33,7 +34,9 @@ export class StationsPage implements AppPage {
     interceptStationCreate();
   }
 
-  assertCreateRequestPayload(expectedValues: Record<string, unknown>) {
+  interceptCreateStationRequestPayload(
+    expectedValues: Record<string, unknown>,
+  ) {
     assertStationCreatePayload(expectedValues);
   }
 
@@ -58,7 +61,7 @@ export class StationsPage implements AppPage {
     );
   }
 
-  assertStationLinkValueExists(
+  private assertStationLinkValueExists(
     stationName: string,
     { host, port }: StationLink,
     label: string,
@@ -75,6 +78,48 @@ export class StationsPage implements AppPage {
         expect(value!, `${label} value`).to.match(regex);
       }
     });
+  }
+
+  assertStationLinkCounterValueExists(stationName: string, link: StationLink) {
+    this.assertStationLinkValueExists(stationName, link, 'Counter', /[0-9]+/);
+  }
+  assertStationLinkStatusValue(
+    stationName: string,
+    link: StationLink,
+    value?: string,
+  ) {
+    this.assertStationLinkValueExists(
+      stationName,
+      link,
+      'Status',
+      value ? createStringSearchRegex(value) : /^[\s\S]+$/,
+    );
+  }
+
+  assertStationLinkPresetValue(
+    stationName: string,
+    link: StationLink,
+    value: string,
+  ) {
+    this.assertStationLinkValueExists(
+      stationName,
+      link,
+      'Preset',
+      createStringSearchRegex(value),
+    );
+  }
+
+  assertStationLinkOutOfSyncValue(
+    stationName: string,
+    link: StationLink,
+    value: boolean,
+  ) {
+    this.assertStationLinkValueExists(
+      stationName,
+      link,
+      'out-of-sync',
+      new RegExp(`^${value}`, 'i'),
+    );
   }
 
   getStationLinkValue(

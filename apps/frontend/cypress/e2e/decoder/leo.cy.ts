@@ -6,6 +6,7 @@ import {
   INVALID_ACTION_PAYLOAD,
   INVALID_MAGIC,
   VALID_ACTION_PAYLOAD,
+  VALID_COUNTER,
   VALID_DECODER_ID,
   VALID_FIRST_ACTION_PAYLOAD,
   VALID_MAGIC,
@@ -40,10 +41,9 @@ describe('Decoder - Leo', () => {
   it('4.1.1 - when creating a station, add a preset, sync the preset to the station, activate station, inject packets to the logger so they will match the transmitted preset. then the preset in the navbar should be valid and so does the logs', () => {
     createStationWithSingleActionPresetSetup();
 
-    const validCounter = 1;
     stationsPage.sendSetCounterRequestToStationLink(
       STATION_LINK_1,
-      validCounter,
+      VALID_COUNTER,
     );
 
     cy.triggerProbeAllInPocketBase();
@@ -57,17 +57,17 @@ describe('Decoder - Leo', () => {
         VALID_ACTION_PAYLOAD,
         VALID_ACTION_PAYLOAD,
         VALID_MAGIC,
-        validCounter,
+        VALID_COUNTER,
       ),
     ]);
 
     cy.contains('VERIFIED', { timeout: 10000 }).should('be.visible');
 
-    decoderPage.getLeoLogFieldValue(
-      0,
-      'status',
-      createStringSearchRegex(`Preset Action #1 (Valid)`),
-    );
+    decoderPage.getLeoLogFieldValue({
+      index: 0,
+      field: 'status',
+      regex: createStringSearchRegex(`Preset Action #1 (Valid)`),
+    });
   });
 
   it('4.1.2 - when creating a station, add a preset, sync the preset to the station, activate station, inject packets to the logger so they wont match the transmitted preset. then the preset in the navbar should be red and so does the logs', () => {
@@ -90,11 +90,11 @@ describe('Decoder - Leo', () => {
 
     cy.contains('WAITING', { timeout: 10000 }).should('be.visible');
 
-    decoderPage.getLeoLogFieldValue(
-      0,
-      'status',
-      createStringSearchRegex(`Unexpected Action: Not in preset`),
-    );
+    decoderPage.getLeoLogFieldValue({
+      index: 0,
+      field: 'status',
+      regex: createStringSearchRegex(`Unexpected Action: Not in preset`),
+    });
   });
 
   it('4.1.3 - when creating a station, add a preset, sync the preset to the station, activate station, set an magic number, inject packets to the logger with not matching magic ', () => {
@@ -115,11 +115,11 @@ describe('Decoder - Leo', () => {
 
     cy.contains('WAITING', { timeout: 10000 }).should('be.visible');
 
-    decoderPage.getLeoLogFieldValue(
-      0,
-      'magic-mismatch',
-      createStringSearchRegex(`true`),
-    );
+    decoderPage.getLeoLogFieldValue({
+      index: 0,
+      field: 'magic-mismatch',
+      regex: createStringSearchRegex(`true`),
+    });
   });
 
   it('4.1.4 - when creating a station, add a preset, sync the preset to the station, activate station, inject packets to the logger so some match and some wont match the transmitted preset. then the preset in the navbar should be red and so does the logs', () => {
@@ -161,29 +161,29 @@ describe('Decoder - Leo', () => {
     ]);
 
     cy.wait(1000).then(() => {
-      decoderPage.getLeoLogFieldValue(
-        0,
-        'status',
-        createStringSearchRegex(`Unexpected Action: Not in preset`),
-      );
+      decoderPage.getLeoLogFieldValue({
+        index: 0,
+        field: 'status',
+        regex: createStringSearchRegex(`Unexpected Action: Not in preset`),
+      });
 
-      decoderPage.getLeoLogFieldValue(
-        1,
-        'status',
-        createStringSearchRegex(`Preset Action #1 (Valid)`),
-      );
+      decoderPage.getLeoLogFieldValue({
+        index: 1,
+        field: 'status',
+        regex: createStringSearchRegex(`Preset Action #1 (Valid)`),
+      });
 
-      decoderPage.getLeoLogFieldValue(
-        2,
-        'status',
-        createStringSearchRegex(`Preset Action #1 (Valid)`),
-      );
+      decoderPage.getLeoLogFieldValue({
+        index: 2,
+        field: 'status',
+        regex: createStringSearchRegex(`Preset Action #1 (Valid)`),
+      });
 
-      decoderPage.getLeoLogFieldValue(
-        3,
-        'status',
-        createStringSearchRegex(`Unexpected Action: Not in preset`),
-      );
+      decoderPage.getLeoLogFieldValue({
+        index: 3,
+        field: 'status',
+        regex: createStringSearchRegex(`Unexpected Action: Not in preset`),
+      });
 
       cy.contains('VERIFIED', { timeout: 10000 }).should('be.visible');
     });
@@ -219,23 +219,23 @@ describe('Decoder - Leo', () => {
     ]);
 
     cy.wait(1000).then(() => {
-      decoderPage.getLeoLogFieldValue(
-        0,
-        'status',
-        createStringSearchRegex(`Preset Action #1 (Valid)`),
-      );
+      decoderPage.getLeoLogFieldValue({
+        index: 0,
+        field: 'status',
+        regex: createStringSearchRegex(`Preset Action #1 (Valid)`),
+      });
 
-      decoderPage.getLeoLogFieldValue(
-        1,
-        'status',
-        createStringSearchRegex(`Incorrect Order: Expected action #2`),
-      );
+      decoderPage.getLeoLogFieldValue({
+        index: 1,
+        field: 'status',
+        regex: createStringSearchRegex(`Incorrect Order: Expected action #2`),
+      });
 
-      decoderPage.getLeoLogFieldValue(
-        2,
-        'status',
-        createStringSearchRegex(`Incorrect Order: Expected action #1`),
-      );
+      decoderPage.getLeoLogFieldValue({
+        index: 2,
+        field: 'status',
+        regex: createStringSearchRegex(`Incorrect Order: Expected action #1`),
+      });
       cy.contains('VERIFIED', { timeout: 10000 }).should('be.visible');
     });
   });
@@ -271,23 +271,23 @@ describe('Decoder - Leo', () => {
     ]);
 
     cy.wait(1000).then(() => {
-      decoderPage.getLeoLogFieldValue(
-        0,
-        'status',
-        createStringSearchRegex(`Preset Action #1 (Valid)`),
-      );
+      decoderPage.getLeoLogFieldValue({
+        index: 0,
+        field: 'status',
+        regex: createStringSearchRegex(`Preset Action #1 (Valid)`),
+      });
 
-      decoderPage.getLeoLogFieldValue(
-        1,
-        'status',
-        createStringSearchRegex(`Preset Action #2 (Valid)`),
-      );
+      decoderPage.getLeoLogFieldValue({
+        index: 1,
+        field: 'status',
+        regex: createStringSearchRegex(`Preset Action #2 (Valid)`),
+      });
 
-      decoderPage.getLeoLogFieldValue(
-        2,
-        'status',
-        createStringSearchRegex(`Preset Action #3 (Valid)`),
-      );
+      decoderPage.getLeoLogFieldValue({
+        index: 2,
+        field: 'status',
+        regex: createStringSearchRegex(`Preset Action #3 (Valid)`),
+      });
 
       cy.contains('VERIFIED', { timeout: 10000 }).should('be.visible');
     });

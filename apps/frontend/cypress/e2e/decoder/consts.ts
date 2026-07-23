@@ -10,3 +10,4 @@ export const VALID_THIRD_ACTION_PAYLOAD = '0x00000000000003';
 
 export const VALID_MAGIC = 1234;
 export const INVALID_MAGIC = 12345678;
+export const VALID_COUNTER = 1;

@@ -2,13 +2,12 @@ import DashboardPage from '../../support/pages/DashboardPage';
 import PresetsPage from '../../support/pages/PresetsPage';
 import StationsPage from '../../support/pages/StationsPage';
 import {
+  CREATE_STATION_REQUEST_PAYLOAD,
+  CREATE_STATION_TEST_FIELDS,
   EXAMPLE_STATION_NAME,
+  MOCK_MULTIPLE_SEEDED_STATIONS,
   STATION_LINK_1,
-  STATION_LINK_2,
-  STATION_LINK_3,
 } from './consts';
-import { Station } from '../../support/types';
-import { createStringSearchRegex } from '../../support/utils/utils';
 import { PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME } from '../presets/consts';
 import { seedStationsInPocketBase } from '../../support/utils/stations';
 
@@ -27,40 +26,17 @@ describe('Stations', () => {
   it('1.1.1 - when creating a new station, should send correct fields to the backend', () => {
     stationsPage.interceptCreateRequest();
 
-    const name = 'newStation';
-    const payload = {
-      name: name,
-      stationLinks: [{ host: 'localhost', port: 9090 }],
-    };
-
     stationsPage.openCreateStationDialog();
-    cy.fillSchemaFormFields({
-      name: name,
-      host: 'localhost',
-      port: '9090',
-    });
+    cy.fillSchemaFormFields(CREATE_STATION_TEST_FIELDS);
 
     stationsPage.submitForm();
-    stationsPage.assertCreateRequestPayload(payload);
+    stationsPage.interceptCreateStationRequestPayload(
+      CREATE_STATION_REQUEST_PAYLOAD,
+    );
   });
 
   it('1.1.2 - when opening the stations page, should show all stations with correct status', () => {
-    const seededStations: Station[] = [
-      {
-        name: 'pb-seeded-station-1',
-        stationLinks: [STATION_LINK_1],
-      },
-      {
-        name: 'pb-seeded-station-2',
-        stationLinks: [STATION_LINK_2],
-      },
-      {
-        name: 'pb-seeded-station-3',
-        stationLinks: [STATION_LINK_3],
-      },
-    ];
-
-    seedStationsInPocketBase(seededStations);
+    seedStationsInPocketBase(MOCK_MULTIPLE_SEEDED_STATIONS);
     dashboardPage.visit();
     stationsPage.visit();
 
@@ -68,9 +44,9 @@ describe('Stations', () => {
     stationsPage
       .getStationsList()
       .find('[data-cy^="station-item-"]')
-      .should('have.length', seededStations.length);
+      .should('have.length', MOCK_MULTIPLE_SEEDED_STATIONS.length);
 
-    seededStations.forEach(({ name, stationLinks }) => {
+    MOCK_MULTIPLE_SEEDED_STATIONS.forEach(({ name, stationLinks }) => {
       stationsPage.assertStationLinkValues(name, stationLinks[0]);
     });
   });
@@ -106,11 +82,9 @@ describe('Stations', () => {
 
     cy.triggerProbeAllInPocketBase();
 
-    stationsPage.assertStationLinkValueExists(
+    stationsPage.assertStationLinkCounterValueExists(
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
-      'Counter',
-      /[0-9]+/,
     );
   });
 
@@ -127,11 +101,9 @@ describe('Stations', () => {
 
     cy.triggerProbeAllInPocketBase();
 
-    stationsPage.assertStationLinkValueExists(
+    stationsPage.assertStationLinkStatusValue(
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
-      'Status',
-      createStringSearchRegex('Inactive'),
     );
   });
 
@@ -149,11 +121,10 @@ describe('Stations', () => {
 
     stationsPage.visit();
     cy.triggerProbeAllInPocketBase();
-    stationsPage.assertStationLinkValueExists(
+    stationsPage.assertStationLinkPresetValue(
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
-      'Preset',
-      createStringSearchRegex(PRESETS_JSON_PRESET_NAME),
+      PRESETS_JSON_PRESET_NAME,
     );
   });
 
@@ -165,20 +136,18 @@ describe('Stations', () => {
 
     stationsPage.activateStation(EXAMPLE_STATION_NAME);
     cy.triggerProbeAllInPocketBase();
-    stationsPage.assertStationLinkValueExists(
+    stationsPage.assertStationLinkStatusValue(
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
-      'Status',
-      createStringSearchRegex('Active'),
+      'Active',
     );
 
     stationsPage.deactivateStation(EXAMPLE_STATION_NAME);
     cy.triggerProbeAllInPocketBase();
-    stationsPage.assertStationLinkValueExists(
+    stationsPage.assertStationLinkStatusValue(
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
-      'Status',
-      createStringSearchRegex('Inactive'),
+      'Inactive',
     );
   });
 });

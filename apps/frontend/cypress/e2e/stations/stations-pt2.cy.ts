@@ -5,7 +5,6 @@ import {
   STATION_LINK_1,
   STATION_LINK_2,
 } from './consts';
-import { createStringSearchRegex } from '../../support/utils/utils';
 
 describe('Stations', () => {
   const stationsPage = new StationsPage();
@@ -36,17 +35,15 @@ describe('Stations', () => {
 
     cy.refresh();
 
-    stationsPage.assertStationLinkValueExists(
+    stationsPage.assertStationLinkStatusValue(
       SECOND_EXAMPLE_STATION_NAME,
       STATION_LINK_2,
-      'Status',
-      createStringSearchRegex('Active'),
+      'Active',
     );
-    stationsPage.assertStationLinkValueExists(
+    stationsPage.assertStationLinkStatusValue(
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
-      'Status',
-      createStringSearchRegex('Inactive'),
+      'Inactive',
     );
   });
 
@@ -61,34 +58,30 @@ describe('Stations', () => {
       stationLinks: [STATION_LINK_2],
     });
 
-    stationsPage.assertStationLinkValueExists(
+    stationsPage.assertStationLinkStatusValue(
       SECOND_EXAMPLE_STATION_NAME,
       STATION_LINK_2,
-      'status',
-      createStringSearchRegex('Inactive'),
+      'Inactive',
     );
-    stationsPage.assertStationLinkValueExists(
+    stationsPage.assertStationLinkStatusValue(
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
-      'status',
-      createStringSearchRegex('Inactive'),
+      'Inactive',
     );
 
     stationsPage.activateStation(EXAMPLE_STATION_NAME);
 
     cy.triggerProbeAllInPocketBase();
 
-    stationsPage.assertStationLinkValueExists(
+    stationsPage.assertStationLinkStatusValue(
       SECOND_EXAMPLE_STATION_NAME,
       STATION_LINK_2,
-      'Status',
-      createStringSearchRegex('Inactive'),
+      'Inactive',
     );
-    stationsPage.assertStationLinkValueExists(
+    stationsPage.assertStationLinkStatusValue(
       EXAMPLE_STATION_NAME,
       STATION_LINK_1,
-      'Status',
-      createStringSearchRegex('Active'),
+      'Active',
     );
   });
 

@@ -33,7 +33,7 @@ describe('Counter', () => {
     stationsPage.assertCounterIncreasing(EXAMPLE_STATION_NAME, STATION_LINK_1);
   });
 
-  it.only('3.1.2 - when connected to a station, then activating the station, the station counter should be the same as the link counter', () => {
+  it('3.1.2 - when connected to a station, then activating the station, the station counter should be the same as the link counter', () => {
     stationsPage.createStationMock({
       name: EXAMPLE_STATION_NAME,
       stationLinks: [STATION_LINK_1],
