@@ -37,7 +37,7 @@ export default function RaphaPage() {
       }));
       setDecoderRecords(records);
 
-      // Initialise selection from the record flagged as current
+      // Initialize selection from the record flagged as current
       const current = records.find((r) => r.currentDecoder);
       if (current) {
         setSelectedDecoder(current.decoderId);
@@ -53,25 +53,27 @@ export default function RaphaPage() {
   useEffect(() => {
     let unsubscribe: (() => void) | null = null;
 
-    pb.collection('decoders').subscribe('*', (e) => {
-      if (skipRealtimeRef.current) return;
+    pb.collection('decoders')
+      .subscribe('*', (e) => {
+        if (skipRealtimeRef.current) return;
 
-      const updated = e.record;
-      setDecoderRecords((prev) =>
-        prev.map((d) =>
-          d.id === updated.id
-            ? { ...d, currentDecoder: !!updated.currentDecoder }
-            : d,
-        ),
-      );
+        const updated = e.record;
+        setDecoderRecords((prev) =>
+          prev.map((d) =>
+            d.id === updated.id
+              ? { ...d, currentDecoder: !!updated.currentDecoder }
+              : d,
+          ),
+        );
 
-      // If this record was just marked as current, switch selection
-      if (updated.currentDecoder) {
-        setSelectedDecoder(updated.decoderId as string);
-      }
-    }).then((unsub) => {
-      unsubscribe = unsub;
-    });
+        // If this record was just marked as current, switch selection
+        if (updated.currentDecoder) {
+          setSelectedDecoder(updated.decoderId as string);
+        }
+      })
+      .then((unsub) => {
+        unsubscribe = unsub;
+      });
 
     return () => {
       unsubscribe?.();
