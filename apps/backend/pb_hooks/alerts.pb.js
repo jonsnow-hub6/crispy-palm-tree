@@ -33,14 +33,19 @@ onRecordAfterCreateSuccess((e) => {
       0,
     );
     if (currentDecoders && currentDecoders.length > 0) {
-      currentDecoderId = String(currentDecoders[0].get('decoderId') || '').trim();
+      currentDecoderId = String(
+        currentDecoders[0].get('decoderId') || '',
+      ).trim();
     }
   } catch (err) {
-    $app.logger().error('alerts.pb.js currentDecoder lookup failed', err.message || err);
+    $app
+      .logger()
+      .error('alerts.pb.js currentDecoder lookup failed', err.message || err);
   }
 
   const isCurrentDecoder =
-    !currentDecoderId || String(record.get('decoderId') || '').trim() === currentDecoderId;
+    !currentDecoderId ||
+    String(record.get('decoderId') || '').trim() === currentDecoderId;
 
   // ------------------------------------------------
   // 1. Magic check
