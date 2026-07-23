@@ -21,6 +21,28 @@ onRecordAfterCreateSuccess((e) => {
   };
 
   // ------------------------------------------------
+  // 0. Look up which decoder is marked as "current"
+  // ------------------------------------------------
+  let currentDecoderId = null;
+  try {
+    const currentDecoders = $app.findRecordsByFilter(
+      'decoders',
+      'currentDecoder = true',
+      '',
+      1,
+      0,
+    );
+    if (currentDecoders && currentDecoders.length > 0) {
+      currentDecoderId = String(currentDecoders[0].get('decoderId') || '').trim();
+    }
+  } catch (err) {
+    $app.logger().error('alerts.pb.js currentDecoder lookup failed', err.message || err);
+  }
+
+  const isCurrentDecoder =
+    !currentDecoderId || String(record.get('decoderId') || '').trim() === currentDecoderId;
+
+  // ------------------------------------------------
   // 1. Magic check
   // ------------------------------------------------
   let isMagicCorrect = null;
@@ -320,40 +342,43 @@ onRecordAfterCreateSuccess((e) => {
 
   // ------------------------------------------------
   // Create ONE alert record with all results
+  // (only for the decoder marked as "current")
   // ------------------------------------------------
-  try {
-    const issues = [];
-    if (isMagicCorrect === false) issues.push('magic mismatch');
-    if (isCounterCorrect === false)
-      issues.push(counterIssue || 'counter not increasing');
-    if (presetStatus && presetStatus !== 'valid') {
-      issues.push('preset validation failed: ' + presetStatus);
+  if (isCurrentDecoder) {
+    try {
+      const issues = [];
+      if (isMagicCorrect === false) issues.push('magic mismatch');
+      if (isCounterCorrect === false)
+        issues.push(counterIssue || 'counter not increasing');
+      if (presetStatus && presetStatus !== 'valid') {
+        issues.push('preset validation failed: ' + presetStatus);
+      }
+
+      const level = issues.length > 0 ? 'error' : 'info';
+      const message =
+        issues.length > 0
+          ? `Issues for project ${currentProjectId}: ${issues.join(', ')}`
+          : `All checks passed for project ${currentProjectId}`;
+
+      const collection = $app.findCollectionByNameOrId('alerts');
+      const alert = new Record(collection);
+      alert.set('level', level);
+      alert.set('message', message);
+      alert.set(
+        'metadata',
+        JSON.stringify({
+          isMagicCorrect,
+          isCounterCorrect,
+          presetStatus,
+          presetId: presetIdVal,
+          presetIndex: presetIndexVal,
+          log: logData,
+        }),
+      );
+      $app.save(alert);
+    } catch (err) {
+      console.error('Failed to save alert:', err.message || err);
     }
-
-    const level = issues.length > 0 ? 'error' : 'info';
-    const message =
-      issues.length > 0
-        ? `Issues for project ${currentProjectId}: ${issues.join(', ')}`
-        : `All checks passed for project ${currentProjectId}`;
-
-    const collection = $app.findCollectionByNameOrId('alerts');
-    const alert = new Record(collection);
-    alert.set('level', level);
-    alert.set('message', message);
-    alert.set(
-      'metadata',
-      JSON.stringify({
-        isMagicCorrect,
-        isCounterCorrect,
-        presetStatus,
-        presetId: presetIdVal,
-        presetIndex: presetIndexVal,
-        log: logData,
-      }),
-    );
-    $app.save(alert);
-  } catch (err) {
-    console.error('Failed to save alert:', err.message || err);
   }
 
   // ------------------------------------------------
