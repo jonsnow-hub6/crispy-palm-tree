@@ -1,6 +1,7 @@
 import { AppPage } from '../abstract/page';
 import { pb } from '../consts';
 import { LeoRecord, RaphaRecord } from '../types';
+import { dateToSeconds, timeToSeconds } from '../utils/utils';
 import { DEFAULT_LEO_RECORD_VALUES } from './consts';
 
 export interface GetLeoLogParams {
@@ -143,35 +144,54 @@ export class DecoderPage implements AppPage {
     lastLocked: string,
     differenceInSecond: number,
   ) {
-    expect(lastLocked, 'last locked value should exist').to.be.a('string');
-
-    const parts = lastLocked.split(':').map(Number);
-
-    expect(parts.length, `invalid last locked value: ${lastLocked}`).to.equal(
-      3,
-    );
-    expect(
-      parts.every((part) => !Number.isNaN(part)),
-      `invalid last locked value: ${lastLocked}`,
-    ).to.equal(true);
-
-    const [hours, minutes, seconds] = parts;
-
-    const expectedSeconds =
-      expectedTime.getHours() * 3600 +
-      expectedTime.getMinutes() * 60 +
-      expectedTime.getSeconds();
-
-    const actualSeconds = hours * 3600 + minutes * 60 + seconds;
+    const actualTime = this.parseLastLockedTime(lastLocked);
+    const expectedSeconds = dateToSeconds(expectedTime);
+    const actualSeconds = timeToSeconds(actualTime);
 
     let difference = Math.abs(expectedSeconds - actualSeconds);
-    console.dir();
+
     // Handle crossing midnight
     if (difference > 12 * 3600) {
       difference = 24 * 3600 - difference;
     }
 
     expect(difference).to.be.at.most(differenceInSecond);
+  }
+
+  private parseLastLockedTime(lastLocked: string): {
+    hours: number;
+    minutes: number;
+    seconds: number;
+  } {
+    const match = lastLocked
+      .trim()
+      .match(/^(\d{1,2}):(\d{2}):(\d{2})(?:\s?(AM|PM))?$/i);
+
+    expect(match, `invalid last locked value: ${lastLocked}`).to.not.equal(
+      null,
+    );
+
+    const [, hours, minutes, seconds, meridiem] = match!;
+
+    let parsedHours = Number(hours);
+
+    if (meridiem) {
+      const period = meridiem.toUpperCase();
+
+      if (period === 'PM' && parsedHours !== 12) {
+        parsedHours += 12;
+      }
+
+      if (period === 'AM' && parsedHours === 12) {
+        parsedHours = 0;
+      }
+    }
+
+    return {
+      hours: parsedHours,
+      minutes: Number(minutes),
+      seconds: Number(seconds),
+    };
   }
 
   assertDecoderIsLoaded() {
