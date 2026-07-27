@@ -71,15 +71,6 @@ export function createLeoLog(
   decoderId?: string,
   timeOfArrival?: string,
 ): Partial<LeoRecord> {
-  console.dir({
-    projectId: projectId,
-    magic: magic ?? 1234,
-    payload: payload,
-    reserved: reserved,
-    decoderId: decoderId ?? VALID_DECODER_ID,
-    counter: counter ?? 0,
-    timeOfArrival: timeOfArrival ?? new Date().toISOString(),
-  });
   return {
     projectId: projectId,
     magic: magic ?? 1234,
@@ -87,6 +78,6 @@ export function createLeoLog(
     reserved: reserved,
     decoderId: decoderId ?? VALID_DECODER_ID,
     counter: counter ?? 0,
-    timeOfArrival: timeOfArrival ?? new Date().toISOString(),
+    timeOfArrival: timeOfArrival ?? '',
   };
 }

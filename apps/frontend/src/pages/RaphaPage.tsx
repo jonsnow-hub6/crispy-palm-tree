@@ -186,6 +186,8 @@ export default function RaphaPage() {
                 variant="outline"
                 onClick={() => setMenuOpen((s) => !s)}
                 className="w-[180px] justify-between font-medium"
+                data-cy="selected-decoder"
+                data-selected-decoder={selectedDecoder}
               >
                 <div className="flex items-center gap-2 truncate">
                   <Layers className="w-4 h-4 text-muted-foreground" />

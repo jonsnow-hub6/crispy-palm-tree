@@ -4,7 +4,7 @@ import { LeoRecord, RaphaRecord } from '../types';
 import { areTimesClose } from '../utils/utils';
 import { DEFAULT_LEO_RECORD_VALUES } from './consts';
 
-interface GetLeoLogParams {
+export interface GetLeoLogParams {
   index: number;
   field: 'status' | 'magic-mismatch';
   regex?: RegExp;
@@ -118,22 +118,25 @@ export class DecoderPage implements AppPage {
 
   getDecoderPllLockStateValues(
     label: 'locked-percentage' | 'last-locked',
-    regex?: RegExp,
+    expectedValue?: string,
   ) {
     const selector = `[data-cy=${label}]`;
     const attrName = `data-${label.toLowerCase()}`;
 
-    return cy.get(selector, { timeout: 10000 }).then(($el) => {
-      const value = $el.attr(attrName);
+    return cy
+      .get(selector, { timeout: 10000 })
+      .should(($el) => {
+        const value = $el.attr(attrName);
 
-      expect(value, `${label} attribute`).to.not.equal(undefined);
+        expect(value, `${label} attribute`).to.not.equal(undefined);
 
-      if (regex) {
-        expect(value!, `${label} value`).to.match(regex);
-      }
-
-      return value!;
-    });
+        if (expectedValue !== undefined) {
+          expect(value, `${label} value`).to.equal(expectedValue);
+        }
+      })
+      .then(($el) => {
+        return $el.attr(attrName)!;
+      });
   }
 
   assertLastLockedValueAndExpectedTimeAreClose(
@@ -149,5 +152,13 @@ export class DecoderPage implements AppPage {
     expect(
       areTimesClose(expectedTime, lastLockedDate, differenceInSecond),
     ).to.equal(true);
+  }
+
+  assertDecoderIsLoaded() {
+    const label = 'selected-decoder';
+    const selector = `[data-cy=${label}]`;
+    const attrName = `data-${label.toLowerCase()}`;
+
+    return cy.get(selector, { timeout: 3000 }).should('have.attr', attrName);
   }
 }

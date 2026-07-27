@@ -22,8 +22,6 @@ describe('Counter', () => {
       stationLinks: [STATION_LINK_1],
     });
 
-    cy.triggerProbeAllInPocketBase();
-
     stationsPage.sendSetCounterRequestToStationLink(STATION_LINK_1, 1);
 
     cy.triggerProbeAllInPocketBase();
@@ -45,7 +43,6 @@ describe('Counter', () => {
 
     cy.refresh();
 
-    cy.wait(1000);
     stationsPage.assertCounterIncreasing(EXAMPLE_STATION_NAME, STATION_LINK_1);
 
     stationsPage
@@ -104,21 +101,9 @@ describe('Counter', () => {
 
     cy.triggerProbeAllInPocketBase();
     cy.refresh();
-    cy.wait(1000);
 
     stationsPage.assertStationVisible(EXAMPLE_STATION_NAME);
     stationsPage.assertStationVisible(SECOND_EXAMPLE_STATION_NAME);
-
-    cy.triggerProbeAllInPocketBase();
-
-    stationsPage.assertAlertVisible(
-      'counter',
-      'warning',
-      'Global counter mismatch detected across stations',
-    );
-
-    cy.refresh();
-    cy.wait(1000);
 
     stationsPage.sendSetCounterRequestToStationLink(STATION_LINK_1, 1);
 

@@ -8,17 +8,15 @@ import {
   VALID_ACTION_PAYLOAD,
   VALID_COUNTER,
   VALID_DECODER_ID,
-  VALID_FIRST_ACTION_PAYLOAD,
   VALID_MAGIC,
-  VALID_SECOND_ACTION_PAYLOAD,
-  VALID_THIRD_ACTION_PAYLOAD,
+  VALID_PACKETS_WITH_CORRECT_ORDER,
+  VALID_PACKETS_WITH_CORRECT_ORDER_EXPECTED_LOGS,
+  VALID_PACKETS_WITH_INCORRECT_ORDER,
+  VALID_PACKETS_WITH_INCORRECT_ORDER_EXPECTED_LOGS,
+  VALID_PACKETS_WITH_SOME_INVALID,
+  VALID_PACKETS_WITH_SOME_INVALID_EXPECTED_LOGS,
 } from './consts';
-import {
-  FIRST_PRESET_JSON_PROJECT_ID,
-  PRESET_JSON_PROJECT_ID,
-  SECOND_PRESET_JSON_PROJECT_ID,
-  THIRD_PRESET_JSON_PROJECT_ID,
-} from '../presets/consts';
+import { PRESET_JSON_PROJECT_ID } from '../presets/consts';
 import {
   createLeoLog,
   createStationWithMultipleActionPresetSetup,
@@ -86,7 +84,6 @@ describe('Decoder - Leo', () => {
         0,
       ),
     ]);
-    cy.wait(1000);
 
     cy.contains('WAITING', { timeout: 10000 }).should('be.visible');
 
@@ -129,114 +126,32 @@ describe('Decoder - Leo', () => {
     decoderPage.changeLeoLoggerSettings('magic', VALID_MAGIC);
     decoderPage.changeLeoLoggerSettings('delta', 10);
 
-    decoderPage.injectLeoRecords([
-      createLeoLog(
-        PRESET_JSON_PROJECT_ID,
-        INVALID_ACTION_PAYLOAD,
-        INVALID_ACTION_PAYLOAD,
-        VALID_MAGIC,
-        1,
-      ),
-      createLeoLog(
-        PRESET_JSON_PROJECT_ID,
-        VALID_ACTION_PAYLOAD,
-        VALID_ACTION_PAYLOAD,
-        VALID_MAGIC,
-        2,
-      ),
-      createLeoLog(
-        PRESET_JSON_PROJECT_ID,
-        VALID_ACTION_PAYLOAD,
-        VALID_ACTION_PAYLOAD,
-        VALID_MAGIC,
-        3,
-      ),
-      createLeoLog(
-        PRESET_JSON_PROJECT_ID,
-        INVALID_ACTION_PAYLOAD,
-        INVALID_ACTION_PAYLOAD,
-        VALID_MAGIC,
-        4,
-      ),
-    ]);
+    decoderPage.injectLeoRecords(VALID_PACKETS_WITH_SOME_INVALID);
 
     cy.wait(1000).then(() => {
-      decoderPage.getLeoLogFieldValue({
-        index: 0,
-        field: 'status',
-        regex: createStringSearchRegex(`Unexpected Action: Not in preset`),
-      });
+      VALID_PACKETS_WITH_SOME_INVALID_EXPECTED_LOGS.forEach((log) =>
+        decoderPage.getLeoLogFieldValue(log),
+      );
 
-      decoderPage.getLeoLogFieldValue({
-        index: 1,
-        field: 'status',
-        regex: createStringSearchRegex(`Preset Action #1 (Valid)`),
-      });
-
-      decoderPage.getLeoLogFieldValue({
-        index: 2,
-        field: 'status',
-        regex: createStringSearchRegex(`Preset Action #1 (Valid)`),
-      });
-
-      decoderPage.getLeoLogFieldValue({
-        index: 3,
-        field: 'status',
-        regex: createStringSearchRegex(`Unexpected Action: Not in preset`),
-      });
-
-      cy.contains('VERIFIED', { timeout: 10000 }).should('be.visible');
+      cy.contains('VERIFIED', { timeout: 3000 }).should('be.visible');
     });
   });
 
   it('4.1.5 - when receiving logs of preset with multiple actions, if the order is wrong, should color the incorrect logs red, and still have verified status', () => {
-    const validMagic = 1234;
     createStationWithMultipleActionPresetSetup();
 
     decoderPage.visit();
-    decoderPage.changeLeoLoggerSettings('magic', validMagic);
+    decoderPage.changeLeoLoggerSettings('magic', VALID_MAGIC);
     decoderPage.changeLeoLoggerSettings('delta', 10);
 
-    decoderPage.injectLeoRecords([
-      createLeoLog(
-        FIRST_PRESET_JSON_PROJECT_ID,
-        VALID_FIRST_ACTION_PAYLOAD,
-        VALID_FIRST_ACTION_PAYLOAD,
-        VALID_MAGIC,
-      ),
-      createLeoLog(
-        THIRD_PRESET_JSON_PROJECT_ID,
-        VALID_THIRD_ACTION_PAYLOAD,
-        VALID_THIRD_ACTION_PAYLOAD,
-        VALID_MAGIC,
-      ),
-      createLeoLog(
-        SECOND_PRESET_JSON_PROJECT_ID,
-        VALID_SECOND_ACTION_PAYLOAD,
-        VALID_SECOND_ACTION_PAYLOAD,
-        VALID_MAGIC,
-      ),
-    ]);
+    decoderPage.injectLeoRecords(VALID_PACKETS_WITH_INCORRECT_ORDER);
 
     cy.wait(1000).then(() => {
-      decoderPage.getLeoLogFieldValue({
-        index: 0,
-        field: 'status',
-        regex: createStringSearchRegex(`Preset Action #1 (Valid)`),
+      VALID_PACKETS_WITH_INCORRECT_ORDER_EXPECTED_LOGS.forEach((log) => {
+        decoderPage.getLeoLogFieldValue(log);
       });
 
-      decoderPage.getLeoLogFieldValue({
-        index: 1,
-        field: 'status',
-        regex: createStringSearchRegex(`Incorrect Order: Expected action #2`),
-      });
-
-      decoderPage.getLeoLogFieldValue({
-        index: 2,
-        field: 'status',
-        regex: createStringSearchRegex(`Incorrect Order: Expected action #1`),
-      });
-      cy.contains('VERIFIED', { timeout: 10000 }).should('be.visible');
+      cy.contains('VERIFIED', { timeout: 3000 }).should('be.visible');
     });
   });
 
@@ -246,50 +161,14 @@ describe('Decoder - Leo', () => {
     decoderPage.changeLeoLoggerSettings('magic', VALID_MAGIC);
     decoderPage.changeLeoLoggerSettings('delta', 10);
 
-    decoderPage.injectLeoRecords([
-      createLeoLog(
-        FIRST_PRESET_JSON_PROJECT_ID,
-        VALID_FIRST_ACTION_PAYLOAD,
-        VALID_FIRST_ACTION_PAYLOAD,
-        VALID_MAGIC,
-        2,
-      ),
-      createLeoLog(
-        SECOND_PRESET_JSON_PROJECT_ID,
-        VALID_SECOND_ACTION_PAYLOAD,
-        VALID_SECOND_ACTION_PAYLOAD,
-        VALID_MAGIC,
-        3,
-      ),
-      createLeoLog(
-        THIRD_PRESET_JSON_PROJECT_ID,
-        VALID_THIRD_ACTION_PAYLOAD,
-        VALID_THIRD_ACTION_PAYLOAD,
-        VALID_MAGIC,
-        4,
-      ),
-    ]);
+    decoderPage.injectLeoRecords(VALID_PACKETS_WITH_CORRECT_ORDER);
 
     cy.wait(1000).then(() => {
-      decoderPage.getLeoLogFieldValue({
-        index: 0,
-        field: 'status',
-        regex: createStringSearchRegex(`Preset Action #1 (Valid)`),
-      });
+      VALID_PACKETS_WITH_CORRECT_ORDER_EXPECTED_LOGS.forEach((log) =>
+        decoderPage.getLeoLogFieldValue(log),
+      );
 
-      decoderPage.getLeoLogFieldValue({
-        index: 1,
-        field: 'status',
-        regex: createStringSearchRegex(`Preset Action #2 (Valid)`),
-      });
-
-      decoderPage.getLeoLogFieldValue({
-        index: 2,
-        field: 'status',
-        regex: createStringSearchRegex(`Preset Action #3 (Valid)`),
-      });
-
-      cy.contains('VERIFIED', { timeout: 10000 }).should('be.visible');
+      cy.contains('VERIFIED', { timeout: 3000 }).should('be.visible');
     });
   });
 });

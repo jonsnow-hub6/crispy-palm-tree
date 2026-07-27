@@ -1,5 +1,9 @@
 import { DecoderPage } from '../../support/pages/DecoderPage';
-import { VALID_DECODER_ID } from './consts';
+import {
+  PLL_LOCK_STATE_0_PACKET,
+  PLL_LOCK_STATE_1_PACKET,
+  VALID_DECODER_ID,
+} from './consts';
 
 describe('Decoder - Rapha', () => {
   const decoderPage = new DecoderPage();
@@ -13,6 +17,7 @@ describe('Decoder - Rapha', () => {
   });
 
   it('4.2.1 - when receiving pll packets, should show change in graph', () => {
+    decoderPage.assertDecoderIsLoaded();
     decoderPage.getPllGraphElement().then(($parent) => {
       const originalGraph = $parent.html();
 
@@ -35,128 +40,54 @@ describe('Decoder - Rapha', () => {
   });
 
   it('4.2.2 - when injecting into the pll 1 then 0, should show 100% locked then slightly reduce with time, last locked time should match', () => {
-    cy.wait(1500).then(() => {
-      decoderPage
-        .injectRaphaRecords([
-          {
-            name: 'pllLockState',
-            parameters: {
-              pllLockState: 1,
-            },
-            decoderId: VALID_DECODER_ID,
-          },
-          {
-            name: 'pllLockState',
-            parameters: {
-              pllLockState: 1,
-            },
-            decoderId: VALID_DECODER_ID,
-          },
-        ])
-        .then(() => {
-          const timeWhenInjecting = new Date();
-          cy.wait(3000).then(() => {
-            decoderPage
-              .getDecoderPllLockStateValues('last-locked')
-              .then((value) => {
-                expect(
-                  decoderPage.assertLastLockedValueAndExpectedTimeAreClose(
-                    timeWhenInjecting,
-                    value,
-                    30,
-                  ),
-                );
-              });
-            decoderPage
-              .getDecoderPllLockStateValues('locked-percentage')
-              .then((value) => {
-                expect(value).to.equal('100');
-              });
-          });
-        });
+    decoderPage.assertDecoderIsLoaded();
 
-      decoderPage
-        .injectRaphaRecords([
-          {
-            name: 'pllLockState',
-            parameters: {
-              pllLockState: 0,
-            },
-            decoderId: VALID_DECODER_ID,
-          },
-          {
-            name: 'pllLockState',
-            parameters: {
-              pllLockState: 0,
-            },
-            decoderId: VALID_DECODER_ID,
-          },
-        ])
-        .then(() => {
-          cy.wait(3000).then(() => {
-            decoderPage
-              .getDecoderPllLockStateValues('locked-percentage')
-              .then((value) => {
-                expect(value).to.equal('50');
-              });
-          });
-        });
+    decoderPage.injectRaphaRecords([PLL_LOCK_STATE_1_PACKET]);
+
+    const timeWhenInjecting = new Date();
+
+    decoderPage
+      .getDecoderPllLockStateValues('locked-percentage', '100')
+      .should('equal', '100');
+
+    decoderPage.getDecoderPllLockStateValues('last-locked').then((value) => {
+      decoderPage.assertLastLockedValueAndExpectedTimeAreClose(
+        timeWhenInjecting,
+        value,
+        30,
+      );
     });
+
+    decoderPage.injectRaphaRecords([PLL_LOCK_STATE_0_PACKET]);
+
+    decoderPage
+      .getDecoderPllLockStateValues('locked-percentage', '50')
+      .should('equal', '50');
   });
 
   it('4.2.3 - when injecting into the pll 0 then 1, should show 0 locked then jump to 50, last locked time should match', () => {
-    cy.wait(1500).then(() => {
-      decoderPage
-        .injectRaphaRecords([
-          {
-            name: 'pllLockState',
-            parameters: {
-              pllLockState: 0,
-            },
-            decoderId: VALID_DECODER_ID,
-          },
-        ])
-        .then(() => {
-          cy.wait(3000).then(() => {
-            decoderPage
-              .getDecoderPllLockStateValues('locked-percentage')
-              .then((value) => {
-                expect(value).to.equal('0');
-              });
-          });
-        });
+    decoderPage.assertDecoderIsLoaded();
 
-      decoderPage
-        .injectRaphaRecords([
-          {
-            name: 'pllLockState',
-            parameters: {
-              pllLockState: 1,
-            },
-            decoderId: VALID_DECODER_ID,
-          },
-        ])
-        .then(() => {
-          const timeWhenInjecting = new Date();
-          cy.wait(3000).then(() => {
-            decoderPage
-              .getDecoderPllLockStateValues('last-locked')
-              .then((value) => {
-                expect(
-                  decoderPage.assertLastLockedValueAndExpectedTimeAreClose(
-                    timeWhenInjecting,
-                    value,
-                    20,
-                  ),
-                );
-              });
-            decoderPage
-              .getDecoderPllLockStateValues('locked-percentage')
-              .then((value) => {
-                expect(value).to.equal('50');
-              });
-          });
-        });
+    decoderPage.injectRaphaRecords([PLL_LOCK_STATE_0_PACKET]);
+
+    decoderPage
+      .getDecoderPllLockStateValues('locked-percentage', '0')
+      .should('equal', '0');
+
+    decoderPage.injectRaphaRecords([PLL_LOCK_STATE_1_PACKET]);
+
+    const timeWhenInjecting = new Date();
+
+    decoderPage
+      .getDecoderPllLockStateValues('locked-percentage', '50')
+      .should('equal', '50');
+
+    decoderPage.getDecoderPllLockStateValues('last-locked').then((value) => {
+      decoderPage.assertLastLockedValueAndExpectedTimeAreClose(
+        timeWhenInjecting,
+        value,
+        20,
+      );
     });
   });
 });
