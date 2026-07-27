@@ -1,7 +1,6 @@
 import { AppPage } from '../abstract/page';
 import { pb } from '../consts';
 import { LeoRecord, RaphaRecord } from '../types';
-import { areTimesClose } from '../utils/utils';
 import { DEFAULT_LEO_RECORD_VALUES } from './consts';
 
 export interface GetLeoLogParams {
@@ -144,14 +143,23 @@ export class DecoderPage implements AppPage {
     lastLocked: string,
     differenceInSecond: number,
   ) {
-    const lastLockedDate = new Date();
-
     const [hours, minutes, seconds] = lastLocked.split(':').map(Number);
 
-    lastLockedDate.setHours(hours, minutes, seconds, 0);
-    expect(
-      areTimesClose(expectedTime, lastLockedDate, differenceInSecond),
-    ).to.equal(true);
+    const expectedSeconds =
+      expectedTime.getHours() * 3600 +
+      expectedTime.getMinutes() * 60 +
+      expectedTime.getSeconds();
+
+    const actualSeconds = hours * 3600 + minutes * 60 + seconds;
+
+    let difference = Math.abs(expectedSeconds - actualSeconds);
+
+    // Handle crossing midnight
+    if (difference > 12 * 3600) {
+      difference = 24 * 3600 - difference;
+    }
+
+    expect(difference).to.be.at.most(differenceInSecond);
   }
 
   assertDecoderIsLoaded() {

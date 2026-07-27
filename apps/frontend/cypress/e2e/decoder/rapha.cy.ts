@@ -42,9 +42,9 @@ describe('Decoder - Rapha', () => {
   it('4.2.2 - when injecting into the pll 1 then 0, should show 100% locked then slightly reduce with time, last locked time should match', () => {
     decoderPage.assertDecoderIsLoaded();
 
-    decoderPage.injectRaphaRecords([PLL_LOCK_STATE_1_PACKET]);
-
     const timeWhenInjecting = new Date();
+
+    decoderPage.injectRaphaRecords([PLL_LOCK_STATE_1_PACKET]);
 
     decoderPage
       .getDecoderPllLockStateValues('locked-percentage', '100')
@@ -74,9 +74,9 @@ describe('Decoder - Rapha', () => {
       .getDecoderPllLockStateValues('locked-percentage', '0')
       .should('equal', '0');
 
-    decoderPage.injectRaphaRecords([PLL_LOCK_STATE_1_PACKET]);
-
     const timeWhenInjecting = new Date();
+
+    decoderPage.injectRaphaRecords([PLL_LOCK_STATE_1_PACKET]);
 
     decoderPage
       .getDecoderPllLockStateValues('locked-percentage', '50')
