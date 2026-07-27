@@ -143,7 +143,19 @@ export class DecoderPage implements AppPage {
     lastLocked: string,
     differenceInSecond: number,
   ) {
-    const [hours, minutes, seconds] = lastLocked.split(':').map(Number);
+    expect(lastLocked, 'last locked value should exist').to.be.a('string');
+
+    const parts = lastLocked.split(':').map(Number);
+
+    expect(parts.length, `invalid last locked value: ${lastLocked}`).to.equal(
+      3,
+    );
+    expect(
+      parts.every((part) => !Number.isNaN(part)),
+      `invalid last locked value: ${lastLocked}`,
+    ).to.equal(true);
+
+    const [hours, minutes, seconds] = parts;
 
     const expectedSeconds =
       expectedTime.getHours() * 3600 +
@@ -153,7 +165,7 @@ export class DecoderPage implements AppPage {
     const actualSeconds = hours * 3600 + minutes * 60 + seconds;
 
     let difference = Math.abs(expectedSeconds - actualSeconds);
-
+    console.dir();
     // Handle crossing midnight
     if (difference > 12 * 3600) {
       difference = 24 * 3600 - difference;
