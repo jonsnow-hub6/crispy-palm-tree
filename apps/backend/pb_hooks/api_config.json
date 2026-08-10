@@ -1,9 +1,0 @@
-{
-  "paths": {
-    "setActive": { "path": "/api/setActive", "method": "POST", "wrap": "active", "timeout": 3000 },
-    "getActive": { "path": "/api/getActive", "method": "GET", "responseKey": null, "timeout": 3000 },
-    "getCounter": { "path": "/api/getCounter", "method": "GET", "responseKey": null, "timeout": 3000 },
-    "setPreset": { "path": "/api/setPreset", "method": "POST", "passthroughBody": true, "timeout": 5000 },
-    "getPreset": { "path": "/api/getPreset", "method": "GET", "responseKey": null, "timeout": 3000 }
-  }
-}
