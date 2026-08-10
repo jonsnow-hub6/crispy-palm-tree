@@ -1,10 +1,10 @@
 /// <reference path="../pb_data/types.d.ts" />
 
 onRecordAfterCreateSuccess(async (e) => {
-  if (process.env.LOGSTASH_URL) {
+  if (process.env.LOGSTASH_URL && process.env.LOGSTASH_METHOD) {
     $http.send({
       url: process.env.LOGSTASH_URL,
-      method: 'POST',
+      method: process.env.LOGSTASH_METHOD,
       body: JSON.stringify({
         level: e.record.get('level'),
         type: e.record.get('type'),
