@@ -1,16 +1,65 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-onRecordAfterCreateSuccess((e) => {
-  const { createBackup } = require(`${__hooks}/api.utils`);
-  const parameters = JSON.parse(e.record.get('parameters'));
+cronAdd('create_backup', '*/1 * * * *', () => {
+  try {
+    const since = new Date(Date.now() - 60_000)
+      .toISOString()
+      .replace('T', ' ')
+      .replace('Z', '');
 
-  if ('snr' in parameters && parameters.snr < 100) {
-    createBackup('low_snr');
-  } else if ('pllLockState' in parameters && parameters.pllLockState === 0) {
-    createBackup('lock_loss');
-  } else if ('carrierPhase' in parameters && parameters.carrierPhase > 100) {
-    createBackup('high_carrier_phase');
+    const rules = $app.findRecordsByFilter('backupReasons', 'enabled = true');
+
+    if (rules.length === 0) {
+      return;
+    }
+
+    const alertsCollection = $app.findCollectionByNameOrId('alerts');
+
+    let shouldCreateBackup = false;
+
+    for (const rule of rules) {
+      try {
+        const rows = $app
+          .db()
+          .newQuery(rule.get('query'))
+          .bind({
+            time: since,
+            value: Number(rule.get('value')),
+          })
+          .rows();
+
+        const triggered = rows.next();
+        rows.close();
+
+        if (!triggered) {
+          continue;
+        }
+
+        shouldCreateBackup = true;
+
+        const alert = new Record(alertsCollection);
+        alert.set('level', 'critical');
+        alert.set('message', rule.get('message'));
+        alert.set('backupReason', rule.get('backupReason'));
+
+        $app.save(alert);
+
+        console.log(`Backup rule triggered: ${rule.get('backupReason')}`);
+      } catch (err) {
+        console.error(
+          `Failed to execute backup rule '${rule.get('backupReason')}'`,
+          err,
+        );
+      }
+    }
+
+    if (!shouldCreateBackup) {
+      return;
+    }
+
+    const backupName = `${new Date().toISOString().replace(/:/g, '-')}.zip`;
+    $app.createBackup(new Context(), backupName);
+  } catch (err) {
+    console.error('create_backup cron failed', err);
   }
-
-  e.next();
-}, 'rapha');
+});

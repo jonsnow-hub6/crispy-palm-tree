@@ -36,6 +36,10 @@ async function insertRaphaData() {
       },
       decoderId: 'decoder2',
     });
+        console.log('Inserted pllLockState');
+
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     await pb.collection('rapha').create({
       name: 'carrierPhase',
@@ -44,8 +48,10 @@ async function insertRaphaData() {
       },
       decoderId: 'decoder2',
     });
+    console.log('Inserted carrierPhase');
 
-    console.log('Inserted pllLockState');
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     await pb.collection('rapha').create({
       name: 'snr',
@@ -54,35 +60,36 @@ async function insertRaphaData() {
       },
       decoderId: 'decoder2',
     });
-
-
-    await pb.collection('rapha').create({
-      name: 'pllLockState',
-      parameters: {
-        pllLockState: Math.random() > 0.5 ? 1 : 0,
-      },
-      decoderId: 'decoder1',
-    });
-
-    await pb.collection('rapha').create({
-      name: 'carrierPhase',
-      parameters: {
-        carrierPhase: Math.floor(Math.random() * 100),
-      },
-      decoderId: 'decoder1',
-    });
-
-    console.log('Inserted pllLockState');
-
-    await pb.collection('rapha').create({
-      name: 'snr',
-      parameters: {
-        snr: Math.floor(Math.random() * 1000),
-      },
-      decoderId: 'decoder1',
-    });
-
     console.log('Inserted snr');
+
+
+    // await pb.collection('rapha').create({
+    //   name: 'pllLockState',
+    //   parameters: {
+    //     pllLockState: Math.random() > 0.5 ? 1 : 0,
+    //   },
+    //   decoderId: 'decoder1',
+    // });
+
+    // await pb.collection('rapha').create({
+    //   name: 'carrierPhase',
+    //   parameters: {
+    //     carrierPhase: Math.floor(Math.random() * 100),
+    //   },
+    //   decoderId: 'decoder1',
+    // });
+
+    // console.log('Inserted pllLockState');
+
+    // await pb.collection('rapha').create({
+    //   name: 'snr',
+    //   parameters: {
+    //     snr: Math.floor(Math.random() * 1000),
+    //   },
+    //   decoderId: 'decoder1',
+    // });
+
+    // console.log('Inserted snr');
 
   } catch (err) {
     console.error('Insert failed:', err.response || err.message);
@@ -93,7 +100,7 @@ async function insertRaphaData() {
 // Run once
 // ----------------------------
 async function main() {
-  await loginAdmin();
+  // await loginAdmin();
   await insertRaphaData();
 
   // 🔥 Uncomment to simulate realtime stream
