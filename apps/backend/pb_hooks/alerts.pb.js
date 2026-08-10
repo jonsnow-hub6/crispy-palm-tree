@@ -408,14 +408,11 @@ onRecordAfterCreateSuccess((e) => {
 }, 'leo');
 
 onRecordAfterCreateSuccess((e) => {
-  const MAX = 10000;
-  const DELETE_BATCH = 1000;
-
   try {
-    if (process.env.LOGSTASH_URL) {
+    if (process.env.LOGSTASH_URL && process.env.LOGSTASH_METHOD) {
       $http.send({
         url: process.env.LOGSTASH_URL,
-        method: 'POST',
+        method: process.env.LOGSTASH_METHOD,
         body: JSON.stringify({
           level: e.record.get('level'),
           message: e.record.get('message'),
