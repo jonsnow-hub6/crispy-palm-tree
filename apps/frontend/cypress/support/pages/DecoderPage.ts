@@ -14,12 +14,15 @@ export class DecoderPage implements AppPage {
     cy.visit('/decoder');
   }
 
-  private injectSingleRaphaRecord(record: Partial<RaphaRecord>) {
-    return new Cypress.Promise((resolve, reject) => {
+  private injectDecoderRecord<T extends DecoderRecordName>(
+    recordType: T,
+    record: Partial<DecoderRecordTypes[T]>,
+  ) {
+    return new Cypress.Promise(async (resolve, reject) => {
       try {
-        pb.collection('rapha')
-          .create(record, {
-            $autoCancel: false,
+        pb.collection(recordType)
+          .create({
+            ...record,
           })
           .then(resolve)
           .catch(reject);
@@ -28,19 +31,15 @@ export class DecoderPage implements AppPage {
       }
     });
   }
+
+  private injectSingleRaphaRecord(record: Partial<RaphaRecord>) {
+    return this.injectDecoderRecord('rapha', record);
+  }
+
   private injectSingleLeoRecord(record: Partial<LeoRecord>) {
-    return new Cypress.Promise(async (resolve, reject) => {
-      try {
-        pb.collection('leo')
-          .create({
-            ...DEFAULT_LEO_RECORD_VALUES,
-            ...record,
-          })
-          .then(resolve)
-          .catch(reject);
-      } catch (err) {
-        console.log(err);
-      }
+    return this.injectDecoderRecord('leo', {
+      ...DEFAULT_LEO_RECORD_VALUES,
+      ...record,
     });
   }
 
