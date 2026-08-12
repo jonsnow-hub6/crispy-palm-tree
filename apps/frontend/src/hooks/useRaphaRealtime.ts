@@ -134,9 +134,7 @@ async function loadInitialData() {
     if (snrPoints.length) {
       store.dispatch(addSnrPoints(snrPoints as Point[]));
     }
-  } catch (err) {
-    console.error('Failed loading initial rapha data', err);
-  }
+  } catch {}
 }
 
 async function ensureSubscription() {

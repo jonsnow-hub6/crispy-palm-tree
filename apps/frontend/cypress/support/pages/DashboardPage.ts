@@ -7,7 +7,10 @@ export class DashboardPage implements AppPage {
     cy.visit('/');
   }
 
-  getPresetItem(presetName: string, timeout: number = 3000) {
+  getPresetItem(
+    presetName: string,
+    timeout: number = 3000,
+  ): Cypress.Chainable<JQuery<HTMLElement>> {
     return cy.get(`[data-cy=preset-item-${presetName}]`, { timeout });
   }
 

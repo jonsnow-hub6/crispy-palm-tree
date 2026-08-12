@@ -49,7 +49,7 @@ describe('Decoder - Leo', () => {
     decoderPage.changeLeoLoggerSettings('delta', 10);
     decoderPage.changeLeoLoggerSettings('magic', VALID_MAGIC);
 
-    decoderPage.injectLeoRecords([
+    decoderPage.injectDecoderRecords('leo', [
       createLeoLog(
         PRESET_JSON_PROJECT_ID,
         VALID_ACTION_PAYLOAD,
@@ -75,7 +75,7 @@ describe('Decoder - Leo', () => {
     decoderPage.changeLeoLoggerSettings('delta', 10);
     decoderPage.changeLeoLoggerSettings('magic', VALID_MAGIC);
 
-    decoderPage.injectLeoRecords([
+    decoderPage.injectDecoderRecords('leo', [
       createLeoLog(
         PRESET_JSON_PROJECT_ID,
         INVALID_ACTION_PAYLOAD,
@@ -100,7 +100,7 @@ describe('Decoder - Leo', () => {
     decoderPage.visit();
     decoderPage.changeLeoLoggerSettings('magic', VALID_MAGIC);
 
-    decoderPage.injectLeoRecords([
+    decoderPage.injectDecoderRecords('leo', [
       createLeoLog(
         PRESET_JSON_PROJECT_ID,
         VALID_ACTION_PAYLOAD,
@@ -126,7 +126,7 @@ describe('Decoder - Leo', () => {
     decoderPage.changeLeoLoggerSettings('magic', VALID_MAGIC);
     decoderPage.changeLeoLoggerSettings('delta', 10);
 
-    decoderPage.injectLeoRecords(VALID_PACKETS_WITH_SOME_INVALID);
+    decoderPage.injectDecoderRecords('leo', VALID_PACKETS_WITH_SOME_INVALID);
 
     cy.wait(1000).then(() => {
       VALID_PACKETS_WITH_SOME_INVALID_EXPECTED_LOGS.forEach((log) =>
@@ -144,7 +144,7 @@ describe('Decoder - Leo', () => {
     decoderPage.changeLeoLoggerSettings('magic', VALID_MAGIC);
     decoderPage.changeLeoLoggerSettings('delta', 10);
 
-    decoderPage.injectLeoRecords(VALID_PACKETS_WITH_INCORRECT_ORDER);
+    decoderPage.injectDecoderRecords('leo', VALID_PACKETS_WITH_INCORRECT_ORDER);
 
     cy.wait(1000).then(() => {
       VALID_PACKETS_WITH_INCORRECT_ORDER_EXPECTED_LOGS.forEach((log) => {
@@ -161,7 +161,7 @@ describe('Decoder - Leo', () => {
     decoderPage.changeLeoLoggerSettings('magic', VALID_MAGIC);
     decoderPage.changeLeoLoggerSettings('delta', 10);
 
-    decoderPage.injectLeoRecords(VALID_PACKETS_WITH_CORRECT_ORDER);
+    decoderPage.injectDecoderRecords('leo', VALID_PACKETS_WITH_CORRECT_ORDER);
 
     cy.wait(1000).then(() => {
       VALID_PACKETS_WITH_CORRECT_ORDER_EXPECTED_LOGS.forEach((log) =>

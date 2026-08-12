@@ -7,7 +7,6 @@ import {
 } from '../types';
 import {
   assertStationCreatePayload,
-  interceptStationCreate,
   seedStationsInPocketBase,
 } from '../utils/stations';
 import { createStringSearchRegex } from '../utils/utils';
@@ -28,10 +27,6 @@ export class StationsPage implements AppPage {
   openCreateStationDialog() {
     cy.get('[data-cy=add-station-button]').click({ force: true });
     cy.get('[data-cy=schema-form]').should('be.visible');
-  }
-
-  interceptCreateRequest() {
-    interceptStationCreate();
   }
 
   interceptCreateStationRequestPayload(
@@ -269,7 +264,7 @@ export class StationsPage implements AppPage {
     );
   }
 
-  sendRequestToStationLink(
+  private sendRequestToStationLink(
     { host, port }: StationLink,
     { method, parameters, path }: StationLinkRequest,
   ) {
@@ -283,7 +278,7 @@ export class StationsPage implements AppPage {
   sendSetCounterRequestToStationLink(
     stationLink: StationLink,
     counter: number,
-  ) {
+  ): Cypress.Chainable<Cypress.Response<any>> {
     return this.sendRequestToStationLink(stationLink, {
       method: 'POST',
       path: '/api/setCounter',
@@ -318,7 +313,10 @@ export class StationsPage implements AppPage {
     });
   }
 
-  getCounterVariableFromStation(stationName: string, regex?: RegExp) {
+  getCounterVariableFromStation(
+    stationName: string,
+    regex?: RegExp,
+  ): Cypress.Chainable<string> {
     const linkSelector = `[data-cy=station-${stationName}-counter]`;
     const attrName = `data-counter`;
 

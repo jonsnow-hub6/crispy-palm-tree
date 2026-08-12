@@ -80,7 +80,7 @@ module.exports = {
         toastIn: {
           '0%': {
             transform: 'translateX(-120%)',
-            opacity: '0.1',
+            opacity: '0',
           },
           '100%': {
             transform: 'translateX(0)',
@@ -95,7 +95,7 @@ module.exports = {
           },
           '100%': {
             transform: 'translateX(-120%)',
-            opacity: '0.1',
+            opacity: '0',
           },
         },
 

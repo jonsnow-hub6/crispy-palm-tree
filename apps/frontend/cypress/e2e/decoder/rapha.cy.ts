@@ -22,7 +22,7 @@ describe('Decoder - Rapha', () => {
       const originalGraph = $parent.html();
 
       for (let i: number = 0; i < 10; i++) {
-        decoderPage.injectRaphaRecords([
+        decoderPage.injectDecoderRecords('rapha', [
           {
             name: 'pllLockState',
             parameters: {
@@ -44,7 +44,7 @@ describe('Decoder - Rapha', () => {
 
     const timeWhenInjecting = new Date();
 
-    decoderPage.injectRaphaRecords([PLL_LOCK_STATE_1_PACKET]);
+    decoderPage.injectDecoderRecords('rapha', [PLL_LOCK_STATE_1_PACKET]);
 
     decoderPage
       .getDecoderPllLockStateValues('locked-percentage', '100')
@@ -58,7 +58,7 @@ describe('Decoder - Rapha', () => {
       );
     });
 
-    decoderPage.injectRaphaRecords([PLL_LOCK_STATE_0_PACKET]);
+    decoderPage.injectDecoderRecords('rapha', [PLL_LOCK_STATE_0_PACKET]);
 
     decoderPage
       .getDecoderPllLockStateValues('locked-percentage', '50')
@@ -68,7 +68,7 @@ describe('Decoder - Rapha', () => {
   it('4.2.3 - when injecting into the pll 0 then 1, should show 0 locked then jump to 50, last locked time should match', () => {
     decoderPage.assertDecoderIsLoaded();
 
-    decoderPage.injectRaphaRecords([PLL_LOCK_STATE_0_PACKET]);
+    decoderPage.injectDecoderRecords('rapha', [PLL_LOCK_STATE_0_PACKET]);
 
     decoderPage
       .getDecoderPllLockStateValues('locked-percentage', '0')
@@ -76,7 +76,7 @@ describe('Decoder - Rapha', () => {
 
     const timeWhenInjecting = new Date();
 
-    decoderPage.injectRaphaRecords([PLL_LOCK_STATE_1_PACKET]);
+    decoderPage.injectDecoderRecords('rapha', [PLL_LOCK_STATE_1_PACKET]);
 
     decoderPage
       .getDecoderPllLockStateValues('locked-percentage', '50')

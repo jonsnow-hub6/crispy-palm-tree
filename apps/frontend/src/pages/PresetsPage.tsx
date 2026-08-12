@@ -347,7 +347,6 @@ export function PresetsPage() {
                         className="w-20 h-10"
                       />
                       <Input
-                        // id='colorString'
                         name="colorStringInput"
                         value={formData.color}
                         onChange={(e) =>

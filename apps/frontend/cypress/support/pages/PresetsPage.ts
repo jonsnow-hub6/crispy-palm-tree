@@ -5,7 +5,7 @@ export class PresetsPage implements AppPage {
     cy.visit('/presets');
   }
 
-  getPresetItem(presetName: string) {
+  getPresetItem(presetName: string): Cypress.Chainable<JQuery<HTMLElement>> {
     return cy.get(`[data-cy=preset-item-${presetName}]`, { timeout: 3000 });
   }
 

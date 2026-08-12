@@ -9,7 +9,10 @@ import {
   STATION_LINK_1,
 } from './consts';
 import { PRESETS_JSON_NAME, PRESETS_JSON_PRESET_NAME } from '../presets/consts';
-import { seedStationsInPocketBase } from '../../support/utils/stations';
+import {
+  interceptStationCreate,
+  seedStationsInPocketBase,
+} from '../../support/utils/stations';
 
 describe('Stations', () => {
   const stationsPage = new StationsPage();
@@ -24,7 +27,7 @@ describe('Stations', () => {
   });
 
   it('1.1.1 - when creating a new station, should send correct fields to the backend', () => {
-    stationsPage.interceptCreateRequest();
+    interceptStationCreate();
 
     stationsPage.openCreateStationDialog();
     cy.fillSchemaFormFields(CREATE_STATION_TEST_FIELDS);

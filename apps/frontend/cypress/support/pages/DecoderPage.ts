@@ -3,19 +3,18 @@ import { pb } from '../consts';
 import { LeoRecord, RaphaRecord } from '../types';
 import { dateToSeconds, timeToSeconds } from '../utils/utils';
 import { DEFAULT_LEO_RECORD_VALUES } from './consts';
-
-export interface GetLeoLogParams {
-  index: number;
-  field: 'status' | 'magic-mismatch';
-  regex?: RegExp;
-}
+import {
+  DecoderRecordName,
+  DecoderRecordTypes,
+  GetLeoLogParams,
+} from './types';
 
 export class DecoderPage implements AppPage {
   visit() {
     cy.visit('/decoder');
   }
 
-  private injectSingleRaphaRecord(record: RaphaRecord) {
+  private injectSingleRaphaRecord(record: Partial<RaphaRecord>) {
     return new Cypress.Promise((resolve, reject) => {
       try {
         pb.collection('rapha')
@@ -45,31 +44,23 @@ export class DecoderPage implements AppPage {
     });
   }
 
-  injectRaphaRecords(records: RaphaRecord[], delay: number = 500) {
-    return cy.wrap(
-      Cypress.Promise.all(
-        records.map(async (record) => {
-          return await new Cypress.Promise((resolve) => {
-            cy.wait(delay).then(() => {
-              this.injectSingleRaphaRecord(record).then(() => {
-                resolve();
-              });
-            });
-          });
-        }),
-      ),
-    );
-  }
+  injectDecoderRecords<T extends DecoderRecordName>(
+    recordType: T,
+    records: Partial<DecoderRecordTypes[T]>[],
+    delay: number = 500,
+  ) {
+    const recordTypeToInjectMap = {
+      leo: this.injectSingleLeoRecord,
+      rapha: this.injectSingleRaphaRecord,
+    };
 
-  injectLeoRecords(records: Partial<LeoRecord>[], delay: number = 500) {
     return cy.wrap(
       Cypress.Promise.all(
         records.map(async (record) => {
           return await new Cypress.Promise((resolve) => {
             cy.wait(delay).then(() => {
-              this.injectSingleLeoRecord(record).then(() => {
-                resolve();
-              });
+              recordTypeToInjectMap[recordType].call(this, record);
+              resolve();
             });
           });
         }),

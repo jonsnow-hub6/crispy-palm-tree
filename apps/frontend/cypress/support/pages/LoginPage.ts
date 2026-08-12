@@ -17,7 +17,7 @@ export class LoginPage implements AppPage {
     cy.get('[data-cy=login-btn]').click();
   }
 
-  getErrorMessage() {
+  getErrorMessage(): Cypress.Chainable<JQuery<HTMLElement>> {
     return cy.get('[data-cy=login-error]');
   }
 
