@@ -1,0 +1,23 @@
+{
+  "name": "frontend-e2e",
+  "root": "apps/frontend/cypress",
+  "projectType": "application",
+  "targets": {
+    "e2e": {
+      "executor": "@nx/cypress:cypress",
+      "options": {
+        "cypressConfig": "apps/frontend/cypress/cypress.config.ts",
+        "devServerTarget": "frontend:serve"
+      }
+    },
+    "open-cypress": {
+      "executor": "@nx/cypress:cypress",
+      "options": {
+        "cypressConfig": "apps/frontend/cypress/cypress.config.ts",
+        "devServerTarget": "frontend:serve",
+        "watch": true
+      }
+    }
+  },
+  "implicitDependencies": ["frontend"]
+}

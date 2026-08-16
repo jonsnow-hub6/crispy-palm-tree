@@ -168,12 +168,12 @@ export function StationsPage() {
   // display stations in stored order (do not reorder)
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-screen bg-background p-8" data-cy="stations-page">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-end">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={handleCreate}>
+              <Button onClick={handleCreate} data-cy="add-station-button">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Station
               </Button>
@@ -189,11 +189,16 @@ export function StationsPage() {
                     : 'Add a new station with links'}
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-4"
+                data-cy="schema-form"
+              >
                 <div className="space-y-2">
                   <Label htmlFor="name">Station Name</Label>
                   <Input
                     id="name"
+                    data-cy="schema-form-field-name"
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
@@ -223,6 +228,7 @@ export function StationsPage() {
                       <div className="flex-1 space-y-2">
                         <Input
                           placeholder="Host"
+                          data-cy={`schema-form-field-link-host-${idx}`}
                           value={link.host}
                           onChange={(e) =>
                             updateLink(idx, 'host', e.target.value)
@@ -232,13 +238,10 @@ export function StationsPage() {
                         <Input
                           type="number"
                           placeholder="Port"
+                          data-cy={`schema-form-field-link-port-${idx}`}
                           value={link.port}
                           onChange={(e) =>
-                            updateLink(
-                              idx,
-                              'port',
-                              parseInt(e.target.value) || 0,
-                            )
+                            updateLink(idx, 'port', parseInt(e.target.value))
                           }
                           required
                         />
@@ -260,10 +263,13 @@ export function StationsPage() {
                     type="button"
                     variant="outline"
                     onClick={() => setIsDialogOpen(false)}
+                    data-cy="schema-form-cancel"
                   >
                     Cancel
                   </Button>
-                  <Button type="submit">Save</Button>
+                  <Button type="submit" data-cy="schema-form-submit">
+                    Save
+                  </Button>
                 </DialogFooter>
               </form>
             </DialogContent>
@@ -279,7 +285,10 @@ export function StationsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            data-cy="stations-list"
+          >
             {stations.map((station) => {
               const isActive = station.stationLinks.some((l) => l.active);
               const anyReachable = station.stationLinks.some(
@@ -291,6 +300,7 @@ export function StationsPage() {
               return (
                 <Card
                   key={station.id}
+                  data-cy={'station-item-' + station.name}
                   className={`border-2 shadow-sm transition-all hover:shadow-md ${
                     isActive
                       ? activeLink?.reachable
@@ -312,7 +322,10 @@ export function StationsPage() {
                           {station.name}
                         </span>
                         {isActive && !activeLink?.reachable ? (
-                          <Badge variant="destructive">
+                          <Badge
+                            variant="destructive"
+                            data-cy={`station-${station.name}-unreachable-active`}
+                          >
                             Unreachable Active
                           </Badge>
                         ) : isActive ? (
@@ -320,13 +333,28 @@ export function StationsPage() {
                         ) : station.stationLinks.every(
                             (l) => l.reachable === false,
                           ) ? (
-                          <Badge variant="destructive">Unreachable</Badge>
+                          <Badge
+                            variant="destructive"
+                            data-cy={`station-${station.name}-unreachable`}
+                          >
+                            Unreachable
+                          </Badge>
                         ) : (
-                          <Badge variant="outline">Inactive</Badge>
+                          <Badge
+                            variant="outline"
+                            data-cy={`station-${station.name}-inactive`}
+                          >
+                            Inactive
+                          </Badge>
                         )}
 
                         {activeCounter !== undefined && (
-                          <Badge variant="secondary" className="ml-1">
+                          <Badge
+                            variant="secondary"
+                            className="ml-1"
+                            data-cy={`station-${station.name}-counter`}
+                            data-counter={activeCounter}
+                          >
                             Counter: {activeCounter}
                           </Badge>
                         )}
@@ -334,6 +362,7 @@ export function StationsPage() {
                       <div className="relative" data-menu-id={station.id}>
                         <div style={{ position: 'absolute', right: 8, top: 8 }}>
                           <button
+                            data-cy={`station-menu-button-${station.name}`}
                             aria-haspopup="menu"
                             aria-expanded={menuOpenFor === station.id}
                             onClick={() =>
@@ -369,6 +398,7 @@ export function StationsPage() {
 
                               {/* Activate */}
                               <button
+                                data-cy={`station-menu-activate-button-${station.name}`}
                                 role="menuitem"
                                 aria-disabled={isActive || !anyReachable}
                                 className={`flex items-center gap-2 w-full px-3 py-2 text-sm text-green-700 ${
@@ -389,6 +419,7 @@ export function StationsPage() {
                               {/* Deactivate (only if active) */}
                               {isActive && (
                                 <button
+                                  data-cy={`station-menu-deactivate-button-${station.name}`}
                                   role="menuitem"
                                   className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-yellow-600"
                                   onClick={() => {
@@ -451,7 +482,11 @@ export function StationsPage() {
             <Button variant="outline" onClick={() => setConfirmOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={confirmActivate} variant="default">
+            <Button
+              data-cy="station-activation-confirm-button"
+              onClick={confirmActivate}
+              variant="default"
+            >
               Confirm
             </Button>
           </DialogFooter>

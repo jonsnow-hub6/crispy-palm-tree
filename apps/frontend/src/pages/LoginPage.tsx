@@ -74,6 +74,7 @@ export function LoginPage() {
                   className="pl-10"
                   autoFocus
                   disabled={isLoading}
+                  data-cy="username-input"
                 />
               </div>
             </div>
@@ -89,15 +90,24 @@ export function LoginPage() {
                   placeholder="Enter your password"
                   className="pl-10"
                   disabled={isLoading}
+                  data-cy="password-input"
                 />
               </div>
             </div>
             {error && (
-              <div className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2">
+              <div
+                className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2"
+                data-cy="login-error"
+              >
                 <p className="text-sm text-destructive">{error}</p>
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading}
+              data-cy="login-btn"
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

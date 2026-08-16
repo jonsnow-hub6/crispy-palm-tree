@@ -29,6 +29,7 @@ export default function RaphaPage() {
     const fetchDecoders = async () => {
       const result = await pb.collection('decoders').getFullList({
         fields: 'id,decoderId,currentDecoder',
+        $autoCancel: false,
       });
       const records: DecoderRecord[] = result.map((r) => ({
         id: r.id,
@@ -45,8 +46,11 @@ export default function RaphaPage() {
         setSelectedDecoder(records[0].decoderId);
       }
     };
-
-    fetchDecoders();
+    try {
+      fetchDecoders();
+    } catch (err) {
+      console.error(err);
+    }
   }, []);
 
   // Realtime subscription — keeps selection in sync across tabs/computers
@@ -182,6 +186,8 @@ export default function RaphaPage() {
                 variant="outline"
                 onClick={() => setMenuOpen((s) => !s)}
                 className="w-[180px] justify-between font-medium"
+                data-cy="selected-decoder"
+                data-selected-decoder={selectedDecoder}
               >
                 <div className="flex items-center gap-2 truncate">
                   <Layers className="w-4 h-4 text-muted-foreground" />
@@ -210,13 +216,21 @@ export default function RaphaPage() {
               )}
             </div>
             <div className="text-sm text-right bg-muted/50 px-4 py-2 rounded-lg border">
-              <div className="text-muted-foreground mb-0.5">
+              <div
+                className="text-muted-foreground mb-0.5"
+                data-cy="last-locked"
+                data-last-locked={lastOneLabel}
+              >
                 Last locked:{' '}
                 <span className="font-medium text-foreground">
                   {lastOneLabel}
                 </span>
               </div>
-              <div className="text-muted-foreground">
+              <div
+                className="text-muted-foreground"
+                data-cy="locked-percentage"
+                data-locked-percentage={percentage}
+              >
                 Locked %:{' '}
                 <span className="font-medium text-foreground">
                   {percentage}%

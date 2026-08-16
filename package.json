@@ -18,7 +18,10 @@
     "format:write": "prettier --write .",
     "spellcheck": "cspell lint \"apps/**/*.{ts,tsx,js,jsx,md}\" --no-progress",
     "ci:check": "npm run format:check && npm run lint && npm run spellcheck",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:e2e-open": "npx cypress open --config-file apps/frontend/cypress/cypress.config.ts",
+    "test:e2e": "npx cypress run --config-file apps/frontend/cypress/cypress.config.ts",
+    "test:e2e-ci": "npx cypress run --config-file apps/frontend/cypress/cypress.config.ts --headless"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
@@ -46,6 +49,7 @@
     "@swc/helpers": "~0.5.11",
     "@testing-library/dom": "10.4.0",
     "@testing-library/react": "16.3.0",
+    "@types/cypress": "^0.1.6",
     "@types/node": "20.19.9",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
@@ -54,6 +58,7 @@
     "@vitest/ui": "^1.6.0",
     "autoprefixer": "10.4.13",
     "cspell": "^10.0.1",
+    "cypress": "^15.18.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
@@ -64,12 +69,14 @@
     "nx": "22.3.3",
     "postcss": "8.4.38",
     "prettier": "~3.6.2",
+    "serve": "^14.2.6",
     "tailwindcss": "3.4.3",
     "tslib": "^2.3.0",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.62.0",
     "vite": "^5.4.0",
-    "vitest": "^1.6.0"
+    "vitest": "^1.6.0",
+    "wait-on": "^9.0.10"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

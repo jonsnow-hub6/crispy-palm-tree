@@ -1,33 +1,25 @@
-name: Docker Image Build
+name: Docker Build
 
 on:
   workflow_call:
 
 jobs:
-  build-backend:
-    name: Build Backend Docker Image
+  docker:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Build backend image
         run: |
           docker build \
             -f apps/backend/Dockerfile \
-            -t backend:latest \
+            -t backend:ci \
             .
-
-  build-frontend:
-    name: Build Frontend Docker Image
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
       - name: Build frontend image
         run: |
           docker build \
             -f apps/frontend/Dockerfile \
-            -t frontend:latest \
+            -t frontend:ci \
             .

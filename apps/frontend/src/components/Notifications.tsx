@@ -98,6 +98,7 @@ function ToastItem({
         ${style.banner || ''}
         ${style.glow || ''}
       `}
+      data-cy={`notification-${toast.type}-${toast.level}`}
     >
       {/* Progress Bar */}
       {!paused && !leaving && (

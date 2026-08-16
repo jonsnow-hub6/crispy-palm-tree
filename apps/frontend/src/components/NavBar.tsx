@@ -145,6 +145,7 @@ export function NavBar({
                         'flex items-center gap-2',
                         isActive && 'bg-primary text-primary-foreground',
                       )}
+                      data-cy={'nav-link-' + item.label.toLowerCase()}
                     >
                       <Icon className="h-4 w-4" />
                       {item.label}
@@ -221,6 +222,7 @@ export function NavBar({
                   className="h-9 w-9"
                   aria-label="Logout"
                   title="Logout"
+                  data-cy="logout-btn"
                 >
                   <LogOut className="h-4 w-4" />
                 </Button>
@@ -231,6 +233,7 @@ export function NavBar({
                   variant="default"
                   size="sm"
                   className="flex items-center gap-2"
+                  data-cy="nav-link-login"
                 >
                   <LogIn className="h-4 w-4" />
                   Login

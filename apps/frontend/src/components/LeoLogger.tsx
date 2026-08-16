@@ -196,9 +196,7 @@ export default function LeoLogger({ decoderId }: Props) {
           }
           return merged;
         });
-      } catch (err) {
-        console.error('Failed to fetch historical leo logs', err);
-      }
+      } catch {}
     };
 
     setRecords([]); // clear before we re-fetch to avoid mixed decoders
@@ -300,6 +298,7 @@ export default function LeoLogger({ decoderId }: Props) {
             <div className="relative">
               <Wand2 className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <Input
+                data-cy="schema-form-field-magic"
                 placeholder="Magic"
                 value={expectedMagic}
                 onChange={(e) => setExpectedMagic(e.target.value)}
@@ -312,8 +311,8 @@ export default function LeoLogger({ decoderId }: Props) {
                 Δ
               </span>
               <Input
+                data-cy="schema-form-field-delta"
                 type="number"
-                placeholder="0"
                 value={counterDelta}
                 onChange={(e) => setCounterDelta(e.target.value)}
                 className="w-[70px] h-8 pl-5 text-xs bg-background border-dashed focus-visible:border-solid"
@@ -424,6 +423,20 @@ export default function LeoLogger({ decoderId }: Props) {
 
                 return (
                   <div
+                    data-cy="leo-log"
+                    data-status={
+                      item.presetStatus === 'valid'
+                        ? `Preset Action #${(item.presetIndex ?? 0) + 1} (Valid)`
+                        : item.presetStatus === 'incorrect_order'
+                          ? `Incorrect Order: Expected action #${(item.presetIndex ?? 0) + 1}`
+                          : item.presetStatus === 'unexpected_action'
+                            ? `Unexpected Action: Not in preset`
+                            : item.presetStatus === 'incomplete_old_preset'
+                              ? `Incomplete Old Preset transition`
+                              : `Project ID: ${item.projectId}`
+                    }
+                    data-magic-mismatch={magicMismatch}
+                    data-preset-status={item.presetStatus}
                     key={`${item.id}-${virtualRow.index}`}
                     style={{
                       position: 'absolute',

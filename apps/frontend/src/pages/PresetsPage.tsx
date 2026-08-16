@@ -189,7 +189,7 @@ export function PresetsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-screen bg-background p-8" data-cy="presets-page">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-end">
           <div className="flex gap-2">
@@ -207,7 +207,7 @@ export function PresetsPage() {
               }}
             >
               <DialogTrigger asChild>
-                <Button>
+                <Button data-cy="import-json-btn">
                   <Upload className="h-4 w-4 mr-2" />
                   Import JSON
                 </Button>
@@ -241,6 +241,7 @@ export function PresetsPage() {
                           : 'No file'}
                       </div>
                       <input
+                        data-cy="open-preset-import-input"
                         ref={fileInputRef}
                         type="file"
                         accept=".json"
@@ -289,6 +290,7 @@ export function PresetsPage() {
                     Cancel
                   </Button>
                   <Button
+                    data-cy="submit-json-import"
                     onClick={handleImportConfirm}
                     disabled={!selectedFile}
                   >
@@ -311,7 +313,11 @@ export function PresetsPage() {
                       : 'No creation via UI. Use Import JSON.'}
                   </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form
+                  onSubmit={handleSubmit}
+                  className="space-y-4"
+                  data-cy="schema-form"
+                >
                   {submitError && (
                     <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md border border-destructive/20">
                       {submitError}
@@ -341,6 +347,7 @@ export function PresetsPage() {
                         className="w-20 h-10"
                       />
                       <Input
+                        name="colorStringInput"
                         value={formData.color}
                         onChange={(e) =>
                           setFormData({ ...formData, color: e.target.value })
@@ -381,10 +388,16 @@ export function PresetsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {presets.map((preset) => (
+          <div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            data-cy="presets-list"
+          >
+            {presets.map((preset: Preset) => (
               <Card
                 key={preset.id}
+                data-cy={`preset-item-${preset.name}`}
+                data-color={preset.color}
+                data-active={preset.active}
                 className="group flex flex-col h-full transition-all duration-300 hover:shadow-lg"
                 style={{ borderLeft: `4px solid ${preset.color}` }}
               >
@@ -404,7 +417,11 @@ export function PresetsPage() {
                       />
 
                       {/* Menu */}
-                      <div className="relative" data-menu-id={preset.id}>
+                      <div
+                        className="relative"
+                        data-menu-id={preset.id}
+                        data-cy={`preset-menu-btn-${preset.name}`}
+                      >
                         <button
                           aria-haspopup="menu"
                           aria-expanded={menuOpenFor === preset.id}
@@ -426,6 +443,7 @@ export function PresetsPage() {
                             <div className="py-1">
                               <button
                                 role="menuitem"
+                                data-cy={`edit-preset-btn-${preset.name}`}
                                 className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60"
                                 onClick={() => {
                                   setMenuOpenFor(null);

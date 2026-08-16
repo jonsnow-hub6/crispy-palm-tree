@@ -1,0 +1,60 @@
+name: Cypress E2E
+
+on:
+  workflow_call:
+
+jobs:
+  cypress:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    strategy:
+      fail-fast: false
+      matrix:
+        spec:
+          - apps/frontend/cypress/e2e/stations
+          - apps/frontend/cypress/e2e/presets
+          - apps/frontend/cypress/e2e/counter
+          - apps/frontend/cypress/e2e/decoder
+          - apps/frontend/cypress/e2e/auth
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-node
+
+      - name: Download frontend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist/apps/frontend
+
+      - name: Download backend runtime
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-runtime
+          path: apps/backend
+
+      - name: Install mock server dependencies
+        working-directory: apps/frontend/cypress/mocks/station-mock
+        run: npm install
+
+      - name: Start PocketBase
+        run: |
+          chmod +x apps/backend/pocketbase
+          ./apps/backend/pocketbase serve --http=0.0.0.0:8090 &
+          npx wait-on http://127.0.0.1:8090/_/
+
+      - name: Serve frontend
+        run: |
+          npx serve -s dist/apps/frontend -l 4200 &
+          npx wait-on http://127.0.0.1:4200
+
+      - name: Run Cypress
+        env:
+          CYPRESS_BASE_URL: http://127.0.0.1:4200
+          VITE_POCKETBASE_URL: http://127.0.0.1:8090
+        run: |
+          npm run test:e2e-ci -- \
+            --config-file apps/frontend/cypress/cypress.config.ts \
+            --spec '${{ matrix.spec }}/*.cy.ts'

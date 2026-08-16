@@ -18,7 +18,9 @@
     "**/coverage/**",
     "**/*.md",
     "**/backend/**",
-    "**/splinter_cron_flow.json"
+    "**/splinter_cron_flow.json",
+    "**/frontend/cypress/fixtures/**",
+    "**/.gitignore"
   ],
   "words": [
     "PocketBase",
@@ -67,6 +69,7 @@
     "finalizer",
     "turso",
     "libc",
-    "daos"
+    "daos",
+    "criticalconnection"
   ]
 }

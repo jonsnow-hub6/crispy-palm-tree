@@ -1,0 +1,17 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["cypress", "node"],
+    "lib": ["esnext", "dom"],
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "ignoreDeprecations": "5.0"
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "cypress.config.ts",
+    "support/utils/mock-stations"
+  ]
+}

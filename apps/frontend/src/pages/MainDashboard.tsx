@@ -86,7 +86,10 @@ export function MainDashboard() {
   const selectedPreset = presets.find((p) => p.id === selectedPresetId) || null;
 
   return (
-    <div className="flex-1 overflow-y-auto bg-background p-8 min-h-0 scrollbar">
+    <div
+      className="flex-1 overflow-y-auto bg-background p-8 min-h-0 scrollbar"
+      data-cy="dashboard-widget"
+    >
       <div className="max-w-7xl mx-auto">
         <div className="max-w-3xl mx-auto">
           {activePresetId && (
@@ -111,7 +114,13 @@ export function MainDashboard() {
                             style={{ backgroundColor: ap.color }}
                           />
                           <div>
-                            <div className="text-xl font-bold">{ap.name}</div>
+                            <div
+                              className="text-xl font-bold"
+                              data-cy="active-preset"
+                              data-active-preset={ap.name}
+                            >
+                              {ap.name}
+                            </div>
                             <div className="text-sm text-muted-foreground">
                               Active preset • {ap.expand?.actions?.length || 0}{' '}
                               action(s)
@@ -151,6 +160,7 @@ export function MainDashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {presets.map((preset) => (
                     <div
+                      data-cy={`preset-item-${preset.name}`}
                       key={preset.id}
                       className="flex items-center justify-between p-3 border rounded-md"
                       style={{ borderColor: preset.color }}
@@ -169,6 +179,7 @@ export function MainDashboard() {
                       </div>
                       <div>
                         <Button
+                          data-cy={`preset-change-button-${preset.name}`}
                           variant={
                             activePresetId === preset.id
                               ? 'secondary'
@@ -241,6 +252,7 @@ export function MainDashboard() {
                     </label>
 
                     <Input
+                      data-cy={`preset-change-password`}
                       type="password"
                       value={password}
                       onChange={(e) => {
@@ -277,6 +289,7 @@ export function MainDashboard() {
                   Cancel
                 </Button>
                 <Button
+                  data-cy="submit-apply-preset"
                   onClick={() => {
                     if (selectedPreset?.passwordRequired) {
                       if (password !== 'Preset1!') {

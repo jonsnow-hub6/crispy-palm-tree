@@ -1,0 +1,5 @@
+{
+  "401": { "message": "Unauthorized" },
+  "404": { "message": "Not Found" },
+  "500": { "message": "Server Error" }
+}

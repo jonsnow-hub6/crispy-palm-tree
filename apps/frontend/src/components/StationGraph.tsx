@@ -192,7 +192,7 @@ export function StationGraph({
           <div
             key={i}
             style={{ left: x, top: `${linksY - 12}px` }}
-            className="absolute flex items-center justify-center pointer-events-none transform -translate-x-1/2"
+            className="absolute flex items-center justify-center transform -translate-x-1/2"
           >
             <div
               className="relative"
@@ -208,6 +208,19 @@ export function StationGraph({
                   setOpenTooltip(null);
                 }, 120);
               }}
+              data-cy={`station-link-${station.name}-${link.host}-${link.port}`}
+              data-link-host={link.host}
+              data-link-port={link.port}
+              data-link-status={
+                link.reachable === false
+                  ? 'Unreachable'
+                  : link.active
+                    ? 'Active'
+                    : 'Inactive'
+              }
+              data-link-counter={link.counter ?? 'N/A'}
+              data-link-preset={link.currentPreset ?? 'N/A'}
+              data-link-out-of-sync={isOutOfSync ?? 'N/A'}
             >
               {/* Out of sync warning badge */}
               {isOutOfSync && (
@@ -216,6 +229,7 @@ export function StationGraph({
                 </div>
               )}
               <button
+                data-cy={`station-link-btn-${station.name}-${link.host}-${link.port}`}
                 onClick={() =>
                   link.reachable !== false &&
                   !link.active &&
@@ -304,6 +318,7 @@ export function StationGraph({
                           </Badge>
 
                           <button
+                            data-cy={`link-sync-button-${link.host}-${link.port}`}
                             disabled={syncing === `${link.host}:${link.port}`}
                             onClick={() => handleSync(link)}
                             className="px-2 py-1 text-[10px] rounded bg-cyan-500 text-white hover:bg-cyan-600 disabled:opacity-50"
