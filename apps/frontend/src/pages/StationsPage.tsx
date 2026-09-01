@@ -434,19 +434,26 @@ export function StationsPage() {
 
                               <div className="border-t my-1" />
 
-                              {/* Delete */}
-                              <button
-                                disabled={isActive}
-                                role="menuitem"
-                                className={`flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-destructive ${isActive ? ' opacity-50 pointer-events-none' : ''}`}
-                                onClick={() => {
-                                  setMenuOpenFor(null);
-                                  handleDelete(station.id);
-                                }}
+                              <span
+                                title={
+                                  isActive
+                                    ? "Can't delete the active station"
+                                    : undefined
+                                }
                               >
-                                <Trash2 className="h-4 w-4" />
-                                <span>Delete</span>
-                              </button>
+                                <button
+                                  disabled={isActive}
+                                  role="menuitem"
+                                  className={`flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent/60 text-destructive ${isActive ? ' opacity-50 pointer-events-none' : ''}`}
+                                  onClick={() => {
+                                    setMenuOpenFor(null);
+                                    handleDelete(station.id);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  <span>Delete</span>
+                                </button>
+                              </span>
                             </div>
                           </div>
                         )}
