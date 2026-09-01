@@ -24,7 +24,6 @@ cronAdd('create_backup', '*/1 * * * *', () => {
           .newQuery(rule.get('query'))
           .bind({
             time: since,
-            value: Number(rule.get('value')),
           })
           .rows();
 
@@ -40,14 +39,13 @@ cronAdd('create_backup', '*/1 * * * *', () => {
         const alert = new Record(alertsCollection);
         alert.set('level', 'critical');
         alert.set('message', rule.get('message'));
-        alert.set('backupReason', rule.get('backupReason'));
 
         $app.save(alert);
 
-        console.log(`Backup rule triggered: ${rule.get('backupReason')}`);
+        console.log(`Backup rule triggered: ${rule.get('message')}`);
       } catch (err) {
         console.error(
-          `Failed to execute backup rule '${rule.get('backupReason')}'`,
+          `Failed to execute backup rule '${rule.get('message')}'`,
           err,
         );
       }
