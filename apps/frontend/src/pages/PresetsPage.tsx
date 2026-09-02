@@ -189,7 +189,7 @@ export function PresetsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-8" data-cy="presets-page">
+    <div className="flex-1 bg-background p-8" data-cy="presets-page">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-end">
           <div className="flex gap-2">
