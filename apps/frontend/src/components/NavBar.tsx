@@ -21,6 +21,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { usePresetStatus } from '@/hooks/usePresetStatus';
 import { useLeoContext } from '@/contexts/LeoContext';
 import type { Permission } from '@/store/slices/authSlice';
+import { APP_VERSION } from '@/config/version';
 
 const NAV_ITEMS: {
   path: string;
@@ -131,7 +132,15 @@ export function NavBar({
                 alt="splinter logo"
                 className="h-16 w-16 object-contain"
               />
-              <span className="font-bold text-lg">Splinter</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-bold text-lg">Splinter</span>
+                <span
+                  className="text-[11px] font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded border border-border/40"
+                  data-cy="app-version"
+                >
+                  v{APP_VERSION}
+                </span>
+              </div>
             </Link>
             <div className="flex items-center gap-1">
               {visibleItems.map((item) => {

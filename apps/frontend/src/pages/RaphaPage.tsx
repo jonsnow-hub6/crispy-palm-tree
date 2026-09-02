@@ -288,7 +288,7 @@ export default function RaphaPage() {
       </div>
 
       {/* Right: Logger - ~40% to 30% width */}
-      <div className="flex-[2] h-[calc(100vh-6.5rem)] min-w-0 sticky top-0">
+      <div className="flex-[2] lg:h-[calc(100vh-8.5rem)] min-h-[500px] lg:min-h-0 min-w-0 lg:sticky lg:top-0">
         <LeoLogger decoderId={selectedDecoder ?? undefined} />
       </div>
     </div>
