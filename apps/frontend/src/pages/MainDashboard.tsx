@@ -67,19 +67,45 @@ export function MainDashboard() {
     setLoadingApply(true);
     setMessage(null);
     try {
+      if (selectedPreset?.passwordRequired) {
+        try {
+          const record = await pb
+            .collection('settings')
+            .getFirstListItem('key="preset_password"');
+
+          if (password !== (record?.value as string)) {
+            setMessage({
+              type: 'error',
+              text: 'Incorrect password',
+            });
+            setLoadingApply(false);
+            return;
+          }
+        } catch (err) {
+          console.error('Failed to verify preset password:', err);
+          setMessage({
+            type: 'error',
+            text: 'Incorrect password',
+          });
+          setLoadingApply(false);
+          return;
+        }
+      }
+
       // Call backend preset set endpoint
       await pb.send(`/api/presets/${selectedPresetId}/set`, { method: 'POST' });
       dispatch(setActivePreset(selectedPresetId));
+
+      // keep dialog open briefly to show result, then close
+      setTimeout(() => {
+        setIsDialogOpen(false);
+      }, 800);
     } catch (err: any) {
       console.error('Failed to apply preset:', err);
       const text = err?.message || 'Failed to apply preset to stations';
       setMessage({ type: 'error', text });
     } finally {
       setLoadingApply(false);
-      // keep dialog open briefly to show result, then close
-      setTimeout(() => {
-        setIsDialogOpen(false);
-      }, 800);
     }
   };
 
@@ -290,18 +316,7 @@ export function MainDashboard() {
                 </Button>
                 <Button
                   data-cy="submit-apply-preset"
-                  onClick={() => {
-                    if (selectedPreset?.passwordRequired) {
-                      if (password !== 'Preset1!') {
-                        setMessage({
-                          type: 'error',
-                          text: 'Incorrect password',
-                        });
-                        return;
-                      }
-                    }
-                    handleConfirmApply();
-                  }}
+                  onClick={handleConfirmApply}
                   style={
                     selectedPreset
                       ? {
