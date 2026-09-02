@@ -4,4 +4,7 @@ dist
 coverage
 .nx
 *.lock
-apps/backend/
+apps/backend/pb_data/
+apps/backend/pb_migrations/
+apps/backend/workers/
+apps/backend/pocketbase/

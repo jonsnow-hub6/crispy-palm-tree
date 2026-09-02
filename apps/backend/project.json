@@ -1,21 +1,21 @@
 {
-    "name": "backend",
-    "$schema": "../../node_modules/nx/schemas/project-schema.json",
-    "projectType": "application",
-    "targets": {
-        "serve": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "./pocketbase serve --http=0.0.0.0:8090",
-                "cwd": "apps/backend"
-            }
-        },
-        "setup": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "chmod +x setup.sh && ./setup.sh",
-                "cwd": "apps/backend"
-            }
-        }
+  "name": "backend",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./pocketbase serve --http=0.0.0.0:8090",
+        "cwd": "apps/backend"
+      }
+    },
+    "setup": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "chmod +x setup.sh && ./setup.sh",
+        "cwd": "apps/backend"
+      }
     }
+  }
 }
