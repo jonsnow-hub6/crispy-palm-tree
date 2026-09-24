@@ -35,4 +35,18 @@ describe('Auth - Login', () => {
     loginPage.login(VALID_USERNAME, VALID_PASSWORD);
     cy.location('pathname').should('eq', '/');
   });
+
+  it('5.1.4 - when clicking user avatar, should open avatar preview modal', () => {
+    cy.injectUsernameAndPasswordIntoPocketBase({
+      username: VALID_USERNAME,
+      password: VALID_PASSWORD,
+      permission: ['dashboard'],
+    });
+    loginPage.login(VALID_USERNAME, VALID_PASSWORD);
+    cy.location('pathname').should('eq', '/');
+    cy.get('[data-cy=user-avatar-button]').should('be.visible').click();
+    cy.get('[data-cy=avatar-modal]').should('be.visible');
+    cy.get('[data-cy=close-avatar-modal]').click();
+    cy.get('[data-cy=avatar-modal]').should('not.exist');
+  });
 });

@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logout, getUserAvatarUrl } from '@/store/slices/authSlice';
 import { RootState } from '@/store';
 import { Button } from '@/components/ui/button';
+import { UserAvatar } from '@/components/UserAvatar';
 import {
   Radio,
   Palette,
@@ -39,50 +40,6 @@ const NAV_ITEMS: {
     permission: 'decoder',
   },
 ];
-
-function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return Math.abs(hash);
-}
-
-function getAvatarColor(name: string): string {
-  const h = hashString(name) % 360;
-  return `hsl(${h}, 65%, 45%)`;
-}
-
-function UserAvatar({
-  name,
-  avatarUrl,
-}: {
-  name: string;
-  avatarUrl: string | null;
-}) {
-  const initial = (name || '?').charAt(0).toUpperCase();
-
-  if (avatarUrl) {
-    return (
-      <img
-        src={avatarUrl}
-        alt={name}
-        className="h-8 w-8 rounded-full object-cover border-2 border-primary/20"
-        title={name}
-      />
-    );
-  }
-
-  return (
-    <div
-      className="h-8 w-8 rounded-full flex items-center justify-center text-sm font-semibold select-none text-white"
-      style={{ backgroundColor: getAvatarColor(name) }}
-      title={name}
-    >
-      {initial}
-    </div>
-  );
-}
 
 export function NavBar({
   unreadCount = 0,
@@ -223,7 +180,11 @@ export function NavBar({
             </Button>
             {isAuthenticated && user ? (
               <div className="flex items-center gap-2">
-                <UserAvatar name={user.username} avatarUrl={avatarUrl} />
+                <UserAvatar
+                  name={user.username}
+                  avatarUrl={avatarUrl}
+                  permissions={user.permission}
+                />
                 <Button
                   variant="ghost"
                   size="icon"
